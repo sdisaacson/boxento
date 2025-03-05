@@ -2,72 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: 'Inter', system-ui, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-}
-
+/* Basic layout */
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.react-grid-layout {
+/* Widget container - contains styling ONLY for widgets themselves */
+.widget-container {
+  border-radius: 1.25rem;
+  background-color: white;
+  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  transition: height 200ms ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.react-grid-item {
-  transition: all 200ms ease;
-  transition-property: left, top, width, height;
+.dark .widget-container {
+  background-color: #1f2937; /* dark:bg-gray-800 */
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.react-grid-item.react-grid-placeholder {
-  background: #1E293B;
-  opacity: 0.2;
-  border-radius: 8px;
-  transition-duration: 100ms;
-  z-index: 2;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
+.widget-container:hover .widget-drag-handle {
+  opacity: 1;
 }
 
-.react-grid-item.react-draggable-dragging {
-  transition: none;
-  z-index: 3;
+.widget-drag-handle {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  cursor: move;
 }
 
-.react-grid-item.resizing {
-  z-index: 1;
-  will-change: width, height;
+.widget-container .settings-button {
+  cursor: pointer;
+  border-radius: 9999px; /* rounded-full */
 }
 
-.react-grid-item .react-resizable-handle {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  bottom: 0;
-  right: 0;
-  cursor: se-resize;
-}
-
-.react-grid-item .react-resizable-handle::after {
-  content: "";
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
-}
-
-.dark .react-grid-item .react-resizable-handle::after {
-  border-right: 2px solid rgba(255, 255, 255, 0.4);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+/* Basic container - completely unstyled */
+.grid-item-container {
+  padding: 0;
+  background: transparent;
+  height: 100%;
+  width: 100%;
 }

@@ -33,6 +33,9 @@ function App() {
   })
 
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
+  const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800)
+  const [rowHeight, setRowHeight] = useState(100)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -48,13 +51,23 @@ function App() {
   }, [widgets])
 
   useEffect(() => {
+    // Set window dimensions on resize
     const handleResize = () => {
-      setWindowWidth(window.innerWidth - 40)
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+      setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0));
+      setWindowHeight(window.innerHeight);
+    };
+
+    // Call once initially
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [sidebarOpen]);
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light')
@@ -77,6 +90,11 @@ function App() {
       y = maxY
     }
     
+    // Make sure calendar widgets are square by setting equal height and width
+    if (type === 'calendar') {
+      defaultSize = { w: 2, h: 2 } // Enforce 2x2 for calendars
+    }
+    
     setWidgets([...widgets, newWidget])
     setLayout([
       ...layout, 
@@ -89,7 +107,8 @@ function App() {
         minW: 1,
         minH: 1,
         maxW: 6,
-        maxH: 6
+        maxH: 6,
+        isBounded: type === 'calendar' && defaultSize.w === 2 && defaultSize.h === 2,
       }
     ])
   }
@@ -197,16 +216,25 @@ function App() {
             className="layout"
             layout={layout}
             cols={12}
-            rowHeight={100}
+            rowHeight={rowHeight}
             width={windowWidth}
+            height={windowHeight}
             onLayoutChange={handleLayoutChange}
             draggableHandle=".widget-drag-handle"
+            margin={[10, 10]}
           >
-            {widgets.map(widget => (
-              <div key={widget.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                {renderWidget(widget)}
-              </div>
-            ))}
+            {widgets.map(widget => {
+              const layoutItem = layout.find(item => item.i === widget.id);
+              
+              return (
+                <div 
+                  key={widget.id} 
+                  className="grid-item-container"
+                >
+                  {renderWidget(widget)}
+                </div>
+              );
+            })}
           </GridLayout>
         </div>
       )}
