@@ -114,13 +114,54 @@ function App() {
       }
     ])
     
+    // Calculate best position for new widget (fill horizontally first)
+    const widgetWidth = Math.max(defaultSize[type].w, 2);
+    const cols = 12; // Total columns in grid
+    
+    // Initialize position
+    let bestX = 0;
+    let bestY = 0;
+    
+    if (layout.length > 0) {
+      // Find all occupied cells in the grid
+      const occupiedPositions = new Set();
+      layout.forEach(item => {
+        for (let x = item.x; x < item.x + item.w; x++) {
+          for (let y = item.y; y < item.y + item.h; y++) {
+            occupiedPositions.add(`${x},${y}`);
+          }
+        }
+      });
+      
+      // Find the first row with available space
+      let foundPosition = false;
+      for (let y = 0; y < 50 && !foundPosition; y++) { // Check up to 50 rows
+        for (let x = 0; x <= cols - widgetWidth && !foundPosition; x++) {
+          let canPlaceHere = true;
+          
+          // Check if all cells for this widget are free
+          for (let wx = 0; wx < widgetWidth && canPlaceHere; wx++) {
+            if (occupiedPositions.has(`${x + wx},${y}`)) {
+              canPlaceHere = false;
+            }
+          }
+          
+          if (canPlaceHere) {
+            bestX = x;
+            bestY = y;
+            foundPosition = true;
+          }
+        }
+      }
+    }
+    
     // Add layout position
     setLayout([
       ...layout,
       {
         i: id,
-        x: 0,
-        y: 0, // Will be placed at the first available position
+        x: bestX,
+        y: bestY,
         w: Math.max(defaultSize[type].w, 2), // Ensure minimum width of 2
         h: Math.max(defaultSize[type].h, 2), // Ensure minimum height of 2
         minW: 2, // Minimum width of 2
