@@ -155,6 +155,44 @@ body.dragging-active {
   background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
 }
 
+/* Curved corner resize handle with aggressive styling */
+.react-resizable-handle,
+.react-resizable .react-resizable-handle,
+.react-grid-item .react-resizable-handle {
+  position: absolute !important;
+  width: 30px !important;
+  height: 30px !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  background-image: none !important;
+  pointer-events: all !important;
+  cursor: se-resize !important;
+  z-index: 10 !important;
+}
+
+/* Create a larger, more prominent curved corner effect */
+.react-resizable-handle::after,
+.react-resizable .react-resizable-handle::after,
+.react-grid-item .react-resizable-handle::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 1 !important;
+  right: 1 !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 0 0 1.25rem 0 !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.3) !important;
+  border-right: 2px solid rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dark mode version with higher contrast */
+.dark .react-resizable-handle::after,
+.dark .react-resizable .react-resizable-handle::after,
+.dark .react-grid-item .react-resizable-handle::after {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-right: 2px solid rgba(255, 255, 255, 0.3) !important;
+}
+
 /* Remove these custom classes that might interfere with default behavior */
 /* 
 .react-grid-item.cssTransforms {
