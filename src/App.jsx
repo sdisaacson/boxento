@@ -115,77 +115,43 @@ function App() {
     ])
     
     // Calculate best position for new widget (fill horizontally first)
-    const widgetWidth = Math.max(defaultSize[type].w, 2);
-    const cols = 12; // Total columns in grid
+    const widgetWidth = defaultSize[type].w;
+    const widgetHeight = defaultSize[type].h;
     
-    // Initialize position
-    let bestX = 0;
-    let bestY = 0;
-    
-    if (layout.length > 0) {
-      // Find all occupied cells in the grid
-      const occupiedPositions = new Set();
-      layout.forEach(item => {
-        for (let x = item.x; x < item.x + item.w; x++) {
-          for (let y = item.y; y < item.y + item.h; y++) {
-            occupiedPositions.add(`${x},${y}`);
-          }
-        }
-      });
-      
-      // Find the first row with available space
-      let foundPosition = false;
-      for (let y = 0; y < 50 && !foundPosition; y++) { // Check up to 50 rows
-        for (let x = 0; x <= cols - widgetWidth && !foundPosition; x++) {
-          let canPlaceHere = true;
-          
-          // Check if all cells for this widget are free
-          for (let wx = 0; wx < widgetWidth && canPlaceHere; wx++) {
-            if (occupiedPositions.has(`${x + wx},${y}`)) {
-              canPlaceHere = false;
-            }
-          }
-          
-          if (canPlaceHere) {
-            bestX = x;
-            bestY = y;
-            foundPosition = true;
-          }
-        }
-      }
-    }
-    
-    // Add layout position
+    // Add layout position - let react-grid-layout handle exact positioning
     setLayout([
       ...layout,
       {
         i: id,
-        x: bestX,
-        y: bestY,
-        w: Math.max(defaultSize[type].w, 2), // Ensure minimum width of 2
-        h: Math.max(defaultSize[type].h, 2), // Ensure minimum height of 2
+        x: 0, // Let library determine placement
+        y: 0, // Let library determine placement
+        w: widgetWidth,
+        h: widgetHeight,
         minW: 2, // Minimum width of 2
         minH: 2, // Minimum height of 2
         maxW: 6,
-        maxH: 6,
-        isBounded: true, // Ensure widget stays within grid bounds
-        isDraggable: true,
-        isResizable: true
+        maxH: 6
       }
     ])
   }
 
   const handleLayoutChange = (newLayout) => {
-    // Enforce minimum size of 2x2 for all layout items
-    const enforcedLayout = newLayout.map(item => ({
-      ...item,
-      w: Math.max(item.w, 2), // Ensure minimum width of 2
-      h: Math.max(item.h, 2), // Ensure minimum height of 2
-      minW: 2, // Set minimum width constraint
-      minH: 2  // Set minimum height constraint
-    }));
+    // Only enforce minimum size of 2x2 for widgets that are explicitly being resized
+    // Let the library handle everything else naturally
+    const updatedLayout = newLayout.map(item => {
+      // Only modify items that were explicitly resized below our minimum
+      if (item.w < 2 || item.h < 2) {
+        return {
+          ...item,
+          w: Math.max(item.w, 2),
+          h: Math.max(item.h, 2)
+        };
+      }
+      // Otherwise, leave the item exactly as the library calculated it
+      return item;
+    });
     
-    setLayout(enforcedLayout);
+    setLayout(updatedLayout);
   }
 
   const renderWidget = (widget) => {
@@ -291,10 +257,8 @@ function App() {
             width={windowWidth}
             height={windowHeight}
             onLayoutChange={handleLayoutChange}
-            draggableHandle=".widget-drag-handle"
             margin={[10, 10]}
             containerPadding={[20, 20]}
-            isBounded={true}
           >
             {widgets.map(widget => {
               const layoutItem = layout.find(item => item.i === widget.id);

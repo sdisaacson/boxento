@@ -57,3 +57,24 @@ body {
   height: 100%;
   width: 100%;
 }
+
+/* Minimal styling for grid items */
+.react-grid-item.react-draggable-dragging {
+  z-index: 100;
+}
+
+.react-grid-layout {
+  position: relative;
+}
+
+/* Remove these custom classes that might interfere with default behavior */
+/* 
+.react-grid-item.cssTransforms {
+  transition-property: transform;
+  transition-duration: 0.2s;
+}
+
+.react-grid-item.moving {
+  transition: none !important;
+}
+*/
