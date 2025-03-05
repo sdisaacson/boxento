@@ -19,7 +19,18 @@ function App() {
   const [layout, setLayout] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedLayout = localStorage.getItem('boxento-layout')
-      return savedLayout ? JSON.parse(savedLayout) : []
+      if (savedLayout) {
+        // Enforce 2x2 minimum size on any existing layout items
+        const parsedLayout = JSON.parse(savedLayout);
+        return parsedLayout.map(item => ({
+          ...item,
+          w: Math.max(item.w, 2),
+          h: Math.max(item.h, 2),
+          minW: 2,
+          minH: 2
+        }));
+      }
+      return []
     }
     return []
   })
@@ -34,8 +45,17 @@ function App() {
 
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800)
-  const [rowHeight, setRowHeight] = useState(100)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  
+  // Calculate the rowHeight to match column width for square cells
+  const calculateRowHeight = () => {
+    const totalMarginWidth = 11 * 10; // 11 margins between 12 columns
+    const availableWidth = windowWidth - 40 - totalMarginWidth; // Subtract container padding and margins
+    const columnWidth = availableWidth / 12;
+    return columnWidth; // This makes each cell square
+  }
+  
+  const rowHeight = calculateRowHeight();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -80,8 +100,8 @@ function App() {
     const defaultSize = {
       'calendar': { w: 2, h: 2 },
       'weather': { w: 2, h: 2 },
-      'worldclocks': { w: 3, h: 2 },
-      'quicklinks': { w: 3, h: 2 }
+      'worldclocks': { w: 2, h: 2 },
+      'quicklinks': { w: 2, h: 2 }
     }
     
     // Add default config
