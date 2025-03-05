@@ -53,7 +53,9 @@ function App() {
   useEffect(() => {
     // Set window dimensions on resize
     const handleResize = () => {
-      setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0));
+      // Account for any body margin/padding plus a small safety margin
+      const bodyPadding = 40; // Account for any potential body margin/padding
+      setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0) - bodyPadding);
       setWindowHeight(window.innerHeight);
     };
 
@@ -74,47 +76,55 @@ function App() {
   }
 
   const addWidget = (type) => {
-    const newWidget = {
-      id: `widget-${Date.now()}`,
-      type,
-      config: {}
+    const id = `${type}-${Date.now()}`;
+    const defaultSize = {
+      'calendar': { w: 2, h: 2 },
+      'weather': { w: 2, h: 2 },
+      'worldclocks': { w: 3, h: 2 },
+      'quicklinks': { w: 3, h: 2 }
     }
     
-    let defaultSize = { w: 2, h: 2 }
-    let x = 0
-    let y = 0
+    // Add default config
+    setWidgets([
+      ...widgets,
+      {
+        id,
+        type,
+        config: { id }
+      }
+    ])
     
-    // Find available position
-    if (layout.length > 0) {
-      const maxY = Math.max(...layout.map(item => item.y + item.h))
-      y = maxY
-    }
-    
-    // Make sure calendar widgets are square by setting equal height and width
-    if (type === 'calendar') {
-      defaultSize = { w: 2, h: 2 } // Enforce 2x2 for calendars
-    }
-    
-    setWidgets([...widgets, newWidget])
+    // Add layout position
     setLayout([
-      ...layout, 
-      { 
-        i: newWidget.id, 
-        x, 
-        y, 
-        w: defaultSize.w, 
-        h: defaultSize.h,
-        minW: 1,
-        minH: 1,
+      ...layout,
+      {
+        i: id,
+        x: 0,
+        y: 0, // Will be placed at the first available position
+        w: Math.max(defaultSize[type].w, 2), // Ensure minimum width of 2
+        h: Math.max(defaultSize[type].h, 2), // Ensure minimum height of 2
+        minW: 2, // Minimum width of 2
+        minH: 2, // Minimum height of 2
         maxW: 6,
         maxH: 6,
-        isBounded: type === 'calendar' && defaultSize.w === 2 && defaultSize.h === 2,
+        isBounded: true, // Ensure widget stays within grid bounds
+        isDraggable: true,
+        isResizable: true
       }
     ])
   }
 
   const handleLayoutChange = (newLayout) => {
-    setLayout(newLayout)
+    // Enforce minimum size of 2x2 for all layout items
+    const enforcedLayout = newLayout.map(item => ({
+      ...item,
+      w: Math.max(item.w, 2), // Ensure minimum width of 2
+      h: Math.max(item.h, 2), // Ensure minimum height of 2
+      minW: 2, // Set minimum width constraint
+      minH: 2  // Set minimum height constraint
+    }));
+    
+    setLayout(enforcedLayout);
   }
 
   const renderWidget = (widget) => {
@@ -138,7 +148,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 transition-colors p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Boxento</h1>
         <div className="flex gap-2">
@@ -222,6 +232,8 @@ function App() {
             onLayoutChange={handleLayoutChange}
             draggableHandle=".widget-drag-handle"
             margin={[10, 10]}
+            containerPadding={[20, 20]}
+            isBounded={true}
           >
             {widgets.map(widget => {
               const layoutItem = layout.find(item => item.i === widget.id);

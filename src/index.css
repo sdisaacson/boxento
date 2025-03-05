@@ -18,12 +18,16 @@ body {
   background-color: white;
   box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 1rem;
-  overflow: hidden;
+  overflow: hidden; /* Ensure content never causes overflow */
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  /* Ensure text wrapping */
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .dark .widget-container {
