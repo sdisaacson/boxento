@@ -12,6 +12,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global style to prevent any text selection when dragging/resizing occurs */
+body.dragging-active {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  cursor: move !important;
+}
+
 /* Widget container - contains styling ONLY for widgets themselves */
 .widget-container {
   border-radius: 1.25rem;
@@ -28,6 +39,8 @@ body {
   /* Ensure text wrapping */
   word-wrap: break-word;
   word-break: break-word;
+  /* Prevent text selection during any interaction */
+  -webkit-touch-callout: none; /* iOS Safari */
 }
 
 .dark .widget-container {
@@ -58,16 +71,78 @@ body {
   width: 100%;
 }
 
-/* Minimal styling for grid items */
+/* Base widget styling with enhanced selection prevention */
+.react-grid-item {
+  transition: all 200ms ease;
+  -webkit-user-drag: none; /* Prevent dragging of content */
+}
+
+/* Apply selection prevention immediately on mousedown */
+.react-grid-item:active,
+.react-grid-item:focus {
+  user-select: none !important;
+}
+
+.react-grid-item:active *,
+.react-grid-item:focus * {
+  user-select: none !important;
+}
+
+/* Specific styling for dragging state */
 .react-grid-item.react-draggable-dragging {
   z-index: 100;
+  transition: none;
+  pointer-events: none;
 }
 
+/* Specific styling for resize state */
+.react-grid-item.resizing {
+  z-index: 10;
+  transition: none;
+}
+
+/* Comprehensive selection prevention for all interaction states */
+.react-grid-item,
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Apply to the entire grid */
 .react-grid-layout {
   position: relative;
+  -webkit-user-drag: none;
 }
 
-/* Override React Grid Layout placeholder */
+.react-grid-layout--dragging,
+.react-grid-layout--resizing {
+  cursor: move;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.react-grid-layout--dragging *,
+.react-grid-layout--resizing * {
+  cursor: inherit !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Ensure the placeholder is under the dragged widget */
 .react-grid-item.react-grid-placeholder {
   background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
   opacity: 0.6;
@@ -78,21 +153,6 @@ body {
 
 .dark .react-grid-item.react-grid-placeholder {
   background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
-}
-
-/* Add styling for resizable widgets to ensure they stay above placeholder */
-.react-grid-item.resizing {
-  z-index: 10;
-}
-
-/* Add common transition for both drag and resize operations */
-.react-grid-item {
-  transition: all 200ms ease;
-}
-
-.react-grid-item.resizing,
-.react-grid-item.react-draggable-dragging {
-  transition: none;
 }
 
 /* Remove these custom classes that might interfere with default behavior */

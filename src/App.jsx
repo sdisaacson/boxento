@@ -174,6 +174,23 @@ function App() {
     }
   }
 
+  // Handle drag and resize start/stop for text selection prevention
+  const handleDragStart = () => {
+    document.body.classList.add('dragging-active');
+  }
+  
+  const handleDragStop = () => {
+    document.body.classList.remove('dragging-active');
+  }
+  
+  const handleResizeStart = () => {
+    document.body.classList.add('dragging-active');
+  }
+  
+  const handleResizeStop = () => {
+    document.body.classList.remove('dragging-active');
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
       <header className="flex justify-between items-center mb-6">
@@ -257,6 +274,10 @@ function App() {
             width={windowWidth}
             height={windowHeight}
             onLayoutChange={handleLayoutChange}
+            onDragStart={handleDragStart}
+            onDragStop={handleDragStop}
+            onResizeStart={handleResizeStart}
+            onResizeStop={handleResizeStop}
             margin={[10, 10]}
             containerPadding={[20, 20]}
           >
