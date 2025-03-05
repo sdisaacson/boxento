@@ -78,3 +78,15 @@ body {
   transition: none !important;
 }
 */
+
+/* Override React Grid Layout placeholder */
+.react-grid-item.react-grid-placeholder {
+  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
+  opacity: 0.6;
+  border-radius: 1.25rem; /* Match widget-container border-radius */
+  transition-duration: 200ms;
+}
+
+.dark .react-grid-item.react-grid-placeholder {
+  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
+}
