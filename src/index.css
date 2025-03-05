@@ -67,6 +67,34 @@ body {
   position: relative;
 }
 
+/* Override React Grid Layout placeholder */
+.react-grid-item.react-grid-placeholder {
+  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
+  opacity: 0.6;
+  border-radius: 1.25rem; /* Match widget-container border-radius */
+  transition-duration: 200ms;
+  z-index: 1; /* Ensure placeholder is below the widget being manipulated */
+}
+
+.dark .react-grid-item.react-grid-placeholder {
+  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
+}
+
+/* Add styling for resizable widgets to ensure they stay above placeholder */
+.react-grid-item.resizing {
+  z-index: 10;
+}
+
+/* Add common transition for both drag and resize operations */
+.react-grid-item {
+  transition: all 200ms ease;
+}
+
+.react-grid-item.resizing,
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+}
+
 /* Remove these custom classes that might interfere with default behavior */
 /* 
 .react-grid-item.cssTransforms {
@@ -78,15 +106,3 @@ body {
   transition: none !important;
 }
 */
-
-/* Override React Grid Layout placeholder */
-.react-grid-item.react-grid-placeholder {
-  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
-  opacity: 0.6;
-  border-radius: 1.25rem; /* Match widget-container border-radius */
-  transition-duration: 200ms;
-}
-
-.dark .react-grid-item.react-grid-placeholder {
-  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
-}
