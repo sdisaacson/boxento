@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, Settings, X, CircleDot } from 'lucide-react'
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import Modal from '../ui/Modal'
+import WidgetHeader from '../ui/WidgetHeader'
 
 const WeatherWidget = ({ width, height, config }) => {
   const [weather, setWeather] = useState({
@@ -246,18 +247,15 @@ const WeatherWidget = ({ width, height, config }) => {
   }
   
   return (
-    <div ref={widgetRef} className="widget-container">
-      <div className="flex justify-end items-center mb-2">
-        <button 
-          className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          <CircleDot size={16} className="text-gray-500" />
-        </button>
-      </div>
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+      <WidgetHeader 
+        title="Weather" 
+        onSettingsClick={() => setShowSettings(!showSettings)}
+      />
       
-      {/* Use the renderContent function to determine which view to show based on dimensions */}
-      {renderContent()}
+      <div className="flex-1 overflow-hidden">
+        {renderContent()}
+      </div>
       
       {/* Settings modal */}
       {renderSettings()}

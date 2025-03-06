@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Calendar, X, CircleDot } from 'lucide-react'
 import Modal from '../ui/Modal'
 import { useWidgetSettings } from '../../utils/widgetHelpers'
+import WidgetHeader from '../ui/WidgetHeader'
 
 /**
  * Calendar Widget Component
@@ -237,21 +238,15 @@ const CalendarWidget = ({ width, height, config }) => {
   };
 
   return (
-    <div ref={widgetRef} className="widget-container">
-      <div className="flex justify-end items-center mb-2">
-        <button 
-          className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsSettingsOpen(true);
-          }}
-        >
-          <CircleDot size={16} className="text-gray-500" />
-        </button>
-      </div>
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+      <WidgetHeader 
+        title="Calendar" 
+        onSettingsClick={() => setIsSettingsOpen(true)}
+      />
       
-      {/* Use the renderContent function to determine which view to show based on dimensions */}
-      {renderContent()}
+      <div className="flex-1 overflow-hidden">
+        {renderContent()}
+      </div>
       
       {/* Settings modal using our reusable Modal component */}
       <Modal
