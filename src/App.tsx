@@ -111,18 +111,25 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
   
-  // Calculate row height based on window width
+  // Calculate row height based on window width to ensure square widgets
   const calculateRowHeight = (): number => {
-    // Base row height
-    const baseHeight = 100;
+    // Calculate the column width based on available width
+    // Total usable width = windowWidth - (containerPadding * 2) - (margin * (cols - 1))
+    const totalPadding = 40; // containerPadding (20px * 2)
+    const totalMargins = 10 * (12 - 1); // margin (10px) * (cols - 1)
+    const usableWidth = windowWidth - totalPadding - totalMargins;
     
-    // Adjust based on window width
+    // Calculate column width (each column should be square)
+    const columnWidth = usableWidth / 12;
+    
+    // Return the column width as row height to ensure squares
+    // Apply responsiveness scaling similar to before
     if (windowWidth < 600) {
-      return baseHeight * 0.8; // Smaller on mobile
+      return columnWidth * 0.8; // Smaller on mobile
     } else if (windowWidth < 1200) {
-      return baseHeight * 0.9; // Slightly smaller on tablets
+      return columnWidth * 0.9; // Slightly smaller on tablets
     } else {
-      return baseHeight; // Default for desktop
+      return columnWidth; // Default for desktop
     }
   };
   
