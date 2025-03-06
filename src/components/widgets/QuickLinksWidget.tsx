@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Link, ExternalLink, Plus, X, Trash, Edit, CircleDot } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { ExternalLink, Plus, X, Trash, Edit } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import WidgetHeader from '../ui/WidgetHeader'
 
@@ -28,17 +28,8 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
   ])
   const [showSettings, setShowSettings] = useState<boolean>(false)
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null)
-  const settingsRef = useRef<HTMLDivElement>(null)
-  const settingsButtonRef = useRef<HTMLButtonElement>(null)
-  const widgetRef = useRef<HTMLDivElement>(null)
-  
-  // Handle link navigation with an imperative approach
-  const navigateToUrl = (url: string) => {
-    // Open the URL in a new tab
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-  
-  // No need for click outside handler as the modal backdrop handles this
+  const settingsRef = useRef<HTMLDivElement | null>(null)
+  const widgetRef = useRef<HTMLDivElement | null>(null)
   
   const addLink = () => {
     if (editingLink && editingLink.title && editingLink.url) {
@@ -72,7 +63,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
         target="_blank" 
         rel="noopener noreferrer"
         className="flex items-center p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <div 
           className="w-2.5 h-2.5 rounded-full mr-2.5 ring-1 ring-gray-200 dark:ring-gray-600 transition-colors" 
@@ -114,7 +105,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <div 
               className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
@@ -125,7 +116,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
           </a>
         ))}
         <button
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             startEdit();
           }}
@@ -148,7 +139,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <div 
               className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
@@ -159,7 +150,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
           </a>
         ))}
         <button
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             startEdit();
           }}
@@ -182,7 +173,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
             target="_blank" 
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <div 
               className="w-12 h-12 rounded-full mb-3 flex items-center justify-center ring-2 ring-white dark:ring-slate-600 shadow-md transition-shadow group-hover:shadow-lg"
@@ -202,7 +193,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
           </a>
         ))}
         <button
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             startEdit();
           }}
@@ -248,7 +239,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
                     <input 
                       type="text" 
                       value={editingLink.title} 
-                      onChange={e => setEditingLink({...editingLink, title: e.target.value})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       placeholder="Google"
                     />
@@ -258,7 +249,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
                     <input 
                       type="url" 
                       value={editingLink.url} 
-                      onChange={e => setEditingLink({...editingLink, url: e.target.value})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, url: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       placeholder="https://google.com"
                     />
@@ -269,13 +260,13 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
                       <input 
                         type="color" 
                         value={editingLink.color} 
-                        onChange={e => setEditingLink({...editingLink, color: e.target.value})}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
                         className="w-10 h-10 p-1 rounded border border-gray-300 dark:border-slate-600"
                       />
                       <input 
                         type="text" 
                         value={editingLink.color} 
-                        onChange={e => setEditingLink({...editingLink, color: e.target.value})}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
                         className="flex-1 ml-2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       />
                     </div>
@@ -288,7 +279,9 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
                       Cancel
                     </button>
                     <button 
-                      onClick={addLink}
+                      onClick={() => {
+                        addLink()
+                      }}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
                       disabled={!editingLink.title || !editingLink.url}
                     >

@@ -26,7 +26,7 @@ const Modal: React.FC<ModalProps> = ({
   footer,
   size = 'md'
 }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   // Get width class based on size prop
   const getWidthClass = (): string => {
@@ -82,9 +82,9 @@ const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         className={`bg-white dark:bg-slate-800 rounded-lg p-6 ${getWidthClass()} shadow-lg dark:shadow-slate-900/30 max-h-[90vh] overflow-auto`}
         onClick={handleModalClick}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
-        onMouseMove={(e) => e.stopPropagation()} 
+        onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+        onMouseUp={(e: React.MouseEvent) => e.stopPropagation()}
+        onMouseMove={(e: React.MouseEvent) => e.stopPropagation()} 
       >
         <div className="flex justify-between items-center mb-4">
           {title && <h3 className="text-lg font-medium">{title}</h3>}

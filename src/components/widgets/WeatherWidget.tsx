@@ -32,7 +32,6 @@ interface ForecastDay {
 }
 
 type TemperatureUnit = 'celsius' | 'fahrenheit';
-type WeatherCondition = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'stormy' | 'foggy';
 
 /**
  * Weather Widget Component
@@ -516,7 +515,7 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
             className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
             placeholder="Enter city name"
             value={localConfig.location || ''}
-            onChange={(e) => setLocalConfig({...localConfig, location: e.target.value})}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, location: e.target.value})}
           />
         </div>
         
@@ -527,7 +526,7 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
             className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
             placeholder="OpenWeatherMap API Key"
             value={localConfig.apiKey || ''}
-            onChange={(e) => setLocalConfig({...localConfig, apiKey: e.target.value})}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, apiKey: e.target.value})}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Get a free API key from <a 

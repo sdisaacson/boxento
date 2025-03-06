@@ -27,8 +27,8 @@ export const useWidgetSettings = (): WidgetSettingsHook => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const showSettingsRef = useRef<boolean>(false);
-  const settingsRef = useRef<HTMLDivElement>(null);
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const settingsRef = useRef<HTMLDivElement | null>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Set portal container on mount
   useEffect(() => {

@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { Calendar, X, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from '../ui/Modal'
-import { useWidgetSettings } from '../../utils/widgetHelpers'
 import WidgetHeader from '../ui/WidgetHeader'
 import { WidgetProps, CalendarWidgetConfig, CalendarEvent, WidgetConfig } from '../../types'
 
@@ -21,11 +20,11 @@ import { WidgetProps, CalendarWidgetConfig, CalendarEvent, WidgetConfig } from '
 const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetConfig>) => {
   const [date, setDate] = useState<Date>(new Date())
   const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(config || { id: '' })
-  const widgetRef = useRef<HTMLDivElement>(null)
+  const widgetRef = useRef<HTMLDivElement | null>(null)
   
   // Simplified settings state
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
-  const [events, setEvents] = useState<CalendarEvent[]>([
+  const [events, _setEvents] = useState<CalendarEvent[]>([
     { title: 'Team Meeting', time: '10:00 AM' },
     { title: 'Lunch with Alex', time: '12:30 PM' },
     { title: 'Product Demo', time: '3:00 PM' }
@@ -43,18 +42,6 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
   }, [])
   
   /**
-   * Format a date using Intl.DateTimeFormat
-   */
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date)
-  }
-  
-  /**
    * Get the number of days in a month
    */
   const getDaysInMonth = (year: number, month: number): number => {
@@ -66,19 +53,6 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
    */
   const getFirstDayOfMonth = (year: number, month: number): number => {
     return new Date(year, month, 1).getDay()
-  }
-  
-  const renderCompactView = () => {
-    return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 rounded-lg p-2">
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gray-800 dark:text-gray-100">{date.getDate()}</div>
-          <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-            {date.toLocaleString('default', { month: 'short' })}
-          </div>
-        </div>
-      </div>
-    )
   }
   
   const renderFullCalendar = () => {
@@ -181,7 +155,7 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
           <select 
             className="w-full p-2 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600 text-gray-800 dark:text-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent outline-none"
             value={localConfig.startDay || 'sunday'}
-            onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value as 'sunday' | 'monday'})}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLocalConfig({...localConfig, startDay: e.target.value as 'sunday' | 'monday'})}
           >
             <option value="sunday">Sunday</option>
             <option value="monday">Monday</option>
@@ -194,7 +168,7 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
             <input 
               type="checkbox"
               checked={localConfig.showWeekNumbers || false}
-              onChange={(e) => setLocalConfig({...localConfig, showWeekNumbers: e.target.checked})}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, showWeekNumbers: e.target.checked})}
               className="mr-3 h-4 w-4 accent-blue-500 dark:accent-blue-400"
               id="weekNumbers"
             />

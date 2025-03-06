@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Settings, Plus, Search, Sun, Moon, X, Grid, Menu, AlertTriangle, ChevronDown } from 'lucide-react'
-import GridLayout, { Layout } from 'react-grid-layout'
+import { Plus, Search, Sun, Moon, X, Grid, AlertTriangle, ChevronDown } from 'lucide-react'
+import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { getWidgetComponent, getWidgetConfigByType, WIDGET_REGISTRY, EnhancedWidgetConfig } from '@/components/widgets'
+import { getWidgetComponent, getWidgetConfigByType, WIDGET_REGISTRY } from '@/components/widgets'
 import { 
-  WidgetProps, 
   WidgetConfig, 
   Widget,
-  LayoutItem,
-  WidgetSize
+  LayoutItem
 } from '@/types'
 
 interface WidgetErrorBoundaryProps {
@@ -108,11 +106,10 @@ function App() {
   })
 
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
-  const [windowHeight, setWindowHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight : 800)
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
+  const [sidebarOpen, _setSidebarOpen] = useState<boolean>(false)
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [widgetCategories, setWidgetCategories] = useState<WidgetCategory>(() => {
+  const [widgetCategories, _setWidgetCategories] = useState<WidgetCategory>(() => {
     // Group widgets by category
     const categories: WidgetCategory = {};
     WIDGET_REGISTRY.forEach(widget => {
@@ -165,10 +162,8 @@ function App() {
   useEffect(() => {
     // Set window dimensions on resize
     const handleResize = () => {
-      // Account for any body margin/padding plus a small safety margin
       const bodyPadding = 40; // Account for any potential body margin/padding
       setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0) - bodyPadding);
-      setWindowHeight(window.innerHeight);
     };
 
     // Call once initially
@@ -329,7 +324,7 @@ function App() {
     
     return (
       <div className="widget-selector-overlay" onClick={toggleWidgetSelector}>
-        <div className="widget-selector-modal" onClick={e => e.stopPropagation()}>
+        <div className="widget-selector-modal" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <div className="widget-selector-header">
             <h3 className="text-lg font-semibold">Add Widget</h3>
             <button onClick={toggleWidgetSelector} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -474,8 +469,6 @@ function App() {
             draggableHandle=".widget-drag-handle"
             draggableCancel=".settings-button"
             children={widgets.map(widget => {
-              const layoutItem = layout.find(item => item.i === widget.id);
-              
               return (
                 <div 
                   key={widget.id} 

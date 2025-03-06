@@ -30,7 +30,7 @@ const WidgetHeader: React.FC<WidgetHeaderProps> = ({
       {onSettingsClick && (
         <button 
           className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onSettingsClick();
           }}
