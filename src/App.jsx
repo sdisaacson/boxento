@@ -1,12 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Component } from 'react'
 import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import CalendarWidget from './components/widgets/CalendarWidget'
-import WeatherWidget from './components/widgets/WeatherWidget'
-import WorldClocksWidget from './components/widgets/WorldClocksWidget'
-import QuickLinksWidget from './components/widgets/QuickLinksWidget'
-import { Sun, Moon, Plus } from 'lucide-react'
+import { widgetConfigs, getWidgetConfigByType, getWidgetComponent } from './components/widgets'
+import { Sun, Moon, Plus, AlertTriangle } from 'lucide-react'
+
+/**
+ * Error Boundary component to catch errors in widget rendering
+ */
+class WidgetErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Widget error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={20} />
+            <h3 className="font-medium">Widget Error</h3>
+          </div>
+          <p className="text-sm opacity-80">
+            {this.state.error?.message || "An error occurred while rendering this widget"}
+          </p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function App() {
   const [theme, setTheme] = useState(() => {
@@ -97,11 +130,11 @@ function App() {
 
   const addWidget = (type) => {
     const id = `${type}-${Date.now()}`;
-    const defaultSize = {
-      'calendar': { w: 2, h: 2 },
-      'weather': { w: 2, h: 2 },
-      'worldclocks': { w: 2, h: 2 },
-      'quicklinks': { w: 2, h: 2 }
+    const widgetConfig = getWidgetConfigByType(type);
+    
+    if (!widgetConfig) {
+      console.error(`Widget type "${type}" not found in registry`);
+      return;
     }
     
     // Add default config
@@ -114,9 +147,9 @@ function App() {
       }
     ])
     
-    // Calculate best position for new widget (fill horizontally first)
-    const widgetWidth = defaultSize[type].w;
-    const widgetHeight = defaultSize[type].h;
+    // Use the defaultSize from the widget config
+    const widgetWidth = widgetConfig.defaultSize.w;
+    const widgetHeight = widgetConfig.defaultSize.h;
     
     // Add layout position - let react-grid-layout handle exact positioning
     setLayout([
@@ -127,19 +160,18 @@ function App() {
         y: 0, // Let library determine placement
         w: widgetWidth,
         h: widgetHeight,
-        minW: 2, // Minimum width of 2
-        minH: 2, // Minimum height of 2
-        maxW: 6,
-        maxH: 6
+        minW: widgetConfig.minSize?.w || 2, // Minimum width
+        minH: widgetConfig.minSize?.h || 2, // Minimum height
+        maxW: widgetConfig.maxSize?.w || 6,
+        maxH: widgetConfig.maxSize?.h || 6
       }
     ])
   }
 
   const handleLayoutChange = (newLayout) => {
-    // Only enforce minimum size of 2x2 for widgets that are explicitly being resized
-    // Let the library handle everything else naturally
+    // Enforce minimum size of 2x2 for all widgets
     const updatedLayout = newLayout.map(item => {
-      // Only modify items that were explicitly resized below our minimum
+      // Ensure all widgets are at least 2x2
       if (item.w < 2 || item.h < 2) {
         return {
           ...item,
@@ -160,18 +192,18 @@ function App() {
     
     const { w, h } = layoutItem
     
-    switch(widget.type) {
-      case 'calendar':
-        return <CalendarWidget width={w} height={h} config={widget.config} />
-      case 'weather':
-        return <WeatherWidget width={w} height={h} config={widget.config} />
-      case 'worldclocks':
-        return <WorldClocksWidget width={w} height={h} config={widget.config} />
-      case 'quicklinks':
-        return <QuickLinksWidget width={w} height={h} config={widget.config} />
-      default:
-        return <div>Unknown widget type</div>
+    // Get the widget component from the registry
+    const WidgetComponent = getWidgetComponent(widget.type);
+    
+    if (!WidgetComponent) {
+      return <div className="p-4 text-red-500">Unknown widget type: {widget.type}</div>
     }
+    
+    return (
+      <WidgetErrorBoundary>
+        <WidgetComponent width={w} height={h} config={widget.config} />
+      </WidgetErrorBoundary>
+    )
   }
 
   // Handle drag and resize start/stop for text selection prevention
@@ -191,6 +223,19 @@ function App() {
     document.body.classList.remove('dragging-active');
   }
 
+  // Add this function to render widget buttons
+  const renderWidgetButtons = () => {
+    return widgetConfigs.map(config => (
+      <button 
+        key={config.type}
+        onClick={() => addWidget(config.type)}
+        className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
+      >
+        <Plus size={16} /> {config.name}
+      </button>
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
       <header className="flex justify-between items-center mb-6">
@@ -198,7 +243,7 @@ function App() {
         <div className="flex gap-2">
           <button 
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow hover:shadow-md transition-all"
+            className="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:shadow-md transition-all"
           >
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
@@ -209,60 +254,14 @@ function App() {
         <div className="flex flex-col items-center justify-center h-[80vh]">
           <p className="text-xl mb-4">You can add widgets</p>
           <div className="flex gap-2 flex-wrap justify-center">
-            <button 
-              onClick={() => addWidget('calendar')}
-              className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <Plus size={16} /> Calendar
-            </button>
-            <button 
-              onClick={() => addWidget('weather')}
-              className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <Plus size={16} /> Weather
-            </button>
-            <button 
-              onClick={() => addWidget('worldclocks')}
-              className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <Plus size={16} /> World Clocks
-            </button>
-            <button 
-              onClick={() => addWidget('quicklinks')}
-              className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-            >
-              <Plus size={16} /> Quick Links
-            </button>
+            {renderWidgetButtons()}
           </div>
         </div>
       ) : (
         <div>
           <div className="mb-4 flex justify-end">
             <div className="flex gap-2">
-              <button 
-                onClick={() => addWidget('calendar')}
-                className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-              >
-                <Plus size={16} /> Calendar
-              </button>
-              <button 
-                onClick={() => addWidget('weather')}
-                className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-              >
-                <Plus size={16} /> Weather
-              </button>
-              <button 
-                onClick={() => addWidget('worldclocks')}
-                className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-              >
-                <Plus size={16} /> World Clocks
-              </button>
-              <button 
-                onClick={() => addWidget('quicklinks')}
-                className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-              >
-                <Plus size={16} /> Quick Links
-              </button>
+              {renderWidgetButtons()}
             </div>
           </div>
           

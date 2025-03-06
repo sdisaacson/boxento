@@ -2,6 +2,27 @@ import { useState, useEffect, useRef } from 'react'
 import { Calendar, Settings, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
+/**
+ * Calendar Widget Component
+ * 
+ * Displays a calendar with different views based on the widget size:
+ * - 1x1: Shows just the current date
+ * - 1x2: Shows date in a vertical layout
+ * - 2x1: Shows date in a horizontal layout
+ * - 2x2 and larger: Shows a full month calendar
+ * 
+ * The widget supports configuration through a settings modal:
+ * - First day of week (Sunday/Monday)
+ * - Show/hide week numbers
+ * 
+ * @param {Object} props - Component props
+ * @param {number} props.width - Width of the widget in grid units
+ * @param {number} props.height - Height of the widget in grid units
+ * @param {Object} props.config - Widget configuration
+ * @param {string} [props.config.startDay='sunday'] - First day of the week
+ * @param {boolean} [props.config.showWeekNumbers=false] - Whether to show week numbers
+ * @returns {JSX.Element} Calendar widget component
+ */
 const CalendarWidget = ({ width, height, config }) => {
   const [date, setDate] = useState(new Date())
   const [showSettings, setShowSettings] = useState(false)
@@ -10,6 +31,9 @@ const CalendarWidget = ({ width, height, config }) => {
   const settingsButtonRef = useRef(null)
   const widgetRef = useRef(null)
   
+  /**
+   * Update the date every minute
+   */
   useEffect(() => {
     const timer = setInterval(() => {
       setDate(new Date())
@@ -18,6 +42,11 @@ const CalendarWidget = ({ width, height, config }) => {
     return () => clearInterval(timer)
   }, [])
   
+  /**
+   * Format a date using Intl.DateTimeFormat
+   * @param {Date} date - The date to format
+   * @returns {string} Formatted date string
+   */
   const formatDate = (date) => {
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
@@ -27,10 +56,22 @@ const CalendarWidget = ({ width, height, config }) => {
     }).format(date)
   }
   
+  /**
+   * Get the number of days in a month
+   * @param {number} year - The year
+   * @param {number} month - The month (0-11)
+   * @returns {number} Number of days in the month
+   */
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate()
   }
   
+  /**
+   * Get the day of the week for the first day of a month
+   * @param {number} year - The year
+   * @param {number} month - The month (0-11)
+   * @returns {number} Day of the week (0-6, where 0 is Sunday)
+   */
   const getFirstDayOfMonth = (year, month) => {
     return new Date(year, month, 1).getDay()
   }
@@ -171,46 +212,44 @@ const CalendarWidget = ({ width, height, config }) => {
   // Render different views based on widget size
   const renderContent = () => {
     // Check for different size combinations
-    if (width === 1 && height === 1) {
-      return renderCompactView(); // 1x1 smallest view
-    } else if (width === 1 && height === 2) {
-      return renderVerticalView(); // 1x2 vertical view
-    } else if (width === 2 && height === 1) {
-      return renderHorizontalView(); // 2x1 horizontal view
-    } else if ((width === 2 && height >= 2) || (width >= 2 && height === 2)) {
-      return renderFullCalendar(); // 2x2 and larger square/rectangle view
+    if (width === 2 && height === 2) {
+      return renderDefaultView(); // 2x2 default view
+    } else if (width > 2 && height === 2) {
+      return renderWideView(); // Wide view (e.g., 4x2)
+    } else if (width === 2 && height > 2) {
+      return renderTallView(); // Tall view (e.g., 2x4)
     } else {
-      // 3x2, 2x3, or other larger sizes
-      return renderFullCalendar(); 
+      return renderFullCalendar(); // Large view (e.g., 4x4, 6x6)
     }
   };
 
-  // Vertical view for 1x2 layout
-  const renderVerticalView = () => {
+  // Default view for 2x2 layout
+  const renderDefaultView = () => {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-2">
-        <div className="text-4xl font-bold">{date.getDate()}</div>
-        <div className="text-xl">
-          {date.toLocaleString('default', { month: 'short' })}
+      <div className="h-full flex flex-col">
+        <div className="text-center mb-2 font-medium">
+          {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </div>
-        <div className="text-sm opacity-80">
-          {date.toLocaleString('default', { weekday: 'short' })}
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl font-bold">{date.getDate()}</div>
+            <div className="text-sm opacity-80">
+              {date.toLocaleString('default', { weekday: 'long' })}
+            </div>
+          </div>
         </div>
       </div>
     );
   };
 
-  // Horizontal view for 2x1 layout
-  const renderHorizontalView = () => {
-    return (
-      <div className="flex items-center justify-between h-full px-2">
-        <div className="text-3xl font-bold">{date.getDate()}</div>
-        <div className="flex flex-col text-right">
-          <div className="text-lg">{date.toLocaleString('default', { month: 'short' })}</div>
-          <div className="text-sm opacity-80">{date.toLocaleString('default', { weekday: 'short' })}</div>
-        </div>
-      </div>
-    );
+  // Wide view for layouts like 4x2, 6x2
+  const renderWideView = () => {
+    return renderFullCalendar(); // For calendar, wide view can show the full calendar
+  };
+
+  // Tall view for layouts like 2x4, 2x6
+  const renderTallView = () => {
+    return renderFullCalendar(); // For calendar, tall view can show the full calendar
   };
 
   return (
@@ -241,6 +280,16 @@ const CalendarWidget = ({ width, height, config }) => {
       {renderSettings()}
     </div>
   )
+}
+
+// Widget configuration for registration
+export const calendarWidgetConfig = {
+  type: 'calendar',
+  name: 'Calendar',
+  description: 'Shows today\'s date and upcoming events',
+  defaultSize: { w: 2, h: 2 },
+  minSize: { w: 2, h: 2 },
+  maxSize: { w: 6, h: 6 }
 }
 
 export default CalendarWidget

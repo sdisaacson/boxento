@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Clock, Plus, Settings, X } from 'lucide-react'
+import { Clock, Plus, Settings, X, Trash2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 const WorldClocksWidget = ({ width, height, config }) => {
@@ -256,53 +256,70 @@ const WorldClocksWidget = ({ width, height, config }) => {
   // Render different views based on widget size
   const renderContent = () => {
     // Check for different size combinations
-    if (width === 1 && height === 1) {
-      return renderCompactView(); // 1x1 smallest view
-    } else if (width === 1 && height === 2) {
-      return renderVerticalView(); // 1x2 vertical view
-    } else if (width === 2 && height === 1) {
-      return renderHorizontalView(); // 2x1 horizontal view
-    } else if ((width === 2 && height === 2) || (width === 2 && height === 3)) {
-      return renderMediumView(); // 2x2 or 2x3 medium view
+    if (width === 2 && height === 2) {
+      return renderDefaultView(); // 2x2 default view
+    } else if (width > 2 && height === 2) {
+      return renderWideView(); // Wide view (e.g., 4x2)
+    } else if (width === 2 && height > 2) {
+      return renderTallView(); // Tall view (e.g., 2x4)
     } else {
-      // 3x2 or other larger sizes
-      return renderFullView(); 
+      return renderFullView(); // Large view (e.g., 4x4, 6x6)
     }
   };
 
-  // Vertical view for 1x2 layout
-  const renderVerticalView = () => {
-    // Show the most important 2-3 clocks for vertical layout
-    const displayClocks = timezones.slice(0, 3);
-    
+  // Default view for 2x2 layout (previously renderMediumView)
+  const renderDefaultView = () => {
     return (
-      <div className="flex flex-col gap-2 overflow-y-auto h-full px-1">
-        {displayClocks.map(tz => (
-          <div key={tz.id} className="flex justify-between items-center p-1">
-            <div className="text-sm">{tz.name}</div>
-            <div className="text-lg font-medium">{formatTime(new Date(), tz.timezone)}</div>
-          </div>
-        ))}
+      <div className="h-full">
+        <div className="flex flex-col gap-2">
+          {timezones.slice(0, 3).map(tz => (
+            <div key={tz.id} className="flex justify-between items-center">
+              <div className="text-sm">{tz.name}</div>
+              <div className="text-sm font-medium">
+                {formatTime(currentTime, tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    );
-  };
-
-  // Horizontal view for 2x1 layout
-  const renderHorizontalView = () => {
-    // Show the most important 2 clocks for horizontal layout
-    const displayClocks = timezones.slice(0, 2);
-    
+    )
+  }
+  
+  // Wide view for layouts like 4x2, 6x2
+  const renderWideView = () => {
     return (
-      <div className="flex justify-between h-full">
-        {displayClocks.map(tz => (
-          <div key={tz.id} className="text-center px-2">
-            <div className="text-sm opacity-80">{tz.name}</div>
-            <div className="text-lg font-medium">{formatTime(new Date(), tz.timezone)}</div>
-          </div>
-        ))}
+      <div className="h-full">
+        <div className="grid grid-cols-2 gap-3">
+          {timezones.slice(0, 6).map(tz => (
+            <div key={tz.id} className="flex justify-between items-center">
+              <div className="text-sm">{tz.name}</div>
+              <div className="text-sm font-medium">
+                {formatTime(currentTime, tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    );
-  };
+    )
+  }
+  
+  // Tall view for layouts like 2x4, 2x6
+  const renderTallView = () => {
+    return (
+      <div className="h-full">
+        <div className="flex flex-col gap-2">
+          {timezones.slice(0, 6).map(tz => (
+            <div key={tz.id} className="flex justify-between items-center">
+              <div className="text-sm">{tz.name}</div>
+              <div className="text-sm font-medium">
+                {formatTime(currentTime, tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div ref={widgetRef} className="widget-container">
@@ -332,6 +349,16 @@ const WorldClocksWidget = ({ width, height, config }) => {
       {renderSettings()}
     </div>
   )
+}
+
+// Widget configuration for registration
+export const worldClocksWidgetConfig = {
+  type: 'worldclocks',
+  name: 'World Clocks',
+  description: 'Shows times in multiple timezones around the world',
+  defaultSize: { w: 2, h: 2 },
+  minSize: { w: 2, h: 2 },
+  maxSize: { w: 6, h: 6 }
 }
 
 export default WorldClocksWidget

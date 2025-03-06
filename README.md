@@ -133,8 +133,8 @@ See [Contributing](#contributing) and [Design Guidelines](#design-guidelines) fo
 ### Resizable Widgets
 All widgets are resizable with react-grid-layout:
 
-- Default size: 2x2 grid units (adjustable in `config.defaultSize`)
-- Resize from 1x1 to 4x4 (or more, if needed)—smaller sizes show minimal info, larger sizes show details
+- Default size: 2x2 grid units
+- Resize from 2x2 to 6x6 (or more, if needed)—smaller sizes show minimal info, larger sizes show details
 - Store sizes in localStorage for persistence
 
 ## Hosting Boxento

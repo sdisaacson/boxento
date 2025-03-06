@@ -52,54 +52,19 @@ const WeatherWidget = ({ width, height, config }) => {
   // Render different views based on widget size
   const renderContent = () => {
     // Check for different size combinations
-    if (width === 1 && height === 1) {
-      return renderCompactView(); // 1x1 smallest view
-    } else if (width === 1 && height === 2) {
-      return renderVerticalView(); // 1x2 vertical view
-    } else if (width === 2 && height === 1) {
-      return renderHorizontalView(); // 2x1 horizontal view
-    } else if ((width === 2 && height >= 2) || (width >= 2 && height === 2)) {
-      return renderMediumView(); // 2x2 
+    if (width === 2 && height === 2) {
+      return renderDefaultView(); // 2x2 default view
+    } else if (width > 2 && height === 2) {
+      return renderWideView(); // Wide view (e.g., 4x2)
+    } else if (width === 2 && height > 2) {
+      return renderTallView(); // Tall view (e.g., 2x4)
     } else {
-      // 3x2, 2x3, or other larger sizes
-      return renderFullView(); 
+      return renderFullView(); // Large view (e.g., 4x4, 6x6)
     }
   };
 
-  // Vertical view for 1x2 layout
-  const renderVerticalView = () => {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-2">
-        {getWeatherIcon(weather.condition, 32)}
-        <div className="text-2xl font-semibold">{weather.temperature}°</div>
-        <div className="text-sm opacity-80">{weather.location}</div>
-      </div>
-    );
-  };
-
-  // Horizontal view for 2x1 layout
-  const renderHorizontalView = () => {
-    return (
-      <div className="flex items-center justify-between h-full px-3">
-        <div className="flex items-center gap-2">
-          {getWeatherIcon(weather.condition, 24)}
-          <div className="text-xl font-semibold">{weather.temperature}°</div>
-        </div>
-        <div className="text-sm opacity-80">{weather.location}</div>
-      </div>
-    );
-  };
-  
-  const renderCompactView = () => {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-xl mb-1">{weather.temperature}°</div>
-        <div className="text-sm">{weather.location}</div>
-      </div>
-    )
-  }
-  
-  const renderMediumView = () => {
+  // Default view for 2x2 layout (previously renderMediumView)
+  const renderDefaultView = () => {
     return (
       <div className="flex items-center justify-between h-full">
         <div className="flex flex-col">
@@ -109,6 +74,61 @@ const WeatherWidget = ({ width, height, config }) => {
         </div>
         <div className="flex items-center">
           {getWeatherIcon(weather.condition, 40)}
+        </div>
+      </div>
+    )
+  }
+  
+  // Wide view for layouts like 4x2, 6x2
+  const renderWideView = () => {
+    return (
+      <div className="flex items-center justify-between h-full">
+        <div className="flex flex-col">
+          <div className="text-3xl font-medium">{weather.temperature}°</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
+          <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
+        </div>
+        <div className="flex items-center gap-4">
+          {getWeatherIcon(weather.condition, 40)}
+          <div className="grid grid-cols-3 gap-2">
+            {weather.forecast.slice(0, 3).map((day, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className="text-xs">{day.day}</div>
+                <div className="my-1">{getWeatherIcon(day.condition, 20)}</div>
+                <div className="text-xs font-medium">{day.temp}°</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
+  // Tall view for layouts like 2x4, 2x6
+  const renderTallView = () => {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="text-3xl font-medium">{weather.temperature}°</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
+            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
+          </div>
+          <div className="flex items-center">
+            {getWeatherIcon(weather.condition, 40)}
+          </div>
+        </div>
+        
+        <div className="flex flex-col gap-2 mt-auto">
+          {weather.forecast.map((day, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="text-sm">{day.day}</div>
+              <div className="flex items-center gap-2">
+                {getWeatherIcon(day.condition, 16)}
+                <div className="text-sm font-medium">{day.temp}°</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -252,6 +272,16 @@ const WeatherWidget = ({ width, height, config }) => {
       {renderSettings()}
     </div>
   )
+}
+
+// Widget configuration for registration
+export const weatherWidgetConfig = {
+  type: 'weather',
+  name: 'Weather',
+  description: 'Displays local weather conditions and forecast',
+  defaultSize: { w: 2, h: 2 },
+  minSize: { w: 2, h: 2 },
+  maxSize: { w: 6, h: 6 }
 }
 
 export default WeatherWidget

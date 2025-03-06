@@ -69,41 +69,46 @@ const QuickLinksWidget = ({ width, height, config }) => {
   // Render different views based on widget size
   const renderContent = () => {
     // Check for different size combinations
-    if (width === 1 && height === 1) {
-      return renderCompactView(); // 1x1 smallest view
-    } else if (width === 1 && height === 2) {
-      return renderVerticalView(); // 1x2 vertical view
-    } else if (width === 2 && height === 1) {
-      return renderHorizontalView(); // 2x1 horizontal view
+    if (width === 2 && height === 2) {
+      return renderDefaultView(); // 2x2 default view
+    } else if (width > 2 && height === 2) {
+      return renderWideView(); // Wide view (e.g., 4x2)
+    } else if (width === 2 && height > 2) {
+      return renderTallView(); // Tall view (e.g., 2x4)
     } else {
-      // 2x2, 3x2, 2x3, or other larger sizes
-      return renderFullView(); 
+      return renderFullView(); // Large view (e.g., 4x4, 6x6)
     }
   };
 
-  // Compact view for 1x1 layout
-  const renderCompactView = () => {
+  // Default view for 2x2 layout
+  const renderDefaultView = () => {
     return (
-      <div className="grid grid-cols-2 gap-2 overflow-hidden">
-        {renderLinks(4)}
+      <div className="h-full">
+        <div className="grid grid-cols-2 gap-2">
+          {renderLinks(4)}
+        </div>
       </div>
     );
   };
 
-  // Vertical view for 1x2 layout
-  const renderVerticalView = () => {
+  // Wide view for layouts like 4x2, 6x2
+  const renderWideView = () => {
     return (
-      <div className="flex flex-col gap-1 overflow-y-auto">
-        {renderLinks(6)}
+      <div className="h-full">
+        <div className="grid grid-cols-4 gap-2">
+          {renderLinks(8)}
+        </div>
       </div>
     );
   };
 
-  // Horizontal view for 2x1 layout
-  const renderHorizontalView = () => {
+  // Tall view for layouts like 2x4, 2x6
+  const renderTallView = () => {
     return (
-      <div className="grid grid-cols-3 gap-1 overflow-hidden">
-        {renderLinks(3)}
+      <div className="h-full">
+        <div className="grid grid-cols-2 gap-2">
+          {renderLinks(8)}
+        </div>
       </div>
     );
   };
@@ -270,6 +275,16 @@ const QuickLinksWidget = ({ width, height, config }) => {
       {renderSettings()}
     </div>
   )
+}
+
+// Widget configuration for registration
+export const quickLinksWidgetConfig = {
+  type: 'quicklinks',
+  name: 'Quick Links',
+  description: 'Editable grid of clickable bookmarks for your favorite sites',
+  defaultSize: { w: 2, h: 2 },
+  minSize: { w: 2, h: 2 },
+  maxSize: { w: 6, h: 6 }
 }
 
 export default QuickLinksWidget
