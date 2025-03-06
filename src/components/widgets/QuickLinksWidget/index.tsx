@@ -16,17 +16,11 @@ import { QuickLinksWidgetProps, LinkItem } from './types'
  * @returns {JSX.Element} QuickLinks widget component
  */
 const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, config }) => {
-  // Base container styles for consistent dark mode with slate colors
-  const containerClasses = 'h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-colors duration-200 p-3';
-  const [links, setLinks] = useState<LinkItem[]>(config?.links || [
-    { id: 1, title: 'Google', url: 'https://google.com', color: '#EA4335' },
-    { id: 2, title: 'GitHub', url: 'https://github.com', color: '#171515' },
-    { id: 3, title: 'YouTube', url: 'https://youtube.com', color: '#FF0000' }
-  ])
-  const [showSettings, setShowSettings] = useState<boolean>(false)
-  const [editingLink, setEditingLink] = useState<LinkItem | null>(null)
+  const [links, setLinks] = useState<LinkItem[]>(config?.links || []);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
+  const widgetRef = useRef<HTMLDivElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null)
-  const widgetRef = useRef<HTMLDivElement | null>(null)
   
   /**
    * Adds or updates a link in the links collection
@@ -400,7 +394,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   }
 
   return (
-    <div ref={widgetRef} className={containerClasses}>
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
       <WidgetHeader 
         title="Quick Links" 
         onSettingsClick={() => setShowSettings(true)}

@@ -591,7 +591,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   return (
-    <div ref={widgetRef} className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-colors duration-200">
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
       <WidgetHeader 
         title="World Clocks" 
         onSettingsClick={() => setShowSettings(true)}

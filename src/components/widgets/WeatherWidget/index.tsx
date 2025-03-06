@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim } from 'lucide-react';
 import Modal from '../../ui/Modal';
 import WidgetHeader from '../../ui/WidgetHeader';
@@ -24,6 +24,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   const [localConfig, setLocalConfig] = useState<WeatherWidgetConfig>(
     config || { id: '', location: 'New York', units: 'metric', apiKey: '' }
   );
+  const widgetRef = useRef<HTMLDivElement | null>(null);
 
   // Mock weather data for development/testing
   const mockWeatherData: WeatherData = {
@@ -596,7 +597,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-colors duration-200">
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
       <WidgetHeader 
         title="Weather" 
         onSettingsClick={() => setIsSettingsOpen(true)}

@@ -91,7 +91,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ config }) => {
     const showWeekNumbers = localConfig.showWeekNumbers || false
     
     return (
-      <div className="h-full flex flex-col">
+      <div ref={widgetRef} className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-2 px-2">
           <button 
             onClick={() => setDate(new Date(year, month - 1, 1))}
@@ -260,7 +260,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ config }) => {
   return (
     <div 
       ref={widgetRef} 
-      className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-colors duration-200"
+      className="widget-container h-full flex flex-col"
     >
       <WidgetHeader 
         title="Calendar" 
