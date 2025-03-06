@@ -4,10 +4,9 @@ import { createPortal } from 'react-dom'
 import Modal from '../ui/Modal'
 import WidgetHeader from '../ui/WidgetHeader'
 
-// OpenWeatherMap API key - in a real app, you'd want to store this in an environment variable
-// For development purposes, we're using the provided API key
+// OpenWeatherMap API key from environment variables
 // NOTE: According to OpenWeatherMap, new API keys may take a couple hours to activate
-const OPENWEATHER_API_KEY = '9d74c3f72016b8e9a2a15d6c04a9250f'
+const OPENWEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 
 // Temperature conversion utility functions
 const convertFtoC = (fahrenheit) => Math.round((fahrenheit - 32) * 5 / 9);
