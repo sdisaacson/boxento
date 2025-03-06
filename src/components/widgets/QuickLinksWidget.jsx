@@ -109,26 +109,61 @@ const QuickLinksWidget = ({ width, height, config }) => {
     );
   };
 
-  // Wide view for layouts like 4x2, 6x2
+  // Wide view for layouts like 3x2, 4x2, 6x2
   const renderWideView = () => {
     // Determine number of columns based on width
-    const columns = width <= 4 ? 4 : 6;
-    const maxLinks = columns * 2;
+    let columns;
+    let displayStyle;
+    
+    if (width === 3) {
+      columns = 2; // 2 columns for 3x2 layout
+      displayStyle = "compact";
+    } else {
+      columns = width <= 4 ? 4 : 6;
+      displayStyle = "grid";
+    }
+    
+    const maxLinks = width === 3 ? 4 : columns * 2;
     
     return (
-      <div className="h-full overflow-auto">
-        <div className={`grid grid-cols-${columns} gap-2`}>
-          {renderLinks(maxLinks)}
-        </div>
+      <div className="h-full overflow-auto p-1">
+        {displayStyle === "compact" ? (
+          // Compact vertical layout for 3x2 size
+          <div className="grid grid-cols-2 gap-2">
+            {links.slice(0, maxLinks).map(link => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer" 
+                className="flex items-center p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                style={{
+                  borderLeft: `3px solid ${link.color || '#3B82F6'}`,
+                }}
+              >
+                <div className="flex-1 truncate">
+                  <span className="text-sm font-medium truncate">{link.title}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          // Grid layout for wider sizes
+          <div className={`grid grid-cols-${columns} gap-2`}>
+            {renderLinks(maxLinks)}
+          </div>
+        )}
+        
         {links.length < 1 && (
           <div className="h-full flex items-center justify-center text-gray-400 text-sm">
             No links added yet
           </div>
         )}
+        
         {links.length > 0 && links.length < maxLinks && (
           <button 
             onClick={() => startEdit()} 
-            className="mt-2 w-full p-2 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+            className="mt-2 w-full p-1.5 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
           >
             Add Link
           </button>
@@ -137,29 +172,45 @@ const QuickLinksWidget = ({ width, height, config }) => {
     );
   };
 
-  // Tall view for layouts like 2x4, 2x6
+  // Tall view for layouts like 2x3
   const renderTallView = () => {
-    // Calculate how many links we can show based on height
-    const maxLinks = height * 4;
-    
     return (
-      <div className="h-full overflow-auto">
-        <div className="grid grid-cols-2 gap-2">
-          {renderLinks(maxLinks)}
+      <div className="h-full overflow-auto p-2">
+        <div className="flex flex-col space-y-2">
+          {links.slice(0, 4).map(link => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              style={{
+                borderLeft: `3px solid ${link.color || '#3B82F6'}`
+              }}
+            >
+              {link.icon ? (
+                <img src={link.icon} alt="" className="w-5 h-5 ml-1 mr-3" />
+              ) : (
+                <div 
+                  className="w-5 h-5 rounded-full flex items-center justify-center ml-1 mr-3"
+                  style={{ backgroundColor: link.color || '#3B82F6' }}
+                >
+                  <span className="text-white text-xs font-bold">{link.title.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              <span className="truncate font-medium">{link.title}</span>
+            </a>
+          ))}
+          
+          {links.length < 4 && (
+            <button 
+              onClick={() => startEdit()} 
+              className="flex items-center justify-center p-2 mt-auto text-sm text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
+            >
+              <span className="mr-1">+</span> Add Link
+            </button>
+          )}
         </div>
-        {links.length < 1 && (
-          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-            No links added yet
-          </div>
-        )}
-        {links.length > 0 && links.length < maxLinks && (
-          <button 
-            onClick={() => startEdit()} 
-            className="mt-2 w-full p-2 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-          >
-            Add Link
-          </button>
-        )}
       </div>
     );
   };

@@ -81,31 +81,31 @@ const WeatherWidget = ({ width, height, config }) => {
     )
   }
   
-  // Wide view for layouts like 4x2, 6x2
+  // Wide view for layouts like 3x2, 4x2, 6x2
   const renderWideView = () => {
     // Determine how many forecast days to show based on width
-    const forecastDays = width <= 4 ? 3 : 5;
+    const forecastDays = width === 3 ? 2 : width <= 4 ? 3 : 5;
     
     return (
-      <div className="flex h-full">
-        {/* Current weather - takes 40% width */}
-        <div className="flex items-center w-2/5">
+      <div className="flex flex-col h-full p-1">
+        {/* Current weather - takes top portion */}
+        <div className="flex items-center justify-between mb-2">
           <div className="flex flex-col">
             <div className="text-4xl font-medium">{weather.temperature}°</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
-            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
+            <div className="text-xs">H: {weather.high}° L: {weather.low}°</div>
           </div>
-          <div className="flex items-center ml-4">
-            {getWeatherIcon(weather.condition, 56)}
+          <div className="flex items-center ml-auto">
+            {getWeatherIcon(weather.condition, width === 3 ? 48 : 64)}
           </div>
         </div>
         
-        {/* Forecast - takes 60% width */}
-        <div className="flex items-center justify-around w-3/5 ml-2 border-l border-gray-200 dark:border-gray-700 pl-4">
+        {/* Forecast - takes bottom portion */}
+        <div className="flex justify-around items-center flex-1 pt-1 border-t border-gray-200 dark:border-gray-700">
           {weather.forecast.slice(0, forecastDays).map((day, index) => (
             <div key={index} className="flex flex-col items-center">
-              <div className="text-sm font-medium">{day.day}</div>
-              <div className="my-2">{getWeatherIcon(day.condition, 32)}</div>
+              <div className="font-medium text-sm">{day.day}</div>
+              <div className="my-1">{getWeatherIcon(day.condition, width === 3 ? 28 : 36)}</div>
               <div className="text-sm font-medium">{day.temp}°</div>
             </div>
           ))}
@@ -114,31 +114,35 @@ const WeatherWidget = ({ width, height, config }) => {
     )
   }
   
-  // Tall view for layouts like 2x4, 2x6
+  // Tall view for layouts like 2x3
   const renderTallView = () => {
     return (
       <div className="h-full flex flex-col">
-        {/* Current weather section */}
-        <div className="flex flex-col items-center mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{weather.location}</div>
-          <div className="flex items-center">
-            {getWeatherIcon(weather.condition, 64)}
-            <div className="text-5xl font-medium ml-2">{weather.temperature}°</div>
+        {/* Current weather section - takes about 40% of height */}
+        <div className="flex items-center justify-between p-3 mb-2">
+          <div>
+            <div className="text-5xl font-medium">{weather.temperature}°</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{weather.location}</div>
+            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
           </div>
-          <div className="text-sm mt-1">H: {weather.high}° L: {weather.low}°</div>
+          <div>
+            {getWeatherIcon(weather.condition, 64)}
+          </div>
         </div>
         
-        {/* Forecast section */}
-        <div className="flex-1 bg-white dark:bg-gray-850 rounded-lg p-2">
-          <div className="text-sm font-medium mb-2 text-center">5-Day Forecast</div>
-          <div className="flex flex-col gap-3">
-            {weather.forecast.map((day, index) => (
-              <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-750 rounded">
-                <div className="text-sm font-medium w-12">{day.day}</div>
-                <div className="flex items-center flex-1 justify-between">
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700 mb-2 mx-3"></div>
+        
+        {/* Forecast section - takes about 60% of height */}
+        <div className="flex-1 px-3">
+          <div className="grid grid-cols-1 h-full">
+            {weather.forecast.slice(0, 3).map((day, index) => (
+              <div key={index} className="flex items-center py-2">
+                <div className="w-16 text-sm font-medium">{day.day}</div>
+                <div className="flex-grow flex justify-center">
                   {getWeatherIcon(day.condition, 24)}
-                  <div className="text-sm font-medium">{day.temp}°</div>
                 </div>
+                <div className="w-10 text-right text-sm font-medium">{day.temp}°</div>
               </div>
             ))}
           </div>

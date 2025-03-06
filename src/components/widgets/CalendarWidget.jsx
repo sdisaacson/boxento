@@ -279,7 +279,7 @@ const CalendarWidget = ({ width, height, config }) => {
       <div className="h-full flex">
         <div className="w-2/5 flex flex-col justify-center items-center border-r border-gray-200 dark:border-gray-700 pr-4">
           <div className="text-center">
-            <div className="text-6xl font-bold mb-1">{date.getDate()}</div>
+            <div className="text-7xl font-bold mb-1">{date.getDate()}</div>
             <div className="text-sm font-medium">
               {date.toLocaleString('default', { weekday: 'long' })}
             </div>
@@ -288,19 +288,24 @@ const CalendarWidget = ({ width, height, config }) => {
             </div>
           </div>
         </div>
-        <div className="w-3/5 pl-4">
+        <div className="w-3/5 pl-4 flex flex-col">
           <div className="text-sm font-medium mb-2">Today's Events</div>
           {safeEvents.length > 0 ? (
-            <div className="space-y-2 overflow-y-auto max-h-[80px]">
-              {safeEvents.slice(0, 3).map((event, index) => (
-                <div key={index} className="text-xs p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded">
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-gray-500 dark:text-gray-400">{event.time}</div>
+            <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 'calc(100% - 24px)' }}>
+              {safeEvents.map((event, index) => (
+                <div 
+                  key={index} 
+                  className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors"
+                >
+                  <div className="font-medium text-sm">{event.title}</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-xs">{event.time}</div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-xs text-gray-500 dark:text-gray-400">No events today</div>
+            <div className="flex-grow flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+              No events today
+            </div>
           )}
         </div>
       </div>

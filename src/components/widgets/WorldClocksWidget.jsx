@@ -217,22 +217,58 @@ const WorldClocksWidget = ({ width, height, config }) => {
     )
   }
   
-  // Wide view for layouts like 4x2, 6x2
+  // Wide view for layouts like 3x2, 4x2, 6x2
   const renderWideView = () => {
     // Determine grid layout based on width
-    const columns = width <= 4 ? 2 : 3;
+    let columns;
+    if (width === 3) {
+      columns = 1; // Single column for 3x2
+    } else if (width <= 4) {
+      columns = 2;
+    } else {
+      columns = 3;
+    }
+    
     // Calculate how many timezones to show
-    const maxTimezones = columns * 3;
+    const maxTimezones = width === 3 ? 3 : columns * 2;
     
     return (
-      <div className="h-full">
-        <div className={`grid grid-cols-${columns} gap-x-4 gap-y-2`}>
+      <div className="h-full p-1">
+        <div className={`grid grid-cols-${columns} gap-1 h-full`}>
           {timezones.slice(0, maxTimezones).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-              <div className="text-sm truncate mr-2">{tz.name}</div>
-              <div className="text-sm font-medium whitespace-nowrap">
-                {formatTime(currentTime, tz.timezone)}
-              </div>
+            <div 
+              key={tz.id} 
+              className={`flex ${width === 3 ? 'justify-between' : 'flex-col justify-center'} 
+                items-center p-2 m-0.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded 
+                border border-gray-100 dark:border-gray-700`}
+            >
+              {width === 3 ? (
+                // 3x2 layout: horizontal layout with time on right
+                <>
+                  <div className="flex flex-col">
+                    <div className="text-sm font-medium truncate mr-2">{tz.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatTimezoneName(tz.timezone)}
+                    </div>
+                  </div>
+                  <div className="text-base font-medium whitespace-nowrap">
+                    {formatTime(currentTime, tz.timezone)}
+                  </div>
+                </>
+              ) : (
+                // Wider layouts: vertical layout with time below
+                <>
+                  <div className="flex flex-col text-center">
+                    <div className="text-base font-medium truncate">{tz.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {formatTimezoneName(tz.timezone)}
+                    </div>
+                    <div className="text-lg font-medium whitespace-nowrap">
+                      {formatTime(currentTime, tz.timezone)}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -245,19 +281,29 @@ const WorldClocksWidget = ({ width, height, config }) => {
     )
   }
   
-  // Tall view for layouts like 2x4, 2x6
+  // Formats timezone string like "America/New_York" to "America, New York"
+  const formatTimezoneName = (timezone) => {
+    if (!timezone) return '';
+    return timezone
+      .replace('_', ' ')
+      .replace('/', ', ');
+  }
+  
+  // Tall view for layouts like 2x3
   const renderTallView = () => {
-    // Calculate how many timezones to show based on height
-    const maxTimezones = height * 3;
-    
     return (
-      <div className="h-full overflow-auto">
-        <div className="flex flex-col gap-2">
-          {timezones.slice(0, maxTimezones).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
-              <div className="text-sm truncate mr-2">{tz.name}</div>
-              <div className="text-sm font-medium whitespace-nowrap">
-                {formatTime(currentTime, tz.timezone)}
+      <div className="h-full p-2">
+        <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
+          {timezones.slice(0, 3).map(tz => (
+            <div key={tz.id} className="py-3 px-2">
+              <div className="flex justify-between">
+                <div className="text-base font-medium">{tz.name}</div>
+                <div className="text-lg font-medium">
+                  {formatTime(currentTime, tz.timezone)}
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {formatTimezoneName(tz.timezone)}
               </div>
             </div>
           ))}
