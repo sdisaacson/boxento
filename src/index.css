@@ -164,7 +164,7 @@ body.dragging-active {
 
 /* App Header Styles */
 .app-header {
-  @apply fixed top-0 left-0 right-0 p-2 md:p-3 backdrop-blur-sm z-40 bg-transparent;
+  @apply fixed top-0 left-0 right-0 p-2 md:px-6 backdrop-blur-sm z-40 bg-transparent;
 }
 
 .header-container {
