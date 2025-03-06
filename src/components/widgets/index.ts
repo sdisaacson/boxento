@@ -2,10 +2,10 @@ import React from 'react';
 import { WidgetConfig, WidgetProps } from '@/types';
 
 // Widget Components
-import CalendarWidget from './CalendarWidget';
-import WeatherWidget from './WeatherWidget';
-import WorldClocksWidget from './WorldClocksWidget';
-import QuickLinksWidget from './QuickLinksWidget';
+import CalendarWidget from './CalendarWidget/index';
+import WeatherWidget from './WeatherWidget/index';
+import WorldClocksWidget from './WorldClocksWidget/index';
+import QuickLinksWidget from './QuickLinksWidget/index';
 
 // Export widget types
 export * from './CalendarWidget/types';
