@@ -4,14 +4,12 @@
 
 /* Basic layout */
 :root {
-  --border-radius-standard: 2rem;
+  --border-radius-standard: 1.9rem;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  /* Removing the font-family declaration to use Tailwind's Inter font */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -153,10 +151,12 @@ body.dragging-active {
   border-radius: var(--border-radius-standard); /* Match widget-container border-radius */
   transition-duration: 200ms;
   z-index: 1; /* Ensure placeholder is below the widget being manipulated */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); /* Add subtle inset shadow for depth */
 }
 
 .dark .react-grid-item.react-grid-placeholder {
   background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Darker inset shadow for dark mode */
 }
 
 /* Curved corner resize handle with aggressive styling */

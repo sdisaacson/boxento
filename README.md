@@ -31,7 +31,7 @@ Boxento is inspired by the need for a flexible dashboard for developers, sysadmi
 ## Features
 - **Lightweight & Modular**: Built with React + Vite for fast, minimal performance, using Vite as the industry-standard build tool and Bun for package management and runtime.
 - **Modern UI Components**: Utilizes shadcn/ui for beautiful, accessible, and consistent UI elements.
-- **Resizable Widgets**: Drag, drop, and resize all widgets to show more or less information (e.g., Calendar shows date at 1x1, full month at 4x4).
+- **Resizable Widgets**: Drag, drop, and resize all widgets to show more or less information (e.g., Calendar shows month overview at 2x2, full calendar at 6x6).
 - **Theme Support**: All widgets support both light and dark modes, toggled via a sun icon in the top-right corner.
 - **Open-Source Friendly**: MIT-licensed, easy for anyone to contribute widgets.
 - **UX-Focused**: Intuitive drag-and-drop, keyboard shortcuts (cmd + k for widget picker), and clean aesthetics.
@@ -78,7 +78,7 @@ Open your browser to http://localhost:5173 (Vite's default port). Vite provides 
 
 ## Usage
 - **Homepage**: Land on "You can add widgets" with a button to add built-in widgets.
-- **Widgets**: Drag and resize tiles to fit your workflow—larger sizes show more details, smaller sizes show essentials.
+- **Widgets**: Drag and resize tiles to fit your workflow—larger sizes (up to 6x6) show more details, while the standard 2x2 size shows essential information.
 - **Settings**: Click the gear icon on a widget for basic settings (e.g., location for Weather), stored in localStorage.
 - **Theme Toggle**: Switch between light and dark modes using the sun icon in the top-right corner, stored in localStorage. This toggles the entire screen and all widgets, ensuring consistent theming across Boxento.
 
@@ -93,7 +93,9 @@ Boxento comes with these widgets:
 - **Quick Links**: Editable grid of clickable bookmarks
 
 ### Creating Your Own Widgets
-Boxento is open-source, and anyone can create and contribute widgets! Follow these steps:
+Boxento is open-source, and anyone can create and contribute widgets! For detailed instructions, see our [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md).
+
+Here's a quick overview of the process:
 
 1. **Fork the Repository**:
    - Visit github.com/sushaantu/boxento and click "Fork."
@@ -110,32 +112,27 @@ Boxento is open-source, and anyone can create and contribute widgets! Follow the
    ```
 
 4. **Create a Widget**:
-   - Navigate to `/src/components/widgets/`
-   - Copy an existing widget (e.g., `CalendarWidget.jsx`) and rename it (e.g., `MyWidget.jsx`)
-   - Modify it to include:
-     - A React component that renders the UI, built with Vite and React
-     - A config object with name, description, defaultSize (e.g., `{ w: 2, h: 2 }`), and settings (if needed)
-     - Resizable logic (accept width and height props to adjust content dynamically)
-     - Support for both light and dark modes, toggled via the sun icon (use Tailwind's dark: classes)
-     - Use shadcn/ui components for UI elements like buttons, inputs, and dialogs
-     - Style with Tailwind CSS, ensuring compatibility with Vite's build process
+   - Follow the template and guidelines in the [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md)
+   - Remember that all widgets must have a minimum size of 2x2 and maximum size of 6x6
+   - Ensure your widget supports both light and dark themes
 
 5. **Test Locally**:
-   - Run `bun run dev` (which uses Vite), add your widget via the picker, and test drag, drop, resize, and both light and dark modes.
+   - Run `bun run dev` and test your widget thoroughly
 
 6. **Submit a Pull Request (PR)**:
-   - Commit: `git add src/components/widgets/MyWidget.jsx` and `git commit -m "Add MyWidget: Shows [Description]"`
-   - Push: `git push origin main`
-   - Create a PR on GitHub against `sushaantu/boxento:main`, including a description, testing steps, and screenshots if possible.
+   - Create a PR on GitHub against `sushaantu/boxento:main`, including a description, testing steps, and screenshots if possible
 
-See [Contributing](#contributing) and [Design Guidelines](#design-guidelines) for details.
+See [Contributing](#contributing) and [Design Guidelines](#design-guidelines) for additional details.
 
 ### Resizable Widgets
 All widgets are resizable with react-grid-layout:
 
-- Default size: 2x2 grid units
-- Resize from 2x2 to 6x6 (or more, if needed)—smaller sizes show minimal info, larger sizes show details
-- Store sizes in localStorage for persistence
+- **Size Constraints**: All widgets have a minimum size of 2x2 grid units and a maximum size of 6x6 grid units
+- **Responsive Content**: Widgets adapt their content based on size—smaller sizes show essential information, larger sizes show more details
+- **Size Persistence**: Widget sizes are stored in localStorage for persistence
+- **Size Enforcement**: The application enforces the minimum 2x2 size constraint for all widgets
+
+For detailed information about widget sizing and development, see the [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md).
 
 ## Hosting Boxento
 
@@ -216,7 +213,7 @@ All widgets must follow Boxento's aesthetic for consistency:
 - **Theming**: All widgets must support both light and dark modes using Tailwind's `dark:` prefix. The theme is toggled via a sun icon (or moon icon) in the top-right corner, using shadcn/ui components.
 - **Spacing**: Use 16px padding (`p-4`) inside widgets and 8px margins between tiles (handled by `react-grid-layout`).
 - **Animations**: Keep animations minimal—use Tailwind hover effects (`hover:shadow-md`) or transitions (`transition-all duration-200`) for resize/drag interactions.
-- **Responsiveness**: Adjust content dynamically for all sizes (1x1 to 4x4 grid units) based on `width` and `height` props, ensuring readability and usability.
+- **Responsiveness**: Adjust content dynamically for different sizes (2x2 minimum to 6x6 maximum) based on `width` and `height` props, ensuring readability and usability at all supported sizes.
 
 ## License
 Boxento is licensed under the MIT License—see the LICENSE file for details.
