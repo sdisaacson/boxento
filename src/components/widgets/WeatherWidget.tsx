@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim } from 'lucide-react';
 import Modal from '../ui/Modal';
 import WidgetHeader from '../ui/WidgetHeader';
-import { WidgetProps, WeatherWidgetConfig, WidgetConfig } from '../../types';
+import { WidgetProps, WidgetConfig } from '../../types';
+import { WeatherWidgetConfig } from './WeatherWidget/types';
 
 /**
  * Extended weather data structure

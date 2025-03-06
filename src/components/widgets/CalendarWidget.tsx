@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from '../ui/Modal'
 import WidgetHeader from '../ui/WidgetHeader'
-import { WidgetProps, CalendarWidgetConfig, CalendarEvent, WidgetConfig } from '../../types'
+import { WidgetProps, WidgetConfig } from '../../types'
+import { CalendarWidgetConfig, CalendarEvent } from './CalendarWidget/types'
 
 /**
  * Calendar Widget Component

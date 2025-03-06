@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Sun, Moon, X, Grid, AlertTriangle, ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -9,49 +9,9 @@ import {
   Widget,
   LayoutItem
 } from '@/types'
-
-interface WidgetErrorBoundaryProps {
-  children: React.ReactNode;
-}
-
-interface WidgetErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-/**
- * Error Boundary component to catch errors in widget rendering
- */
-class WidgetErrorBoundary extends React.Component<WidgetErrorBoundaryProps, WidgetErrorBoundaryState> {
-  constructor(props: WidgetErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): WidgetErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error('Widget error:', error, errorInfo);
-  }
-
-  render(): React.ReactNode {
-    if (this.state.hasError) {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg">
-          <AlertTriangle className="mb-2" size={24} />
-          <h3 className="text-sm font-medium mb-1">Widget Error</h3>
-          <p className="text-xs text-center">
-            {this.state.error?.message || "An error occurred while rendering this widget"}
-          </p>
-        </div>
-      );
-    }
-    
-    return this.props.children;
-  }
-}
+import WidgetErrorBoundary from '@/components/ui/WidgetErrorBoundary'
+import ThemeToggle from '@/components/ui/ThemeToggle'
+import WidgetSelector from '@/components/ui/WidgetSelector'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -104,383 +64,269 @@ function App() {
     }
     return []
   })
-
+  
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
   const [sidebarOpen, _setSidebarOpen] = useState<boolean>(false)
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false)
-  const [searchQuery, setSearchQuery] = useState<string>('')
   const [widgetCategories, _setWidgetCategories] = useState<WidgetCategory>(() => {
     // Group widgets by category
     const categories: WidgetCategory = {};
+    
     WIDGET_REGISTRY.forEach(widget => {
-      const category = widget.category || 'General';
+      const category = widget.category || 'Other';
       if (!categories[category]) {
         categories[category] = [];
       }
       categories[category].push(widget);
     });
+    
     return categories;
   });
   
-  // Calculate the rowHeight to match column width for square cells
-  const calculateRowHeight = (): number => {
-    const totalMarginWidth = 11 * 10; // 11 margins between 12 columns
-    const availableWidth = windowWidth - 40 - totalMarginWidth; // Subtract container padding and margins
-    const columnWidth = availableWidth / 12;
-    return columnWidth; // This makes each cell square
-  }
+  // Save widgets and layout to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('boxento-widgets', JSON.stringify(widgets))
+      localStorage.setItem('boxento-layout', JSON.stringify(layout))
+    }
+  }, [widgets, layout])
   
-  const rowHeight: number = calculateRowHeight();
-
+  // Apply theme to document
   useEffect(() => {
-    // Apply dark mode class to both html and body
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    document.body.className = theme === 'dark' ? 'bg-slate-900' : 'bg-gray-100'
-    
-    // Set CSS variables with refined color palette for dark mode using slate colors
-    document.documentElement.style.setProperty('--app-background', theme === 'dark' ? '#0f172a' : '#ffffff') // slate-900
-    document.documentElement.style.setProperty('--widget-background', theme === 'dark' ? '#1e293b' : '#ffffff') // slate-800
-    document.documentElement.style.setProperty('--text-primary', theme === 'dark' ? '#f1f5f9' : '#334155') // slate-100 : slate-700
-    document.documentElement.style.setProperty('--text-secondary', theme === 'dark' ? '#94a3b8' : '#64748b') // slate-400 : slate-500
-    
-    // Add transition classes for smooth theme switching
-    document.documentElement.classList.add('transition-colors', 'duration-200')
-    setTimeout(() => document.documentElement.classList.remove('transition-colors', 'duration-200'), 200)
-    
-    // Save to localStorage
-    localStorage.setItem('theme', theme)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }, [theme])
-
+  
+  // Handle window resize
   useEffect(() => {
-    localStorage.setItem('boxento-layout', JSON.stringify(layout))
-  }, [layout])
-
-  useEffect(() => {
-    localStorage.setItem('boxento-widgets', JSON.stringify(widgets))
-  }, [widgets])
-
-  useEffect(() => {
-    // Set window dimensions on resize
     const handleResize = () => {
       const bodyPadding = 40; // Account for any potential body margin/padding
       setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0) - bodyPadding);
     };
-
-    // Call once initially
-    handleResize();
-
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [sidebarOpen]);
-
-  const toggleTheme = (): void => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-    // Apply smooth transition when toggling theme
-    document.documentElement.classList.add('transition-colors', 'duration-300')
-    setTimeout(() => {
-      document.documentElement.classList.remove('transition-colors', 'duration-300')
-    }, 300)
-  }
-
-  const addWidget = (type: string): void => {
-    const id = `widget-${Date.now()}`
-    const widgetConfig = getWidgetConfigByType(type)
     
-    if (!widgetConfig) return
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebarOpen]);
+  
+  // Calculate row height based on window width
+  const calculateRowHeight = (): number => {
+    // Base row height
+    const baseHeight = 100;
+    
+    // Adjust based on window width
+    if (windowWidth < 600) {
+      return baseHeight * 0.8; // Smaller on mobile
+    } else if (windowWidth < 1200) {
+      return baseHeight * 0.9; // Slightly smaller on tablets
+    } else {
+      return baseHeight; // Default for desktop
+    }
+  };
+  
+  const rowHeight = calculateRowHeight();
+  
+  const toggleTheme = (): void => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Apply theme to document
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+  
+  const addWidget = (type: string): void => {
+    const widgetConfig = getWidgetConfigByType(type);
+    
+    if (!widgetConfig) return;
+    
+    const newWidget: Widget = {
+      id: `widget-${Date.now()}`,
+      type,
+      config: { id: `widget-${Date.now()}` }
+    };
     
     // Add widget to state
-    setWidgets([
-      ...widgets,
-      {
-        id,
-        type,
-        config: { id }
-      }
-    ])
+    setWidgets([...widgets, newWidget]);
     
-    // Use the widget config for dimensions
-    const widgetWidth = widgetConfig.defaultWidth;
-    const widgetHeight = widgetConfig.defaultHeight;
+    // Create layout item for the new widget
+    const newLayoutItem: LayoutItem = {
+      i: newWidget.id,
+      x: 0,
+      y: 0, // Will be placed at the bottom
+      w: widgetConfig.defaultWidth || 2,
+      h: widgetConfig.defaultHeight || 2,
+      minW: widgetConfig.minWidth || 2,
+      minH: widgetConfig.minHeight || 2
+    };
     
-    // Add layout position - let react-grid-layout handle exact positioning
-    setLayout([
-      ...layout,
-      {
-        i: id,
-        x: 0, // Let library determine placement
-        y: 0, // Let library determine placement
-        w: widgetWidth,
-        h: widgetHeight,
-        minW: widgetConfig.minWidth || 1, // Minimum width
-        minH: widgetConfig.minHeight || 1, // Minimum height
-        maxW: 6, // Maximum width
-        maxH: 6  // Maximum height
-      }
-    ])
-  }
-
+    // Add layout item to state
+    setLayout([...layout, newLayoutItem]);
+    
+    // Close widget selector
+    setWidgetSelectorOpen(false);
+  };
+  
   const handleLayoutChange = (newLayout: LayoutItem[]): void => {
-    // Enforce minimum size of 2x2 for all widgets
-    const updatedLayout = newLayout.map(item => {
-      // Ensure all widgets are at least 2x2
-      if (item.w < 2 || item.h < 2) {
-        return {
-          ...item,
-          w: Math.max(item.w, 2),
-          h: Math.max(item.h, 2)
-        };
-      }
-      // Otherwise, leave the item exactly as the library calculated it
-      return item;
-    });
+    // Enforce minimum size constraints
+    const validatedLayout = newLayout.map(item => ({
+      ...item,
+      w: Math.max(item.w, 2), // Minimum width of 2
+      h: Math.max(item.h, 2)  // Minimum height of 2
+    }));
     
-    setLayout(updatedLayout);
-  }
-
+    setLayout(validatedLayout);
+  };
+  
   const renderWidget = (widget: Widget): React.ReactNode => {
-    const layoutItem = layout.find(item => item.i === widget.id)
-    if (!layoutItem) return null
-    
-    const { w, h } = layoutItem
-    
-    // Get the widget component from the registry
     const WidgetComponent = getWidgetComponent(widget.type);
     
     if (!WidgetComponent) {
-      return <div className="p-4 text-red-500">Unknown widget type: {widget.type}</div>
+      return (
+        <div className="widget-error">
+          <p>Widget type "{widget.type}" not found</p>
+        </div>
+      );
     }
+    
+    // Find layout item for this widget
+    const layoutItem = layout.find(item => item.i === widget.id);
     
     return (
       <WidgetErrorBoundary children={
-        <WidgetComponent width={w} height={h} config={widget.config} />
-      }>
-      </WidgetErrorBoundary>
-    )
-  }
-
-  // Handle drag and resize start/stop for text selection prevention
-  const handleDragStart = (): void => {
-    document.body.classList.add('dragging-active');
-  }
-  
-  const handleDragStop = (): void => {
-    document.body.classList.remove('dragging-active');
-    
-    // Add a small delay before allowing clicks to work again
-    // This helps prevent accidental clicks when dragging ends
-    setTimeout(() => {
-      document.body.classList.add('drag-complete');
-      
-      // Remove the class after a short period
-      setTimeout(() => {
-        document.body.classList.remove('drag-complete');
-      }, 300);
-    }, 50);
-  }
-  
-  const handleResizeStart = (): void => {
-    document.body.classList.add('dragging-active');
-  }
-  
-  const handleResizeStop = (): void => {
-    document.body.classList.remove('dragging-active');
-    
-    // Add a small delay before allowing clicks to work again
-    // This helps prevent accidental clicks when resizing ends
-    setTimeout(() => {
-      document.body.classList.add('drag-complete');
-      
-      // Remove the class after a short period
-      setTimeout(() => {
-        document.body.classList.remove('drag-complete');
-      }, 300);
-    }, 50);
-  }
-
-  const toggleWidgetSelector = (): void => {
-    setWidgetSelectorOpen(!widgetSelectorOpen);
-    setSearchQuery('');
-  }
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredWidgets = searchQuery 
-    ? WIDGET_REGISTRY.filter(widget => 
-        widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (widget.description && widget.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (widget.category && widget.category.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : [];
-
-  const renderWidgetSelector = (): React.ReactNode => {
-    if (!widgetSelectorOpen) return null;
-    
-    return (
-      <div className="widget-selector-overlay" onClick={toggleWidgetSelector}>
-        <div className="widget-selector-modal" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-          <div className="widget-selector-header">
-            <h3 className="text-lg font-semibold">Add Widget</h3>
-            <button onClick={toggleWidgetSelector} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-              <X size={20} />
-            </button>
-          </div>
-          
-          <div className="widget-selector-search">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search widgets..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="widget-search-input"
-            />
-          </div>
-          
-          {searchQuery ? (
-            <div className="widget-selector-results">
-              <h4 className="widget-category-title">Search Results</h4>
-              <div className="widget-grid">
-                {filteredWidgets.length > 0 ? (
-                  filteredWidgets.map(widget => (
-                    <button
-                      key={widget.type}
-                      onClick={() => {
-                        addWidget(widget.type);
-                        toggleWidgetSelector();
-                      }}
-                      className="widget-item"
-                    >
-                      <div className="widget-icon">
-                        {widget.icon || <Grid size={24} />}
-                      </div>
-                      <div className="widget-info">
-                        <span className="widget-name">{widget.name}</span>
-                        {widget.description && (
-                          <span className="widget-description">{widget.description}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <p className="no-results">No widgets found matching "{searchQuery}"</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="widget-selector-categories">
-              {Object.entries(widgetCategories).map(([category, widgets]) => (
-                <div key={category} className="widget-category">
-                  <h4 className="widget-category-title">{category}</h4>
-                  <div className="widget-grid">
-                    {widgets.map(widget => (
-                      <button
-                        key={widget.type}
-                        onClick={() => {
-                          addWidget(widget.type);
-                          toggleWidgetSelector();
-                        }}
-                        className="widget-item"
-                      >
-                        <div className="widget-icon">
-                          {widget.icon || <Grid size={24} />}
-                        </div>
-                        <div className="widget-info">
-                          <span className="widget-name">{widget.name}</span>
-                          {widget.description && (
-                            <span className="widget-description">{widget.description}</span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        <WidgetComponent
+          width={layoutItem?.w || 2}
+          height={layoutItem?.h || 2}
+          config={widget.config}
+        />
+      } />
     );
   };
+  
+  // Drag and resize event handlers
+  const handleDragStart = (): void => {
+    document.body.classList.add('widget-dragging');
+  };
+  
+  const handleDragStop = (): void => {
+    // Use setTimeout to prevent flickering when dragging stops
+    setTimeout(() => {
+      // Add a class to indicate drag is complete (for animations)
+      document.body.classList.add('drag-complete');
+      
+      // Remove the dragging class
+      document.body.classList.remove('widget-dragging');
+      
+      // Remove the complete class after animation
+      setTimeout(() => {
+        document.body.classList.remove('drag-complete');
+      }, 300);
+    }, 50);
+  };
+  
+  const handleResizeStart = (): void => {
+    document.body.classList.add('widget-resizing');
+  };
+  
+  const handleResizeStop = (): void => {
+    // Use setTimeout to prevent flickering when resizing stops
+    setTimeout(() => {
+      // Add a class to indicate resize is complete (for animations)
+      document.body.classList.add('resize-complete');
+      
+      // Remove the resizing class
+      document.body.classList.remove('widget-resizing');
+      
+      // Remove the complete class after animation
+      setTimeout(() => {
+        document.body.classList.remove('resize-complete');
+      }, 300);
+    }, 50);
+  };
+  
+  const toggleWidgetSelector = (): void => {
+    setWidgetSelectorOpen(!widgetSelectorOpen);
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
-      <header className="app-header">
-        <div className="header-container">
-          <div className="header-left">
-            <h1 className="app-title">Boxento</h1>
+    <div className={`app ${theme}`}>
+      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
+        <header className="app-header">
+          <div className="header-container">
+            <div className="header-left">
+              <h1 className="app-title">Boxento</h1>
+            </div>
+            
+            <div className="header-right">
+              <button 
+                onClick={toggleWidgetSelector}
+                className="header-button"
+                title="Add Widget"
+              >
+                <Plus size={20} />
+                <span>Add Widget</span>
+              </button>
+            </div>
           </div>
-          
-          <div className="header-right">
+        </header>
+        
+        <WidgetSelector 
+          isOpen={widgetSelectorOpen}
+          onClose={toggleWidgetSelector}
+          onAddWidget={addWidget}
+          widgetRegistry={WIDGET_REGISTRY}
+          widgetCategories={widgetCategories}
+        />
+        
+        {widgets.length === 0 ? (
+          <div className="empty-dashboard-cta">
+            <p className="text-xl mb-6">Your dashboard is empty</p>
             <button 
               onClick={toggleWidgetSelector}
-              className="header-button"
-              title="Add Widget"
+              className="add-widget-button"
             >
-              <Plus size={20} />
-              <span>Add Widget</span>
-              <ChevronDown size={16} />
-            </button>
-            
-            <button 
-              onClick={toggleTheme}
-              className="header-button"
-              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            >
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              <Plus size={20} /> Add Your First Widget
             </button>
           </div>
-        </div>
-      </header>
-      
-      {renderWidgetSelector()}
-      
-      {widgets.length === 0 ? (
-        <div className="empty-dashboard-cta">
-          <p className="text-xl mb-6">Your dashboard is empty</p>
-          <button 
-            onClick={toggleWidgetSelector}
-            className="add-widget-button"
-          >
-            <Plus size={20} /> Add Your First Widget
-          </button>
-        </div>
-      ) : (
-        <div className="dashboard-container">
-          <GridLayout
-            className="layout"
-            layout={layout}
-            cols={12}
-            rowHeight={rowHeight}
-            width={windowWidth}
-            onLayoutChange={handleLayoutChange}
-            onDragStart={handleDragStart}
-            onDragStop={handleDragStop}
-            onResizeStart={handleResizeStart}
-            onResizeStop={handleResizeStop}
-            margin={[10, 10]}
-            containerPadding={[20, 20]}
-            draggableHandle=".widget-drag-handle"
-            draggableCancel=".settings-button"
-            children={widgets.map(widget => {
-              return (
-                <div 
-                  key={widget.id} 
-                  className="grid-item-container"
-                >
-                  {renderWidget(widget)}
-                </div>
-              )
-            })}
-          />
-        </div>
-      )}
+        ) : (
+          <div className="dashboard-container">
+            <GridLayout
+              className="layout"
+              layout={layout}
+              cols={12}
+              rowHeight={rowHeight}
+              width={windowWidth}
+              onLayoutChange={handleLayoutChange}
+              onDragStart={handleDragStart}
+              onDragStop={handleDragStop}
+              onResizeStart={handleResizeStart}
+              onResizeStop={handleResizeStop}
+              margin={[10, 10]}
+              containerPadding={[20, 20]}
+              draggableHandle=".widget-drag-handle"
+              draggableCancel=".settings-button"
+              children={widgets.map(widget => {
+                return (
+                  <div 
+                    key={widget.id} 
+                    className="grid-item-container"
+                  >
+                    {renderWidget(widget)}
+                  </div>
+                )
+              })}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -7,6 +7,12 @@ import WeatherWidget from './WeatherWidget';
 import WorldClocksWidget from './WorldClocksWidget';
 import QuickLinksWidget from './QuickLinksWidget';
 
+// Export widget types
+export * from './CalendarWidget/types';
+export * from './WeatherWidget/types';
+export * from './WorldClocksWidget/types';
+export * from './QuickLinksWidget/types';
+
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
   category: string;
