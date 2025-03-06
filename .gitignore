@@ -47,3 +47,7 @@ coverage
 # Cache
 .cache/
 .npm
+# Package manager files (using Bun only)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

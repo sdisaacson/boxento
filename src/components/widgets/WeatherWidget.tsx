@@ -1,10 +1,26 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim } from 'lucide-react';
 import Modal from '../ui/Modal';
 import WidgetHeader from '../ui/WidgetHeader';
 import { WidgetProps, WeatherWidgetConfig, WidgetConfig } from '../../types';
 
-// Extended weather types
+/**
+ * Extended weather data structure
+ * 
+ * @interface WeatherData
+ * @property {string} location - Name of the location
+ * @property {number} temperature - Current temperature
+ * @property {number} feelsLike - "Feels like" temperature
+ * @property {string} condition - Weather condition (e.g., "Clear", "Cloudy")
+ * @property {string} description - Detailed weather description
+ * @property {string} icon - Icon code for the weather condition
+ * @property {number} humidity - Humidity percentage
+ * @property {number} windSpeed - Wind speed
+ * @property {number} windDirection - Wind direction in degrees
+ * @property {number} sunrise - Sunrise time in Unix timestamp
+ * @property {number} sunset - Sunset time in Unix timestamp
+ * @property {ForecastDay[]} forecast - Array of forecast days
+ */
 interface WeatherData {
   location: string;
   temperature: number;
@@ -20,6 +36,18 @@ interface WeatherData {
   forecast: ForecastDay[];
 }
 
+/**
+ * Forecast data for a single day
+ * 
+ * @interface ForecastDay
+ * @property {string} day - Day name (e.g., "Monday")
+ * @property {object} temp - Temperature range
+ * @property {number} temp.min - Minimum temperature
+ * @property {number} temp.max - Maximum temperature
+ * @property {string} condition - Weather condition
+ * @property {string} description - Detailed weather description
+ * @property {string} icon - Icon code for the weather condition
+ */
 interface ForecastDay {
   day: string;
   temp: {
@@ -31,6 +59,9 @@ interface ForecastDay {
   icon: string;
 }
 
+/**
+ * Temperature unit type
+ */
 type TemperatureUnit = 'celsius' | 'fahrenheit';
 
 /**
@@ -38,8 +69,11 @@ type TemperatureUnit = 'celsius' | 'fahrenheit';
  * 
  * Displays current weather conditions and forecast.
  * Fetches data from OpenWeatherMap API or uses mock data.
+ * 
+ * @param {WidgetProps<WeatherWidgetConfig>} props - Component props
+ * @returns {JSX.Element} Weather widget component
  */
-const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfig>) => {
+const WeatherWidget: React.FC<WidgetProps<WeatherWidgetConfig>> = ({ width, height, config }) => {
   // No longer needed as we're using the widget-container class
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -102,115 +136,106 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
     ]
   };
 
-  // Fetch weather data when location or units change
-  useEffect(() => {
-    let isMounted = true;
+  /**
+   * Fetches weather data from the API or uses mock data
+   */
+  const fetchWeather = async () => {
+    setLoading(true);
     
-    const fetchWeather = async () => {
-      setLoading(true);
-      
-      try {
-        // If we have an API key, fetch real data, otherwise use mock data
-        if (localConfig.apiKey) {
-          const units = localConfig.units || 'metric';
-          const location = localConfig.location || 'New York';
+    try {
+      // If we have an API key, fetch real data, otherwise use mock data
+      if (localConfig.apiKey) {
+        const units = localConfig.units || 'metric';
+        const location = localConfig.location || 'New York';
+        
+        // Current weather
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${localConfig.apiKey}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Weather API error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Forecast
+        const forecastResponse = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=${units}&appid=${localConfig.apiKey}`
+        );
+        
+        if (!forecastResponse.ok) {
+          throw new Error(`Forecast API error: ${forecastResponse.statusText}`);
+        }
+        
+        const forecastData = await forecastResponse.json();
+        
+        // Process forecast data (get one forecast per day)
+        const dailyForecasts: { [key: string]: ForecastDay } = {};
+        const today = new Date().getDay();
+        
+        forecastData.list.forEach((item: any) => {
+          const date = new Date(item.dt * 1000);
+          const day = date.getDay();
           
-          // Current weather
-          const response = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${localConfig.apiKey}`
-          );
-          
-          if (!response.ok) {
-            throw new Error(`Weather API error: ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          
-          // Forecast
-          const forecastResponse = await fetch(
-            `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=${units}&appid=${localConfig.apiKey}`
-          );
-          
-          if (!forecastResponse.ok) {
-            throw new Error(`Forecast API error: ${forecastResponse.statusText}`);
-          }
-          
-          const forecastData = await forecastResponse.json();
-          
-          // Process forecast data (get one forecast per day)
-          const dailyForecasts: { [key: string]: ForecastDay } = {};
-          const today = new Date().getDay();
-          
-          forecastData.list.forEach((item: any) => {
-            const date = new Date(item.dt * 1000);
-            const day = date.getDay();
+          // Skip forecasts for the current day
+          if (day !== today) {
+            const dayName = getDayName(day);
             
-            // Skip forecasts for the current day
-            if (day !== today) {
-              const dayName = getDayName(day);
-              
-              if (!dailyForecasts[dayName] || date.getHours() === 12) {
-                dailyForecasts[dayName] = {
-                  day: dayName,
-                  temp: {
-                    min: item.main.temp_min,
-                    max: item.main.temp_max
-                  },
-                  condition: item.weather[0].main,
-                  description: item.weather[0].description,
-                  icon: item.weather[0].icon
-                };
-              }
+            if (!dailyForecasts[dayName] || date.getHours() === 12) {
+              dailyForecasts[dayName] = {
+                day: dayName,
+                temp: {
+                  min: item.main.temp_min,
+                  max: item.main.temp_max
+                },
+                condition: item.weather[0].main,
+                description: item.weather[0].description,
+                icon: item.weather[0].icon
+              };
             }
-          });
-          
-          const forecast = Object.values(dailyForecasts).slice(0, 5);
-          
-          if (isMounted) {
-            setWeather({
-              location: data.name,
-              temperature: data.main.temp,
-              feelsLike: data.main.feels_like,
-              condition: data.weather[0].main,
-              description: data.weather[0].description,
-              icon: data.weather[0].icon,
-              humidity: data.main.humidity,
-              windSpeed: data.wind.speed,
-              windDirection: data.wind.deg,
-              sunrise: data.sys.sunrise,
-              sunset: data.sys.sunset,
-              forecast
-            });
-            
-            setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
-            setError(null);
           }
-        } else {
-          if (isMounted) {
-            // Use mock data for development/testing
-            setWeather(mockWeatherData);
-            setUnit('celsius');
-            setError(null);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching weather data:', err);
-        if (isMounted) {
-          setWeather(mockWeatherData);  // Fallback to mock data
-          setError('Could not fetch weather data. Using sample data.');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        });
+        
+        const forecast = Object.values(dailyForecasts).slice(0, 5);
+        
+        setWeather({
+          location: data.name,
+          temperature: data.main.temp,
+          feelsLike: data.main.feels_like,
+          condition: data.weather[0].main,
+          description: data.weather[0].description,
+          icon: data.weather[0].icon,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          windDirection: data.wind.deg,
+          sunrise: data.sys.sunrise,
+          sunset: data.sys.sunset,
+          forecast
+        });
+        
+        setLoading(false);
+        setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
+        setError(null);
+      } else {
+        // Use mock data
+        setWeather(mockWeatherData);
+        
+        setLoading(false);
+        setError(null);
       }
+    } catch (err) {
+      setError('Failed to fetch weather data');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchWeather();
     };
     
-    fetchWeather();
-    
-    return () => {
-      isMounted = false;
-    };
+    fetchData();
   }, [localConfig.location, localConfig.units, localConfig.apiKey]);
 
   // Helper to get day name
@@ -577,15 +602,24 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
   const renderSettingsFooter = () => {
     return (
       <>
-        <button
+        <button 
           onClick={() => setIsSettingsOpen(false)}
-          className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm text-gray-700 dark:text-slate-200"
+          aria-label="Cancel settings changes"
         >
           Cancel
         </button>
-        <button
-          onClick={() => setIsSettingsOpen(false)}
-          className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+        <button 
+          onClick={() => {
+            // Apply the local config settings
+            setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
+            setIsSettingsOpen(false);
+            // Trigger a weather refresh with new settings
+            setLoading(true);
+            fetchWeather();
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+          aria-label="Save weather settings"
         >
           Save
         </button>

@@ -4,10 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "dev": "bun run vite",
+    "build": "bun run tsc && bun run vite build",
+    "preview": "bun run vite preview",
+    "typecheck": "bun run tsc --noEmit",
+    "lint": "bun run eslint src --ext ts,tsx",
+    "clean": "rm -rf node_modules/.vite"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.10",
@@ -36,5 +38,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.8.2",
     "vite": "^6.2.0"
-  }
+  },
+  "packageManager": "bun@1.0.30"
 }

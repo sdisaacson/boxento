@@ -14,6 +14,7 @@ Boxento is a lightweight, open-source, customizable start page for tech-savvy, a
   - [Built-in Widgets](#built-in-widgets)
   - [Creating Your Own Widgets](#creating-your-own-widgets)
   - [Resizable Widgets](#resizable-widgets)
+- [Package Management](#package-management)
 - [Hosting Boxento](#hosting-boxento)
   - [Hosting Yourself](#hosting-yourself)
   - [Hosting for Contributors](#hosting-for-contributors)
@@ -134,7 +135,32 @@ All widgets are resizable with react-grid-layout:
 
 For detailed information about widget sizing and development, see the [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md).
 
-## Hosting Boxento
+## Package Management
+
+Boxento uses [Bun](https://bun.sh/) as its primary package manager. Bun offers faster installation times and improved performance compared to npm or yarn.
+
+### Using Bun
+
+To install dependencies:
+```bash
+bun install
+```
+
+To run scripts:
+```bash
+bun run dev     # Start development server
+bun run build   # Build for production
+bun run preview # Preview production build
+bun run typecheck # Run TypeScript type checking
+```
+
+### Package Management Standards
+
+- Use Bun exclusively for all package management operations
+- Do not commit package-lock.json, yarn.lock, or pnpm-lock.yaml files
+- Always use `bun run` to execute scripts defined in package.json
+- When adding new dependencies, use `bun add [package]`
+- For dev dependencies, use `bun add -d [package]`
 
 ### Hosting Yourself
 Build the static site:
