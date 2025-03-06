@@ -46,7 +46,7 @@ body.dragging-active {
 }
 
 .dark .widget-container {
-  background-color: #1f2937; /* dark:bg-gray-800 */
+  background-color: #1e293b; /* dark:bg-slate-800 */
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 

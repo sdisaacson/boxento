@@ -81,7 +81,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div 
         ref={modalRef}
-        className={`bg-white dark:bg-gray-800 rounded-lg p-6 ${getWidthClass()} shadow-lg max-h-[90vh] overflow-auto`}
+        className={`bg-white dark:bg-slate-800 rounded-lg p-6 ${getWidthClass()} shadow-lg dark:shadow-slate-900/30 max-h-[90vh] overflow-auto`}
         onClick={handleModalClick}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
@@ -91,7 +91,7 @@ const Modal: React.FC<ModalProps> = ({
           {title && <h3 className="text-lg font-medium">{title}</h3>}
           <button 
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 ml-auto"
+            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 ml-auto"
             aria-label="Close"
           >
             <X size={20} />

@@ -60,6 +60,13 @@ interface WidgetCategory {
 }
 
 function App() {
+  // Add a class to the body for dark mode background
+  useEffect(() => {
+    document.body.className = 'bg-gray-100 dark:bg-slate-900 min-h-screen';
+    return () => {
+      document.body.className = '';
+    };
+  }, []);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       // Check system preference if no theme is set
@@ -129,13 +136,20 @@ function App() {
   const rowHeight: number = calculateRowHeight();
 
   useEffect(() => {
-    // Apply or remove dark class
+    // Apply dark mode class to both html and body
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    // Also set a CSS variable for custom components that don't support Tailwind dark mode
-    document.documentElement.style.setProperty('--app-background', theme === 'dark' ? '#0f172a' : '#ffffff')
-    document.documentElement.style.setProperty('--widget-background', theme === 'dark' ? '#1e293b' : '#ffffff')
-    document.documentElement.style.setProperty('--text-primary', theme === 'dark' ? '#f1f5f9' : '#334155')
-    document.documentElement.style.setProperty('--text-secondary', theme === 'dark' ? '#94a3b8' : '#64748b')
+    document.body.className = theme === 'dark' ? 'bg-slate-900' : 'bg-gray-100'
+    
+    // Set CSS variables with refined color palette for dark mode using slate colors
+    document.documentElement.style.setProperty('--app-background', theme === 'dark' ? '#0f172a' : '#ffffff') // slate-900
+    document.documentElement.style.setProperty('--widget-background', theme === 'dark' ? '#1e293b' : '#ffffff') // slate-800
+    document.documentElement.style.setProperty('--text-primary', theme === 'dark' ? '#f1f5f9' : '#334155') // slate-100 : slate-700
+    document.documentElement.style.setProperty('--text-secondary', theme === 'dark' ? '#94a3b8' : '#64748b') // slate-400 : slate-500
+    
+    // Add transition classes for smooth theme switching
+    document.documentElement.classList.add('transition-colors', 'duration-200')
+    setTimeout(() => document.documentElement.classList.remove('transition-colors', 'duration-200'), 200)
+    
     // Save to localStorage
     localStorage.setItem('theme', theme)
   }, [theme])
