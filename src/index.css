@@ -219,8 +219,7 @@ body.dragging-active {
 
 /* App Header Styles */
 .app-header {
-  padding: 0.75rem 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
   backdrop-filter: blur(8px);
 }
 
@@ -234,6 +233,7 @@ body.dragging-active {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 1.5rem;
 }
 
 .header-left {
@@ -478,6 +478,8 @@ body.dragging-active {
 
 .dashboard-container {
   padding: 0 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* Empty dashboard call to action */
