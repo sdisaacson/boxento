@@ -382,8 +382,14 @@ const CalendarWidget = ({ width, height, config }) => {
     );
   };
 
+  // Add the modal-open class when the settings modal is open to prevent widget background changes
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div 
+      ref={widgetRef} 
+      className={`widget-container h-full flex flex-col ${isSettingsOpen ? 'modal-open' : ''}`}
+      // This data attribute helps CSS target widgets with open modals if needed
+      data-modal-open={isSettingsOpen ? 'true' : 'false'}
+    >
       <WidgetHeader 
         title="Calendar" 
         onSettingsClick={() => setIsSettingsOpen(true)}
@@ -394,14 +400,17 @@ const CalendarWidget = ({ width, height, config }) => {
       </div>
       
       {/* Settings modal using our reusable Modal component */}
-      <Modal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title="Calendar Settings"
-        footer={renderSettingsFooter()}
-      >
-        {renderSettingsContent()}
-      </Modal>
+      {/* Render the modal outside of widget event flow */}
+      {isSettingsOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsSettingsOpen(false)}
+          title="Calendar Settings"
+          footer={renderSettingsFooter()}
+        >
+          {renderSettingsContent()}
+        </Modal>
+      )}
     </div>
   )
 }

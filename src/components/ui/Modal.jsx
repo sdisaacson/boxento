@@ -43,14 +43,25 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
       style={{ zIndex: 9999 }}
-      onClick={onClose}
+      onClick={(e) => {
+        // Prevent clicks in the modal backdrop from affecting widgets underneath
+        e.stopPropagation();
+        onClose();
+      }}
       aria-modal="true"
       role="dialog"
     >
       <div 
         ref={modalRef}
         className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-lg max-w-[90vw] max-h-[90vh] overflow-auto"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+        onMouseMove={(e) => e.stopPropagation()} 
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">{title}</h3>

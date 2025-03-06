@@ -267,12 +267,23 @@ const QuickLinksWidget = ({ width, height, config }) => {
     return createPortal(
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
-        onClick={() => setShowSettings(false)}
+        onClick={(e) => {
+          // Prevent clicks in the modal backdrop from affecting widgets underneath
+          e.stopPropagation();
+          setShowSettings(false);
+        }}
       >
         <div 
           ref={settingsRef}
           className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-lg max-w-[90vw] max-h-[90vh] overflow-auto"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            e.nativeEvent.stopImmediatePropagation();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          onMouseMove={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Quick Links Settings</h3>
@@ -384,7 +395,12 @@ const QuickLinksWidget = ({ width, height, config }) => {
   }
   
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div 
+      ref={widgetRef} 
+      className={`widget-container h-full flex flex-col ${showSettings ? 'modal-open' : ''}`}
+      // This data attribute helps CSS target widgets with open modals if needed
+      data-modal-open={showSettings ? 'true' : 'false'}
+    >
       <WidgetHeader 
         title="Quick Links" 
         onSettingsClick={() => setShowSettings(!showSettings)}
