@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { Clock, Plus, Trash, X, CircleDot } from 'lucide-react'
+import { Plus, Trash, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import WidgetHeader from '../ui/WidgetHeader'
 
 interface TimezoneItem {
   id: number
+  name: string
+  timezone: string
+}
+
+interface NewTimezoneItem {
   name: string
   timezone: string
 }
@@ -27,9 +32,9 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   ])
   const [showSettings, setShowSettings] = useState<boolean>(false)
   const [showAddForm, setShowAddForm] = useState<boolean>(false)
-  const [newTimezone, setNewTimezone] = useState<Omit<TimezoneItem, 'id'>>({ name: '', timezone: '' })
-  const settingsRef = useRef<HTMLDivElement>(null)
-  const widgetRef = useRef<HTMLDivElement>(null)
+  const [newTimezone, setNewTimezone] = useState<NewTimezoneItem>({ name: '', timezone: '' })
+  const settingsRef = useRef<HTMLDivElement | null>(null)
+  const widgetRef = useRef<HTMLDivElement | null>(null)
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -184,7 +189,6 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
       const handColor = isDarkTheme ? '#e2e8f0' : '#334155'; // Brighter hands for dark mode
       const secondHandColor = isDarkTheme ? '#38bdf8' : '#3b82f6';  // Sky-500 for dark mode
       const borderColor = isDarkTheme ? '#475569' : '#e2e8f0'; // Brighter border for dark mode
-      const hourMarkerColor = isDarkTheme ? '#94a3b8' : '#64748b'; // slate-400 for dark mode
       
       return (
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
@@ -500,7 +504,7 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
                     <input 
                       type="text" 
                       value={newTimezone.name} 
-                      onChange={e => setNewTimezone({...newTimezone, name: e.target.value})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
                       placeholder="San Francisco"
                     />
@@ -509,7 +513,7 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
                     <label className="block text-sm font-medium mb-1">Timezone</label>
                     <select
                       value={newTimezone.timezone}
-                      onChange={e => setNewTimezone({...newTimezone, timezone: e.target.value})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, timezone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
                     >
                       <option value="">Select a timezone</option>
