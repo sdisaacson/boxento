@@ -52,22 +52,29 @@ const QuickLinksWidget = ({ width, height, config }) => {
     const displayLinks = links.slice(0, maxLinks);
     
     return displayLinks.map(link => (
-      <a
+      <div
         key={link.id}
-        href={link.url}
-        target="_blank"
-        rel="noopener noreferrer" 
-        className="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        className="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
         style={{
           borderLeft: `3px solid ${link.color || '#3B82F6'}`,
           marginBottom: '2px'
+        }}
+        onMouseDown={(e) => {
+          // Prevent any grid layout events from capturing this
+          e.stopPropagation();
+          e.preventDefault();
+          e.nativeEvent.stopImmediatePropagation();
+          
+          // Open the link in a new tab
+          const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+          window.open(url, '_blank', 'noopener,noreferrer');
         }}
       >
         {link.icon && (
           <img src={link.icon} alt="" className="w-5 h-5" />
         )}
         <span className="truncate font-medium">{link.title}</span>
-      </a>
+      </div>
     ));
   };
 
@@ -131,20 +138,27 @@ const QuickLinksWidget = ({ width, height, config }) => {
           // Compact vertical layout for 3x2 size
           <div className="grid grid-cols-2 gap-2">
             {links.slice(0, maxLinks).map(link => (
-              <a
+              <div
                 key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer" 
-                className="flex items-center p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
                 style={{
                   borderLeft: `3px solid ${link.color || '#3B82F6'}`,
+                }}
+                onMouseDown={(e) => {
+                  // Prevent any grid layout events from capturing this
+                  e.stopPropagation();
+                  e.preventDefault();
+                  e.nativeEvent.stopImmediatePropagation();
+                  
+                  // Open the link in a new tab
+                  const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
                 }}
               >
                 <div className="flex-1 truncate">
                   <span className="text-sm font-medium truncate">{link.title}</span>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         ) : (
@@ -178,14 +192,21 @@ const QuickLinksWidget = ({ width, height, config }) => {
       <div className="h-full overflow-auto p-2">
         <div className="flex flex-col space-y-2">
           {links.slice(0, 4).map(link => (
-            <a
+            <div
               key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer" 
-              className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors cursor-pointer"
               style={{
                 borderLeft: `3px solid ${link.color || '#3B82F6'}`
+              }}
+              onMouseDown={(e) => {
+                // Prevent any grid layout events from capturing this
+                e.stopPropagation();
+                e.preventDefault();
+                e.nativeEvent.stopImmediatePropagation();
+                
+                // Open the link in a new tab
+                const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
               }}
             >
               {link.icon ? (
@@ -199,7 +220,7 @@ const QuickLinksWidget = ({ width, height, config }) => {
                 </div>
               )}
               <span className="truncate font-medium">{link.title}</span>
-            </a>
+            </div>
           ))}
           
           {links.length < 4 && (
@@ -225,14 +246,21 @@ const QuickLinksWidget = ({ width, height, config }) => {
       <div className="h-full overflow-auto">
         <div className={`grid grid-cols-${columns} gap-3 p-1`}>
           {links.map(link => (
-            <a
+            <div
               key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer" 
-              className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
               style={{
                 borderTop: `3px solid ${link.color || '#3B82F6'}`
+              }}
+              onMouseDown={(e) => {
+                // Prevent any grid layout events from capturing this
+                e.stopPropagation();
+                e.preventDefault();
+                e.nativeEvent.stopImmediatePropagation();
+                
+                // Open the link in a new tab
+                const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
               }}
             >
               {link.icon ? (
@@ -246,7 +274,7 @@ const QuickLinksWidget = ({ width, height, config }) => {
                 </div>
               )}
               <span className="text-center font-medium truncate w-full">{link.title}</span>
-            </a>
+            </div>
           ))}
           
           <button 
