@@ -252,7 +252,7 @@ const WeatherWidget = ({ width, height, config }) => {
           className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
           onClick={() => setShowSettings(!showSettings)}
         >
-          <CircleDot size={16} />
+          <CircleDot size={16} className="text-gray-500" />
         </button>
       </div>
       

@@ -246,7 +246,7 @@ const CalendarWidget = ({ width, height, config }) => {
             setIsSettingsOpen(true);
           }}
         >
-          <CircleDot size={16} />
+          <CircleDot size={16} className="text-gray-500" />
         </button>
       </div>
       

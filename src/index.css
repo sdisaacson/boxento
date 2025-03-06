@@ -52,17 +52,21 @@ body.dragging-active {
 
 .widget-container .settings-button {
   cursor: pointer;
-  border-radius: 9999px; /* rounded-full */
-  position: relative;
-  z-index: 100; /* Ensure high z-index */
-  pointer-events: auto !important; /* Force pointer events to work */
+  border-radius: var(--border-radius-standard);
+  z-index: 10;
+  opacity: 0; /* Hide by default */
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: auto;
+}
+
+.widget-container:hover .settings-button {
+  opacity: 1; /* Show on hover */
 }
 
 /* Make sure clicks on settings buttons are never blocked */
 .settings-button,
 .settings-button * {
   pointer-events: auto !important;
-  user-select: none !important; 
 }
 
 /* Basic container - completely unstyled */
