@@ -243,6 +243,17 @@ function App() {
   
   const handleDragStop = (): void => {
     document.body.classList.remove('dragging-active');
+    
+    // Add a small delay before allowing clicks to work again
+    // This helps prevent accidental clicks when dragging ends
+    setTimeout(() => {
+      document.body.classList.add('drag-complete');
+      
+      // Remove the class after a short period
+      setTimeout(() => {
+        document.body.classList.remove('drag-complete');
+      }, 300);
+    }, 50);
   }
   
   const handleResizeStart = (): void => {
@@ -251,6 +262,17 @@ function App() {
   
   const handleResizeStop = (): void => {
     document.body.classList.remove('dragging-active');
+    
+    // Add a small delay before allowing clicks to work again
+    // This helps prevent accidental clicks when resizing ends
+    setTimeout(() => {
+      document.body.classList.add('drag-complete');
+      
+      // Remove the class after a short period
+      setTimeout(() => {
+        document.body.classList.remove('drag-complete');
+      }, 300);
+    }, 50);
   }
 
   const toggleWidgetSelector = (): void => {
@@ -417,6 +439,7 @@ function App() {
             onResizeStop={handleResizeStop}
             margin={[10, 10]}
             containerPadding={[20, 20]}
+            draggableHandle=".widget-drag-handle"
             draggableCancel=".settings-button"
             children={widgets.map(widget => {
               const layoutItem = layout.find(item => item.i === widget.id);
@@ -425,11 +448,10 @@ function App() {
                 <div 
                   key={widget.id} 
                   className="grid-item-container"
-                  style={{ pointerEvents: 'auto' }}
                 >
                   {renderWidget(widget)}
                 </div>
-              );
+              )
             })}
           />
         </div>

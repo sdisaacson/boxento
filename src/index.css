@@ -50,6 +50,42 @@ body.dragging-active {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Fix for the drag handle */
+.widget-drag-handle {
+  cursor: move;
+  touch-action: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Non-draggable widget content */
+.widget-container > div:not(.widget-drag-handle) {
+  cursor: default;
+  pointer-events: auto !important;
+}
+
+/* Special handling for the QuickLinks widget buttons */
+.widget-container button[class*="hover:bg-gray"] {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Make all links inside widgets explicitly clickable */
+.widget-container a,
+.widget-container button:not(.settings-button) {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 5;
+}
+
+/* Ensure the widget content is visible and clickable */
+.widget-container *:not(.widget-drag-handle):not(.settings-button) {
+  pointer-events: auto !important;
+}
+
 .widget-container .settings-button {
   cursor: pointer;
   border-radius: var(--border-radius-standard);
@@ -522,7 +558,39 @@ body.dragging-active {
   box-shadow: 0 4px 6px rgba(59, 130, 246, 0.6);
 }
 
+/* Override for widget buttons to ensure they're always clickable */
+.widget-container button {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 50 !important;
+}
 
+/* When drag is complete, ensure buttons are REALLY clickable */
+body.drag-complete .widget-container button {
+  pointer-events: auto !important;
+  z-index: 9999 !important; 
+  position: relative !important;
+}
+
+/* Temporarily disable dragging during the click window after drag/resize completes */
+body.drag-complete .react-grid-item {
+  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease !important;
+}
+
+/* Ensure the placeholder is under the dragged widget */
+.react-grid-item.react-grid-placeholder {
+  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
+  opacity: 0.6;
+  border-radius: var(--border-radius-standard); /* Match widget-container border-radius */
+  transition-duration: 200ms;
+  z-index: 1; /* Ensure placeholder is below the widget being manipulated */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); /* Add subtle inset shadow for depth */
+}
+
+.dark .react-grid-item.react-grid-placeholder {
+  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Darker inset shadow for dark mode */
+}
 
 @layer base {
   :root {
@@ -579,8 +647,6 @@ body.dragging-active {
     --chart-5: 340 75% 55%;
   }
 }
-
-
 
 @layer base {
   * {

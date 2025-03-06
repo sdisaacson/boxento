@@ -30,6 +30,12 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
   const settingsButtonRef = useRef<HTMLButtonElement>(null)
   const widgetRef = useRef<HTMLDivElement>(null)
   
+  // Handle link navigation with an imperative approach
+  const navigateToUrl = (url: string) => {
+    // Open the URL in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  
   // No need for click outside handler as the modal backdrop handles this
   
   const addLink = () => {
@@ -63,7 +69,8 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
         href={link.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="flex items-center p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="flex items-center p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+        onClick={(e) => e.stopPropagation()}
       >
         <div 
           className="w-2 h-2 rounded-full mr-2" 
@@ -89,137 +96,121 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
 
   const renderDefaultView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="Quick Links" 
-          icon={<Link size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="flex-1 overflow-y-auto space-y-1 py-1 px-2">
-          {renderLinks(3)}
-        </div>
+      <div className="flex-1 overflow-y-auto space-y-1 py-1 px-2">
+        {renderLinks(3)}
       </div>
     )
   }
 
   const renderWideView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="Quick Links" 
-          icon={<Link size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto p-2">
-          {links.map(link => (
-            <a 
-              key={link.id}
-              href={link.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
-            >
-              <div 
-                className="w-3 h-3 rounded-full mr-2" 
-                style={{ backgroundColor: link.color }}
-              ></div>
-              <span className="text-sm truncate flex-1">{link.title}</span>
-              <ExternalLink size={14} className="text-gray-400 ml-2" />
-            </a>
-          ))}
-          <button
-            onClick={() => startEdit()}
-            className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto p-2">
+        {links.map(link => (
+          <a 
+            key={link.id}
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Plus size={16} className="text-gray-400" />
-            <span className="ml-1 text-sm text-gray-500">Add link</span>
-          </button>
-        </div>
+            <div 
+              className="w-3 h-3 rounded-full mr-2" 
+              style={{ backgroundColor: link.color }}
+            ></div>
+            <span className="text-sm truncate flex-1">{link.title}</span>
+            <ExternalLink size={14} className="text-gray-400 ml-2" />
+          </a>
+        ))}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            startEdit();
+          }}
+          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <Plus size={16} className="text-gray-400" />
+          <span className="ml-1 text-sm text-gray-500">Add link</span>
+        </button>
       </div>
     )
   }
 
   const renderTallView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="Quick Links" 
-          icon={<Link size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="flex-1 overflow-y-auto space-y-1 p-2">
-          {links.map(link => (
-            <a 
-              key={link.id}
-              href={link.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
-            >
-              <div 
-                className="w-3 h-3 rounded-full mr-2" 
-                style={{ backgroundColor: link.color }}
-              ></div>
-              <span className="text-sm truncate flex-1">{link.title}</span>
-              <ExternalLink size={14} className="text-gray-400 ml-2" />
-            </a>
-          ))}
-          <button
-            onClick={() => startEdit()}
-            className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      <div className="flex-1 overflow-y-auto space-y-1 p-2">
+        {links.map(link => (
+          <a 
+            key={link.id}
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Plus size={16} className="text-gray-400" />
-            <span className="ml-1 text-sm text-gray-500">Add link</span>
-          </button>
-        </div>
+            <div 
+              className="w-3 h-3 rounded-full mr-2" 
+              style={{ backgroundColor: link.color }}
+            ></div>
+            <span className="text-sm truncate flex-1">{link.title}</span>
+            <ExternalLink size={14} className="text-gray-400 ml-2" />
+          </a>
+        ))}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            startEdit();
+          }}
+          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <Plus size={16} className="text-gray-400" />
+          <span className="ml-1 text-sm text-gray-500">Add link</span>
+        </button>
       </div>
     )
   }
 
   const renderFullView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="Quick Links" 
-          icon={<Link size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="grid grid-cols-3 gap-3 flex-1 overflow-y-auto p-3">
-          {links.map(link => (
-            <a 
-              key={link.id}
-              href={link.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center p-3 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
-            >
-              <div 
-                className="w-10 h-10 rounded-full mb-2 flex items-center justify-center"
-                style={{ backgroundColor: link.color }}
-              >
-                <span className="text-white font-bold text-lg">
-                  {link.title.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm font-medium">{link.title}</span>
-              <div className="flex items-center mt-1">
-                <span className="text-xs text-gray-500 truncate max-w-[100px]">
-                  {link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')}
-                </span>
-                <ExternalLink size={12} className="text-gray-400 ml-1" />
-              </div>
-            </a>
-          ))}
-          <button
-            onClick={() => startEdit()}
-            className="flex flex-col items-center justify-center p-3 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      <div className="grid grid-cols-3 gap-3 flex-1 overflow-y-auto p-3">
+        {links.map(link => (
+          <a 
+            key={link.id}
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center p-3 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-10 h-10 rounded-full mb-2 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-              <Plus size={20} className="text-gray-500 dark:text-gray-400" />
+            <div 
+              className="w-10 h-10 rounded-full mb-2 flex items-center justify-center"
+              style={{ backgroundColor: link.color }}
+            >
+              <span className="text-white font-bold text-lg">
+                {link.title.charAt(0).toUpperCase()}
+              </span>
             </div>
-            <span className="text-sm font-medium text-gray-500">Add link</span>
-          </button>
-        </div>
+            <span className="text-sm font-medium">{link.title}</span>
+            <div className="flex items-center mt-1">
+              <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                {link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')}
+              </span>
+              <ExternalLink size={12} className="text-gray-400 ml-1" />
+            </div>
+          </a>
+        ))}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            startEdit();
+          }}
+          className="flex flex-col items-center justify-center p-3 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full mb-2 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+            <Plus size={20} className="text-gray-500 dark:text-gray-400" />
+          </div>
+          <span className="text-sm font-medium text-gray-500">Add link</span>
+        </button>
       </div>
     )
   }
@@ -356,8 +347,14 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
   }
 
   return (
-    <div className="w-full h-full" ref={widgetRef}>
-      {renderContent()}
+    <div className="widget-container h-full flex flex-col pointer-events-auto" ref={widgetRef}>
+      <WidgetHeader 
+        title="Quick Links" 
+        onSettingsClick={() => setShowSettings(true)}
+      />
+      <div className="flex-1 overflow-hidden pointer-events-auto">
+        {renderContent()}
+      </div>
       {renderSettings()}
     </div>
   )

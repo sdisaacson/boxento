@@ -86,20 +86,13 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   
   const renderMediumView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="World Clocks" 
-          icon={<Clock size={14} />} 
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="flex-1 overflow-y-auto p-2">
-          {timezones.slice(0, 3).map(tz => (
-            <div key={tz.id} className="mb-2 last:mb-0">
-              <div className="text-sm font-medium">{tz.name}</div>
-              <div className="text-xl">{formatTime(currentTime, tz.timezone)}</div>
-            </div>
-          ))}
-        </div>
+      <div className="flex-1 overflow-y-auto p-2">
+        {timezones.slice(0, 3).map(tz => (
+          <div key={tz.id} className="mb-2 last:mb-0">
+            <div className="text-sm font-medium">{tz.name}</div>
+            <div className="text-xl">{formatTime(currentTime, tz.timezone)}</div>
+          </div>
+        ))}
       </div>
     )
   }
@@ -239,73 +232,59 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   
   const renderDefaultView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="World Clocks" 
-          icon={<Clock size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {timezones.slice(0, 2).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center">
-              <div className="text-sm">{tz.name}</div>
-              <div className="text-sm font-medium">{formatTime(currentTime, tz.timezone)}</div>
-            </div>
-          ))}
-        </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        {timezones.slice(0, 2).map(tz => (
+          <div key={tz.id} className="flex justify-between items-center">
+            <div className="text-sm">{tz.name}</div>
+            <div className="text-sm font-medium">{formatTime(currentTime, tz.timezone)}</div>
+          </div>
+        ))}
       </div>
     )
   }
   
   const renderWideView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="World Clocks" 
-          icon={<Clock size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="grid grid-cols-3 gap-4 p-4 flex-1">
-          {timezones.map(tz => (
-            <div 
-              key={tz.id} 
-              className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              <div className="relative mb-1">
-                <svg width="64" height="64" viewBox="0 0 64 64" className="transform -rotate-90">
-                  <circle 
-                    cx="32" 
-                    cy="32" 
-                    r="28" 
-                    fill="none" 
-                    stroke="#e5e7eb" 
-                    strokeWidth="2" 
-                    className="dark:stroke-gray-700"
-                  />
-                  <circle 
-                    cx="32" 
-                    cy="32" 
-                    r="28" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="4" 
-                    strokeDasharray="175.93"
-                    strokeDashoffset={175.93 - (175.93 * getTimeProgress(tz.timezone))}
-                    className="text-blue-500"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                  <div className="text-xl font-bold">
-                    {formatTime(currentTime, tz.timezone)}
-                  </div>
+      <div className="grid grid-cols-3 gap-4 p-4 flex-1">
+        {timezones.map(tz => (
+          <div 
+            key={tz.id} 
+            className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <div className="relative mb-1">
+              <svg width="64" height="64" viewBox="0 0 64 64" className="transform -rotate-90">
+                <circle 
+                  cx="32" 
+                  cy="32" 
+                  r="28" 
+                  fill="none" 
+                  stroke="#e5e7eb" 
+                  strokeWidth="2" 
+                  className="dark:stroke-gray-700"
+                />
+                <circle 
+                  cx="32" 
+                  cy="32" 
+                  r="28" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="4" 
+                  strokeDasharray="175.93"
+                  strokeDashoffset={175.93 - (175.93 * getTimeProgress(tz.timezone))}
+                  className="text-blue-500"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center flex-col">
+                <div className="text-xl font-bold">
+                  {formatTime(currentTime, tz.timezone)}
                 </div>
               </div>
-              <div className="text-sm font-medium mt-2">{tz.name}</div>
-              <div className="text-xs text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
             </div>
-          ))}
-        </div>
+            <div className="text-sm font-medium mt-2">{tz.name}</div>
+            <div className="text-xs text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
+          </div>
+        ))}
       </div>
     )
   }
@@ -339,88 +318,80 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   
   const renderTallView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="World Clocks" 
-          icon={<Clock size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {timezones.map(tz => (
-            <div 
-              key={tz.id} 
-              className="flex justify-between items-center p-2 rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              <div>
-                <div className="font-medium">{tz.name}</div>
-                <div className="text-xs text-gray-500">{formatTimezoneName(tz.timezone)}</div>
-              </div>
-              <div className="text-xl font-bold">
-                {formatTime(currentTime, tz.timezone)}
-              </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {timezones.map(tz => (
+          <div 
+            key={tz.id} 
+            className="flex justify-between items-center p-2 rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <div>
+              <div className="font-medium">{tz.name}</div>
+              <div className="text-xs text-gray-500">{formatTimezoneName(tz.timezone)}</div>
             </div>
-          ))}
-        </div>
+            <div className="text-xl font-bold">
+              {formatTime(currentTime, tz.timezone)}
+            </div>
+          </div>
+        ))}
       </div>
     )
   }
   
   const renderFullView = () => {
     return (
-      <div className="flex flex-col h-full">
-        <WidgetHeader 
-          title="World Clocks" 
-          icon={<Clock size={14} />}
-          onSettingsClick={() => setShowSettings(true)}
-        />
-        <div className="grid grid-cols-3 gap-4 p-4 flex-1">
-          {timezones.map(tz => (
-            <div 
-              key={tz.id} 
-              className="flex flex-col items-center justify-center p-4 rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              <div className="relative mb-2">
-                <svg width="100" height="100" viewBox="0 0 100 100" className="transform -rotate-90">
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="45" 
-                    fill="none" 
-                    stroke="#e5e7eb" 
-                    strokeWidth="4" 
-                    className="dark:stroke-gray-700"
-                  />
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="45" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="6" 
-                    strokeDasharray="282.74"
-                    strokeDashoffset={282.74 - (282.74 * getTimeProgress(tz.timezone))}
-                    className="text-blue-500"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                  <div className="text-3xl font-bold">
-                    {formatTime(currentTime, tz.timezone)}
-                  </div>
+      <div className="grid grid-cols-3 gap-4 p-4 flex-1">
+        {timezones.map(tz => (
+          <div 
+            key={tz.id} 
+            className="flex flex-col items-center justify-center p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+          >
+            <div className="relative mb-2">
+              <svg width="100" height="100" viewBox="0 0 100 100" className="transform -rotate-90">
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  fill="none" 
+                  stroke="#e5e7eb" 
+                  strokeWidth="4" 
+                  className="dark:stroke-gray-700"
+                />
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="6" 
+                  strokeDasharray="282.74"
+                  strokeDashoffset={282.74 - (282.74 * getTimeProgress(tz.timezone))}
+                  className="text-blue-500"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center flex-col">
+                <div className="text-3xl font-bold">
+                  {formatTime(currentTime, tz.timezone)}
                 </div>
               </div>
-              <div className="text-lg font-medium mt-3">{tz.name}</div>
-              <div className="text-sm text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
             </div>
-          ))}
-        </div>
+            <div className="text-lg font-medium mt-3">{tz.name}</div>
+            <div className="text-sm text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
+          </div>
+        ))}
       </div>
     )
   }
   
   return (
-    <div className="w-full h-full" ref={widgetRef}>
-      {renderContent()}
+    <div className="widget-container h-full flex flex-col" ref={widgetRef}>
+      <WidgetHeader 
+        title="World Clocks" 
+        onSettingsClick={() => setShowSettings(true)}
+      />
+      <div className="flex-1 overflow-hidden">
+        {renderContent()}
+      </div>
       {renderSettings()}
     </div>
   )

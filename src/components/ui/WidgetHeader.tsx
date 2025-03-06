@@ -30,7 +30,10 @@ const WidgetHeader: React.FC<WidgetHeaderProps> = ({
       {onSettingsClick && (
         <button 
           className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
-          onClick={onSettingsClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSettingsClick();
+          }}
         >
           <Settings size={16} className="text-gray-500" />
         </button>
