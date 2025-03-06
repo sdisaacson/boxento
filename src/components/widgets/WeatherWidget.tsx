@@ -41,8 +41,7 @@ type WeatherCondition = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'stormy' | 'fog
  * Fetches data from OpenWeatherMap API or uses mock data.
  */
 const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfig>) => {
-  // Base container styles for consistent dark mode
-  const containerClasses = 'h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-colors duration-200 p-4';
+  // No longer needed as we're using the widget-container class
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

@@ -8,241 +8,146 @@
 }
 
 body {
-  margin: 0;
-  /* Removing the font-family declaration to use Tailwind's Inter font */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  @apply m-0 antialiased;
 }
 
 /* Global style to prevent any text selection when dragging/resizing occurs */
 body.dragging-active {
+  @apply select-none cursor-move;
   -webkit-touch-callout: none !important;
-  -webkit-user-select: none !important;
-  -khtml-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
-  cursor: move !important;
 }
 
 /* Widget container - contains styling ONLY for widgets themselves */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  background-color: white;
-  box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 1rem;
-  overflow: hidden; /* Ensure content never causes overflow */
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  /* Ensure text wrapping */
-  word-wrap: break-word;
-  word-break: break-word;
+  @apply bg-white dark:bg-slate-800 shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
   /* Prevent text selection during any interaction */
   -webkit-touch-callout: none; /* iOS Safari */
 }
 
-.dark .widget-container {
-  background-color: #1e293b; /* dark:bg-slate-800 */
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
 /* Fix for the drag handle */
 .widget-drag-handle {
-  cursor: move;
-  touch-action: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  @apply cursor-move touch-none select-none;
 }
 
 /* Non-draggable widget content */
 .widget-container > div:not(.widget-drag-handle) {
-  cursor: default;
-  pointer-events: auto !important;
+  @apply cursor-default pointer-events-auto;
 }
 
 /* Special handling for the QuickLinks widget buttons */
 .widget-container button[class*="hover:bg-gray"] {
-  cursor: pointer !important;
-  pointer-events: auto !important;
+  @apply cursor-pointer pointer-events-auto;
 }
 
 /* Make all links inside widgets explicitly clickable */
 .widget-container a,
 .widget-container button:not(.settings-button) {
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 5;
+  @apply cursor-pointer pointer-events-auto relative z-10;
 }
 
 /* Ensure the widget content is visible and clickable */
 .widget-container *:not(.widget-drag-handle):not(.settings-button) {
-  pointer-events: auto !important;
+  @apply pointer-events-auto;
 }
 
 .widget-container .settings-button {
-  cursor: pointer;
+  @apply cursor-pointer z-10 opacity-0 transition-opacity duration-200 ease-in-out pointer-events-auto;
   border-radius: var(--border-radius-standard);
-  z-index: 10;
-  opacity: 0; /* Hide by default */
-  transition: opacity 0.2s ease-in-out;
-  pointer-events: auto;
 }
 
 .widget-container:hover .settings-button {
-  opacity: 1; /* Show on hover */
+  @apply opacity-100;
 }
 
 /* Make sure clicks on settings buttons are never blocked */
 .settings-button,
 .settings-button * {
-  pointer-events: auto !important;
+  @apply pointer-events-auto;
 }
 
 /* Basic container - completely unstyled */
 .grid-item-container {
-  padding: 0;
-  background: transparent;
-  height: 100%;
-  width: 100%;
+  @apply p-0 bg-transparent h-full w-full;
 }
 
 /* Base widget styling with enhanced selection prevention */
 .react-grid-item {
-  transition: all 200ms ease;
+  @apply transition-all duration-200 ease-in-out;
   -webkit-user-drag: none; /* Prevent dragging of content */
 }
 
 /* Apply selection prevention immediately on mousedown */
 .react-grid-item:active,
 .react-grid-item:focus {
-  user-select: none !important;
+  @apply select-none;
 }
 
 .react-grid-item:active *,
 .react-grid-item:focus * {
-  user-select: none !important;
+  @apply select-none;
 }
 
 /* Specific styling for dragging state */
 .react-grid-item.react-draggable-dragging {
-  z-index: 100;
-  transition: none;
-  pointer-events: none;
+  @apply z-[100] transition-none pointer-events-none;
 }
 
 /* Specific styling for resize state */
 .react-grid-item.resizing {
-  z-index: 10;
-  transition: none;
+  @apply z-10 transition-none;
 }
 
 /* Comprehensive selection prevention for all interaction states */
 .react-grid-item,
 .react-grid-item.react-draggable-dragging,
 .react-grid-item.resizing {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  touch-action: none;
+  @apply touch-none select-none;
 }
 
 /* Apply to the entire grid */
 .react-grid-layout {
-  position: relative;
+  @apply relative;
   -webkit-user-drag: none;
 }
 
 .react-grid-layout--dragging,
 .react-grid-layout--resizing {
-  cursor: move;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  @apply cursor-move select-none;
 }
 
 .react-grid-layout--dragging *,
 .react-grid-layout--resizing * {
+  @apply select-none;
   cursor: inherit !important;
-  -webkit-touch-callout: none !important;
-  -webkit-user-select: none !important;
-  -khtml-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
 }
 
 /* Ensure the placeholder is under the dragged widget */
 .react-grid-item.react-grid-placeholder {
-  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
-  opacity: 0.6;
+  @apply bg-gray-200 dark:bg-gray-600 opacity-60 shadow-inner shadow-black/10 dark:shadow-black/30 z-[1] duration-200;
   border-radius: var(--border-radius-standard); /* Match widget-container border-radius */
-  transition-duration: 200ms;
-  z-index: 1; /* Ensure placeholder is below the widget being manipulated */
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); /* Add subtle inset shadow for depth */
-}
-
-.dark .react-grid-item.react-grid-placeholder {
-  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Darker inset shadow for dark mode */
 }
 
 /* Curved corner resize handle with aggressive styling */
 .react-resizable-handle,
 .react-resizable .react-resizable-handle,
 .react-grid-item .react-resizable-handle {
-  position: absolute !important;
-  width: 30px !important;
-  height: 30px !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  background-image: none !important;
-  pointer-events: all !important;
-  cursor: se-resize !important;
-  z-index: 10 !important;
-  opacity: 0 !important; /* Hidden by default */
-  transition: opacity 0.3s ease !important; /* Smooth transition */
+  @apply absolute w-[30px] h-[30px] bottom-0 right-0 bg-none pointer-events-auto 
+         cursor-se-resize z-10 opacity-0 transition-opacity duration-300 ease-in-out;
 }
 
 /* Create a larger, more prominent curved corner effect */
 .react-resizable-handle::after,
 .react-resizable .react-resizable-handle::after,
 .react-grid-item .react-resizable-handle::after {
-  content: "" !important;
-  position: absolute !important;
-  bottom: 4px !important;
-  right: 4px !important;
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 0 0 var(--border-radius-standard) 0 !important;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
-  border-right: 2px solid rgba(0, 0, 0, 0.2) !important;
+  @apply content-[''] absolute bottom-1 right-1 w-[30px] h-[30px] border-b-2 border-r-2 border-black/20 dark:border-white/30;
+  border-radius: 0 0 var(--border-radius-standard) 0;
 }
 
 /* Show resize handle on hover */
 .widget-container:hover .react-resizable-handle,
 .react-grid-item:hover .react-resizable-handle {
-  opacity: 1 !important;
-}
-
-/* Dark mode version with higher contrast */
-.dark .react-resizable-handle::after,
-.dark .react-resizable .react-resizable-handle::after,
-.dark .react-grid-item .react-resizable-handle::after {
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
-  border-right: 2px solid rgba(255, 255, 255, 0.3) !important;
+  @apply opacity-100;
 }
 
 /* Remove these custom classes that might interfere with default behavior */
@@ -259,338 +164,134 @@ body.dragging-active {
 
 /* App Header Styles */
 .app-header {
-  padding: 1rem 1.5rem;
-  backdrop-filter: blur(8px);
-}
-
-.dark .app-header {
-  backdrop-filter: blur(8px);
+  @apply p-4 md:p-6 backdrop-blur-md;
 }
 
 .header-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 1.5rem;
+  @apply max-w-[1600px] mx-auto flex justify-between items-center px-6;
 }
 
 .header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  @apply flex items-center gap-4;
 }
 
 .app-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.dark .app-title {
-  color: #f9fafb;
+  @apply text-2xl font-bold text-gray-900 dark:text-gray-50;
 }
 
 .header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  @apply flex items-center gap-3;
 }
 
 .header-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.dark .header-button {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
-}
-
-.header-button:hover {
-  background-color: #f9fafb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.dark .header-button:hover {
-  background-color: #4b5563;
+  @apply flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 
+         border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300
+         text-sm font-medium transition-all duration-200
+         hover:bg-gray-50 dark:hover:bg-gray-600 hover:shadow-sm;
 }
 
 /* Widget Selector Styles */
 .widget-selector-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-  padding: 1rem;
+  @apply fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4;
 }
 
 .widget-selector-modal {
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1), 0 2px 10px -1px rgba(0, 0, 0, 0.06);
-  width: 100%;
-  max-width: 800px;
-  max-height: 80vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.dark .widget-selector-modal {
-  background-color: #1f2937;
-  border: 1px solid #374151;
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:border dark:border-gray-700
+         w-full max-w-4xl max-h-[80vh] overflow-y-auto flex flex-col;
 }
 
 .widget-selector-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.dark .widget-selector-header {
-  border-bottom-color: #374151;
+  @apply flex justify-between items-center p-4 md:p-6 border-b border-gray-200 dark:border-gray-700;
 }
 
 .widget-selector-search {
-  position: relative;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.dark .widget-selector-search {
-  border-bottom-color: #374151;
+  @apply relative p-4 md:p-6 border-b border-gray-200 dark:border-gray-700;
 }
 
 .search-icon {
-  position: absolute;
-  left: 2rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+  @apply absolute left-8 top-1/2 -translate-y-1/2 text-gray-400;
 }
 
 .widget-search-input {
-  width: 100%;
-  padding: 0.625rem 1rem 0.625rem 2.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  font-size: 0.875rem;
-}
-
-.dark .widget-search-input {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
-}
-
-.widget-search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  @apply w-full py-2.5 px-4 pl-10 rounded-md border border-gray-200 dark:border-gray-600
+         bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100
+         focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30;
 }
 
 .widget-selector-categories,
 .widget-selector-results {
-  padding: 1rem 1.5rem;
+  @apply p-4 md:p-6;
 }
 
 .widget-category {
-  margin-bottom: 1.5rem;
+  @apply mb-6;
 }
 
 .widget-category-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #4b5563;
-}
-
-.dark .widget-category-title {
-  color: #d1d5db;
+  @apply text-base font-semibold mb-3 text-gray-600 dark:text-gray-300;
 }
 
 .widget-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3;
 }
 
 .widget-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background-color: white;
-  text-align: left;
-  transition: all 0.2s ease;
-}
-
-.dark .widget-item {
-  background-color: #374151;
-  border-color: #4b5563;
-}
-
-.widget-item:hover {
-  background-color: #f9fafb;
-  border-color: #d1d5db;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.dark .widget-item:hover {
-  background-color: #4b5563;
-  border-color: #6b7280;
+  @apply flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600
+         bg-white dark:bg-gray-700 text-left transition-all duration-200
+         hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm;
 }
 
 .widget-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.375rem;
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.dark .widget-icon {
-  background-color: #1f2937;
-  color: #d1d5db;
+  @apply flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300;
 }
 
 .widget-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  @apply flex flex-col flex-1;
 }
 
 .widget-name {
-  font-weight: 500;
-  color: #111827;
-}
-
-.dark .widget-name {
-  color: #f9fafb;
+  @apply font-medium text-gray-900 dark:text-white;
 }
 
 .widget-description {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
-.dark .widget-description {
-  color: #9ca3af;
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
 }
 
 .no-results {
-  text-align: center;
-  padding: 2rem 0;
-  color: #6b7280;
-}
-
-.dark .no-results {
-  color: #9ca3af;
+  @apply text-center py-8 text-gray-500 dark:text-gray-400;
 }
 
 .dashboard-container {
-  padding: 0 1.5rem;
-  max-width: 1600px;
-  margin: 0 auto;
+  @apply px-6 max-w-[1600px] mx-auto;
 }
 
 /* Empty dashboard call to action */
 .empty-dashboard-cta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 80vh;
+  @apply flex flex-col items-center justify-center h-[80vh];
 }
 
 .add-widget-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background-color: #3b82f6;
-  color: white;
-  font-weight: 500;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-  transition: all 0.2s ease;
-}
-
-.add-widget-button:hover {
-  background-color: #2563eb;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
-}
-
-.dark .add-widget-button {
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.5);
-}
-
-.dark .add-widget-button:hover {
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.6);
+  @apply flex items-center gap-2 py-3 px-5 bg-blue-500 text-white font-medium rounded-xl
+         shadow-md shadow-blue-500/20 dark:shadow-blue-500/40 transition-all duration-200
+         hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50 hover:-translate-y-0.5;
 }
 
 /* Override for widget buttons to ensure they're always clickable */
 .widget-container button {
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 50 !important;
+  @apply pointer-events-auto relative z-50;
 }
 
 /* When drag is complete, ensure buttons are REALLY clickable */
 body.drag-complete .widget-container button {
-  pointer-events: auto !important;
-  z-index: 9999 !important; 
-  position: relative !important;
+  @apply pointer-events-auto relative z-[9999];
 }
 
 /* Temporarily disable dragging during the click window after drag/resize completes */
 body.drag-complete .react-grid-item {
-  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease !important;
+  @apply transition-transform duration-300 ease-in-out;
 }
 
-/* Ensure the placeholder is under the dragged widget */
-.react-grid-item.react-grid-placeholder {
-  background: #e5e7eb; /* light gray (equivalent to Tailwind's gray-200) */
-  opacity: 0.6;
-  border-radius: var(--border-radius-standard); /* Match widget-container border-radius */
-  transition-duration: 200ms;
-  z-index: 1; /* Ensure placeholder is below the widget being manipulated */
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); /* Add subtle inset shadow for depth */
-}
-
-.dark .react-grid-item.react-grid-placeholder {
-  background: #4b5563; /* dark gray (equivalent to Tailwind's gray-600) for dark mode */
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Darker inset shadow for dark mode */
-}
+/* This style was updated and moved below */
 
 @layer base {
   :root {
