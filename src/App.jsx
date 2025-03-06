@@ -402,6 +402,7 @@ function App() {
             onResizeStop={handleResizeStop}
             margin={[10, 10]}
             containerPadding={[20, 20]}
+            draggableCancel=".settings-button"
           >
             {widgets.map(widget => {
               const layoutItem = layout.find(item => item.i === widget.id);
@@ -410,6 +411,7 @@ function App() {
                 <div 
                   key={widget.id} 
                   className="grid-item-container"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   {renderWidget(widget)}
                 </div>

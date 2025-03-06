@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Calendar, Settings, X } from 'lucide-react'
-import { createPortal } from 'react-dom'
+import Modal from '../ui/Modal'
+import { useWidgetSettings } from '../../utils/widgetHelpers'
 
 /**
  * Calendar Widget Component
@@ -25,11 +26,11 @@ import { createPortal } from 'react-dom'
  */
 const CalendarWidget = ({ width, height, config }) => {
   const [date, setDate] = useState(new Date())
-  const [showSettings, setShowSettings] = useState(false)
   const [localConfig, setLocalConfig] = useState(config || {})
-  const settingsRef = useRef(null)
-  const settingsButtonRef = useRef(null)
   const widgetRef = useRef(null)
+  
+  // Simplified settings state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   /**
    * Update the date every minute
@@ -139,74 +140,57 @@ const CalendarWidget = ({ width, height, config }) => {
     )
   }
 
-  const renderSettings = () => {
-    if (!showSettings) return null;
-    
-    // Use createPortal to render the modal at the document body level
-    return createPortal(
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
-        onClick={() => setShowSettings(false)}
-      >
-        <div 
-          ref={settingsRef}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-lg max-w-[90vw] max-h-[90vh] overflow-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Calendar Settings</h3>
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          
-          <div className="mb-6">
-            <label className="block text-sm mb-2 font-medium">First Day of Week</label>
-            <select 
-              className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
-              value={localConfig.startDay || 'sunday'}
-              onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value})}
-            >
-              <option value="sunday">Sunday</option>
-              <option value="monday">Monday</option>
-            </select>
-          </div>
-          
-          <div className="mb-6">
-            <label className="block text-sm mb-2 font-medium">Show Week Numbers</label>
-            <div className="flex items-center">
-              <input 
-                type="checkbox"
-                checked={localConfig.showWeekNumbers || false}
-                onChange={(e) => setLocalConfig({...localConfig, showWeekNumbers: e.target.checked})}
-                className="mr-2 h-4 w-4"
-                id="weekNumbers"
-              />
-              <label htmlFor="weekNumbers" className="text-sm">Display week numbers</label>
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2">
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Save
-            </button>
+  // Modal content for settings
+  const renderSettingsContent = () => {
+    return (
+      <>
+        <div className="mb-6">
+          <label className="block text-sm mb-2 font-medium">First Day of Week</label>
+          <select 
+            className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
+            value={localConfig.startDay || 'sunday'}
+            onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value})}
+          >
+            <option value="sunday">Sunday</option>
+            <option value="monday">Monday</option>
+          </select>
+        </div>
+        
+        <div className="mb-6">
+          <label className="block text-sm mb-2 font-medium">Show Week Numbers</label>
+          <div className="flex items-center">
+            <input 
+              type="checkbox"
+              checked={localConfig.showWeekNumbers || false}
+              onChange={(e) => setLocalConfig({...localConfig, showWeekNumbers: e.target.checked})}
+              className="mr-2 h-4 w-4"
+              id="weekNumbers"
+            />
+            <label htmlFor="weekNumbers" className="text-sm">Display week numbers</label>
           </div>
         </div>
-      </div>,
-      document.body
-    );
+      </>
+    )
+  }
+
+  // Modal footer with buttons
+  const renderSettingsFooter = () => {
+    return (
+      <>
+        <button 
+          onClick={() => setIsSettingsOpen(false)}
+          className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+        <button 
+          onClick={() => setIsSettingsOpen(false)}
+          className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Save
+        </button>
+      </>
+    )
   }
   
   // Render different views based on widget size
@@ -264,7 +248,10 @@ const CalendarWidget = ({ width, height, config }) => {
         </div>
         <button 
           className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-          onClick={() => setShowSettings(!showSettings)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsSettingsOpen(true);
+          }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -276,8 +263,15 @@ const CalendarWidget = ({ width, height, config }) => {
       {/* Use the renderContent function to determine which view to show based on dimensions */}
       {renderContent()}
       
-      {/* Settings modal (now rendered at the end of body via portal) */}
-      {renderSettings()}
+      {/* Settings modal using our reusable Modal component */}
+      <Modal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title="Calendar Settings"
+        footer={renderSettingsFooter()}
+      >
+        {renderSettingsContent()}
+      </Modal>
     </div>
   )
 }
