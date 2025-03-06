@@ -69,15 +69,15 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
         href={link.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="flex items-center p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+        className="flex items-center p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors relative text-gray-800 dark:text-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div 
-          className="w-2 h-2 rounded-full mr-2" 
+          className="w-2 h-2 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
           style={{ backgroundColor: link.color }}
         ></div>
-        <span className="text-sm truncate flex-1">{link.title}</span>
-        <ExternalLink size={14} className="text-gray-400 ml-1" />
+        <span className="text-sm truncate flex-1 font-medium">{link.title}</span>
+        <ExternalLink size={14} className="text-gray-400 dark:text-gray-300 ml-1" />
       </a>
     ))
   }
@@ -96,7 +96,7 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
 
   const renderDefaultView = () => {
     return (
-      <div className="flex-1 overflow-y-auto space-y-1 py-1 px-2">
+      <div className="flex-1 overflow-y-auto space-y-1 py-1 px-2 bg-white dark:bg-slate-800 rounded-lg">
         {renderLinks(3)}
       </div>
     )
@@ -104,22 +104,22 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
 
   const renderWideView = () => {
     return (
-      <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto p-2">
+      <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto p-2 bg-white dark:bg-slate-800 rounded-lg">
         {links.map(link => (
           <a 
             key={link.id}
             href={link.url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-750 text-gray-800 dark:text-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div 
-              className="w-3 h-3 rounded-full mr-2" 
+              className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
               style={{ backgroundColor: link.color }}
             ></div>
-            <span className="text-sm truncate flex-1">{link.title}</span>
-            <ExternalLink size={14} className="text-gray-400 ml-2" />
+            <span className="text-sm truncate flex-1 font-medium">{link.title}</span>
+            <ExternalLink size={14} className="text-gray-400 dark:text-gray-300 ml-2" />
           </a>
         ))}
         <button
@@ -127,10 +127,10 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
             e.stopPropagation();
             startEdit();
           }}
-          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all bg-gray-50 dark:bg-slate-700/50 shadow-sm dark:shadow-md dark:shadow-slate-900/30"
         >
-          <Plus size={16} className="text-gray-400" />
-          <span className="ml-1 text-sm text-gray-500">Add link</span>
+          <Plus size={16} className="text-gray-500 dark:text-gray-300" />
+          <span className="ml-1 text-sm font-medium text-gray-600 dark:text-gray-300">Add link</span>
         </button>
       </div>
     )
@@ -138,22 +138,22 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
 
   const renderTallView = () => {
     return (
-      <div className="flex-1 overflow-y-auto space-y-1 p-2">
+      <div className="flex-1 overflow-y-auto space-y-2 p-2 bg-white dark:bg-slate-800 rounded-lg">
         {links.map(link => (
           <a 
             key={link.id}
             href={link.url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            className="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-750 text-gray-800 dark:text-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div 
-              className="w-3 h-3 rounded-full mr-2" 
+              className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
               style={{ backgroundColor: link.color }}
             ></div>
-            <span className="text-sm truncate flex-1">{link.title}</span>
-            <ExternalLink size={14} className="text-gray-400 ml-2" />
+            <span className="text-sm truncate flex-1 font-medium">{link.title}</span>
+            <ExternalLink size={14} className="text-gray-400 dark:text-gray-300 ml-2" />
           </a>
         ))}
         <button
@@ -161,10 +161,10 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
             e.stopPropagation();
             startEdit();
           }}
-          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center justify-center p-2 rounded border border-dashed border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all bg-gray-50 dark:bg-slate-700/50 shadow-sm dark:shadow-md dark:shadow-slate-900/30"
         >
-          <Plus size={16} className="text-gray-400" />
-          <span className="ml-1 text-sm text-gray-500">Add link</span>
+          <Plus size={16} className="text-gray-500 dark:text-gray-300" />
+          <span className="ml-1 text-sm font-medium text-gray-600 dark:text-gray-300">Add link</span>
         </button>
       </div>
     )
@@ -172,30 +172,30 @@ const QuickLinksWidget = ({ width, height, config }: QuickLinksWidgetProps) => {
 
   const renderFullView = () => {
     return (
-      <div className="grid grid-cols-3 gap-3 flex-1 overflow-y-auto p-3">
+      <div className="grid grid-cols-3 gap-3 flex-1 overflow-y-auto p-3 bg-white dark:bg-slate-800 rounded-lg">
         {links.map(link => (
           <a 
             key={link.id}
             href={link.url} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center p-3 rounded hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors relative"
+            className="flex flex-col items-center justify-center p-3 rounded hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-750 text-gray-800 dark:text-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div 
-              className="w-10 h-10 rounded-full mb-2 flex items-center justify-center"
+              className="w-10 h-10 rounded-full mb-2 flex items-center justify-center ring-2 ring-white dark:ring-slate-600 shadow-md"
               style={{ backgroundColor: link.color }}
             >
               <span className="text-white font-bold text-lg">
                 {link.title.charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className="text-sm font-medium">{link.title}</span>
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{link.title}</span>
             <div className="flex items-center mt-1">
-              <span className="text-xs text-gray-500 truncate max-w-[100px]">
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[100px]">
                 {link.url.replace(/^https?:\/\//, '').replace(/^www\./, '')}
               </span>
-              <ExternalLink size={12} className="text-gray-400 ml-1" />
+              <ExternalLink size={12} className="text-gray-400 dark:text-gray-300 ml-1" />
             </div>
           </a>
         ))}

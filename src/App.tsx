@@ -62,7 +62,13 @@ interface WidgetCategory {
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+      // Check system preference if no theme is set
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) return savedTheme as 'light' | 'dark';
+      
+      // Use system preference as default if available
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
     }
     return 'light'
   })
@@ -123,7 +129,14 @@ function App() {
   const rowHeight: number = calculateRowHeight();
 
   useEffect(() => {
+    // Apply or remove dark class
     document.documentElement.classList.toggle('dark', theme === 'dark')
+    // Also set a CSS variable for custom components that don't support Tailwind dark mode
+    document.documentElement.style.setProperty('--app-background', theme === 'dark' ? '#0f172a' : '#ffffff')
+    document.documentElement.style.setProperty('--widget-background', theme === 'dark' ? '#1e293b' : '#ffffff')
+    document.documentElement.style.setProperty('--text-primary', theme === 'dark' ? '#f1f5f9' : '#334155')
+    document.documentElement.style.setProperty('--text-secondary', theme === 'dark' ? '#94a3b8' : '#64748b')
+    // Save to localStorage
     localStorage.setItem('theme', theme)
   }, [theme])
 
@@ -158,6 +171,11 @@ function App() {
 
   const toggleTheme = (): void => {
     setTheme(theme === 'light' ? 'dark' : 'light')
+    // Apply smooth transition when toggling theme
+    document.documentElement.classList.add('transition-colors', 'duration-300')
+    setTimeout(() => {
+      document.documentElement.classList.remove('transition-colors', 'duration-300')
+    }, 300)
   }
 
   const addWidget = (type: string): void => {

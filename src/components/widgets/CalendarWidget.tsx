@@ -70,10 +70,10 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
   
   const renderCompactView = () => {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full bg-white dark:bg-slate-800 rounded-lg p-2">
         <div className="text-center">
-          <div className="text-4xl font-bold">{date.getDate()}</div>
-          <div className="text-sm opacity-80">
+          <div className="text-4xl font-bold text-gray-800 dark:text-gray-100">{date.getDate()}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">
             {date.toLocaleString('default', { month: 'short' })}
           </div>
         </div>
@@ -93,32 +93,32 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
     
     // For the full view, let's create a more robust calendar with events
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg p-3 text-gray-800 dark:text-gray-100">
         <div className="flex justify-between items-center mb-3">
-          <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+          <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">
             <ChevronLeft size={16} />
           </button>
-          <div className="text-base font-medium">
+          <div className="text-base font-medium px-3 py-1 bg-gray-50 dark:bg-slate-700 rounded-lg shadow-sm">
             {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </div>
-          <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+          <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">
             <ChevronRight size={16} />
           </button>
         </div>
         
         {/* Days of week header */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 gap-1 mb-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg p-1">
           {daysOfWeek.map(day => (
-            <div key={day} className="text-sm font-medium text-center text-gray-500 py-1">
-              {width >= 4 ? day : day.substring(0, 2)}
+            <div key={day} className="text-sm font-medium text-center text-gray-600 dark:text-gray-300 py-1.5">
+              {width >= 4 ? day : day.substring(0, 3)}
             </div>
           ))}
         </div>
         
         {/* Calendar grid with event indicators */}
-        <div className="grid grid-cols-7 gap-1 flex-1">
+        <div className="grid grid-cols-7 gap-1.5 flex-1">
           {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="rounded border border-transparent"></div>
+            <div key={`empty-${i}`} className="rounded border border-transparent bg-transparent"></div>
           ))}
           
           {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -130,17 +130,17 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
             return (
               <div 
                 key={`day-${day}`} 
-                className={`p-1 border border-gray-100 dark:border-gray-800 rounded min-h-[40px] ${
-                  isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                }`}
+                className={`p-1.5 border ${isToday ? 'border-blue-300 dark:border-blue-500' : 'border-gray-200 dark:border-gray-700'} 
+                  rounded-lg min-h-[40px] transition-all hover:border-blue-300 dark:hover:border-blue-500/70 
+                  ${isToday ? 'bg-blue-50 dark:bg-blue-900/30 shadow-sm dark:shadow-inner dark:shadow-blue-950/30' : 'hover:shadow-sm bg-white/80 dark:bg-slate-750/80'}`}
               >
                 <div className={`text-sm font-medium ${
-                  isToday ? 'text-blue-600 dark:text-blue-400' : ''
+                  isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-100'
                 }`}>
                   {day}
                 </div>
                 {hasEvent && (
-                  <div className="mt-1 w-full h-1 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
+                  <div className="mt-1 w-full h-1.5 bg-blue-400 dark:bg-blue-500 rounded-full opacity-80 shadow-sm"></div>
                 )}
               </div>
             );
@@ -149,19 +149,22 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
         
         {/* Events for today - only show in larger layouts */}
         {width >= 4 && (
-          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-            <div className="text-sm font-medium mb-1">Today's Events</div>
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800/30 shadow-sm">
+            <div className="text-sm font-semibold mb-2 text-blue-800 dark:text-blue-300">Today's Events</div>
             {safeEvents.length > 0 ? (
               <div className="space-y-2">
                 {safeEvents.map((event, index) => (
-                  <div key={index} className="text-xs p-1.5 bg-white dark:bg-gray-800 rounded flex justify-between">
-                    <div className="font-medium">{event.title}</div>
-                    <div className="text-gray-500 dark:text-gray-400">{event.time}</div>
+                  <div key={index} className="text-xs p-2.5 bg-white dark:bg-slate-750 rounded-lg flex justify-between items-center shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800/50 transition-colors">
+                    <div className="font-medium text-gray-800 dark:text-gray-100 flex items-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 mr-1.5"></div>
+                      {event.title}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-300 font-medium bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{event.time}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-xs text-gray-500 dark:text-gray-400">No events today</div>
+              <div className="text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-750 rounded-lg p-3 border border-gray-200 dark:border-gray-700">No events today</div>
             )}
           </div>
         )}
@@ -174,9 +177,9 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
     return (
       <>
         <div className="mb-6">
-          <label className="block text-sm mb-2 font-medium">First Day of Week</label>
+          <label className="block text-sm mb-2 font-medium text-gray-800 dark:text-gray-100">First Day of Week</label>
           <select 
-            className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
+            className="w-full p-2 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600 text-gray-800 dark:text-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent outline-none"
             value={localConfig.startDay || 'sunday'}
             onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value as 'sunday' | 'monday'})}
           >
@@ -186,16 +189,16 @@ const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetCon
         </div>
         
         <div className="mb-6">
-          <label className="block text-sm mb-2 font-medium">Show Week Numbers</label>
-          <div className="flex items-center">
+          <label className="block text-sm mb-2 font-medium text-gray-800 dark:text-gray-100">Show Week Numbers</label>
+          <div className="flex items-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
             <input 
               type="checkbox"
               checked={localConfig.showWeekNumbers || false}
               onChange={(e) => setLocalConfig({...localConfig, showWeekNumbers: e.target.checked})}
-              className="mr-2 h-4 w-4"
+              className="mr-3 h-4 w-4 accent-blue-500 dark:accent-blue-400"
               id="weekNumbers"
             />
-            <label htmlFor="weekNumbers" className="text-sm">Display week numbers</label>
+            <label htmlFor="weekNumbers" className="text-sm text-gray-800 dark:text-gray-100">Display week numbers</label>
           </div>
         </div>
       </>

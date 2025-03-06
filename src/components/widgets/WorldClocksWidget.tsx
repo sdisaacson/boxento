@@ -22,13 +22,13 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   const [timezones, setTimezones] = useState<TimezoneItem[]>(config?.timezones || [
     { id: 1, name: 'New York', timezone: 'America/New_York' },
     { id: 2, name: 'London', timezone: 'Europe/London' },
-    { id: 3, name: 'Tokyo', timezone: 'Asia/Tokyo' }
+    { id: 3, name: 'Tokyo', timezone: 'Asia/Tokyo' },
+    { id: 4, name: 'Sydney', timezone: 'Australia/Sydney' }
   ])
   const [showSettings, setShowSettings] = useState<boolean>(false)
   const [showAddForm, setShowAddForm] = useState<boolean>(false)
   const [newTimezone, setNewTimezone] = useState<Omit<TimezoneItem, 'id'>>({ name: '', timezone: '' })
   const settingsRef = useRef<HTMLDivElement>(null)
-  const settingsButtonRef = useRef<HTMLButtonElement>(null)
   const widgetRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
@@ -39,8 +39,7 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
     return () => clearInterval(timer)
   }, [])
   
-  // No need for click outside handler as the modal backdrop handles this
-  
+  // Format time in 12-hour format (e.g., "10:30 PM")
   const formatTime = (date: Date, timezone: string): string => {
     try {
       return date.toLocaleTimeString('en-US', { 
@@ -52,6 +51,77 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
     } catch (error) {
       console.error(`Error formatting time for timezone ${timezone}:`, error)
       return '--:--'
+    }
+  }
+  
+  // Get the date (Today, Yesterday, Tomorrow, or actual date)
+  const getRelativeDate = (date: Date, timezone: string): string => {
+    try {
+      const today = new Date()
+      const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }))
+      const tzToday = new Date(today.toLocaleString('en-US', { timeZone: timezone }))
+      
+      const tzDateDay = tzDate.getDate()
+      const tzTodayDay = tzToday.getDate()
+      
+      if (tzDateDay === tzTodayDay) {
+        return 'Today'
+      } else if (tzDateDay === tzTodayDay + 1) {
+        return 'Tomorrow'
+      } else if (tzDateDay === tzTodayDay - 1) {
+        return 'Yesterday'
+      } else {
+        return tzDate.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        })
+      }
+    } catch (error) {
+      return 'Today'
+    }
+  }
+  
+  // Get time difference text (e.g. "+8 hrs" or "-2 hrs")
+  const getTimeDiff = (timezone: string): string => {
+    try {
+      // Create Date objects for the current time
+      const now = new Date();
+      
+      // Get the current time in the user's local timezone
+      const localTime = now.getTime();
+      const localOffset = now.getTimezoneOffset() * 60000; // Convert to milliseconds
+      
+      // Get the current time in the target timezone
+      const targetDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      const targetTime = targetDate.getTime();
+      
+      // Calculate difference in milliseconds, adjusting for the local timezone offset
+      const timeDiff = targetTime - localTime + localOffset;
+      
+      // Convert to hours
+      const hoursDiff = timeDiff / 3600000; // 1 hour = 3600000 milliseconds
+      
+      // Round to nearest half hour for display
+      const roundedHours = Math.round(hoursDiff * 2) / 2;
+      
+      if (roundedHours === 0) {
+        return 'Same time';
+      } else {
+        const sign = roundedHours > 0 ? '+' : '';
+        
+        // Check if it's a whole number or has .5
+        if (roundedHours % 1 === 0) {
+          return `${sign}${roundedHours} hrs`;
+        } else {
+          // It has .5
+          const wholePart = Math.floor(Math.abs(roundedHours));
+          return `${sign}${roundedHours < 0 ? '-' : ''}${wholePart}.5 hrs`;
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating time difference:', error);
+      return '';
     }
   }
   
@@ -68,17 +138,216 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
     setTimezones(timezones.filter(tz => tz.id !== id))
   }
   
+  // Render an analog clock
+  const renderClock = (timezone: string, size: number = 80, isDarkMode: boolean = false) => {
+    try {
+      // Calculate time parts for analog clock
+      const date = new Date(currentTime)
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      })
+      const parts = formatter.formatToParts(date)
+      
+      const hour = parseInt(parts.find(part => part.type === 'hour')?.value || '12')
+      const minute = parseInt(parts.find(part => part.type === 'minute')?.value || '0')
+      const second = parseInt(parts.find(part => part.type === 'second')?.value || '0')
+      const dayPeriod = parts.find(part => part.type === 'dayPeriod')?.value || 'AM'
+      
+      // Convert to 24-hour for angle calculations
+      const hour24 = (dayPeriod === 'PM' && hour !== 12) ? hour + 12 : (dayPeriod === 'AM' && hour === 12) ? 0 : hour
+      
+      // Calculate angles
+      const hourAngle = ((hour24 % 12) * 30) + (minute * 0.5)
+      const minuteAngle = minute * 6
+      const secondAngle = second * 6
+      
+      // Calculate center and radius
+      const center = size / 2
+      const radius = (size / 2) * 0.85  // 85% of half size
+      
+      // Calculate hand lengths
+      const hourHandLength = radius * 0.5
+      const minuteHandLength = radius * 0.7
+      const secondHandLength = radius * 0.8
+      
+      // Colors based on theme - support the dark-mode class
+      const darkModeMediaQuery = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+      const isDarkTheme = isDarkMode || (document.documentElement.classList.contains('dark')) || darkModeMediaQuery.matches;
+      
+      // Enhanced colors for better contrast and aesthetics
+      const backgroundColor = isDarkTheme ? '#0f172a' : '#f8fafc'; // slate-900 for dark, light gray for light
+      const textColor = isDarkTheme ? '#f8fafc' : '#334155'; // Brighter text for dark mode
+      const handColor = isDarkTheme ? '#e2e8f0' : '#334155'; // Brighter hands for dark mode
+      const secondHandColor = isDarkTheme ? '#38bdf8' : '#3b82f6';  // Sky-500 for dark mode
+      const borderColor = isDarkTheme ? '#475569' : '#e2e8f0'; // Brighter border for dark mode
+      const hourMarkerColor = isDarkTheme ? '#94a3b8' : '#64748b'; // slate-400 for dark mode
+      
+      return (
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
+          {/* Clock Face with enhanced depth */}
+          {/* Background circle with gradient for depth */}
+          <defs>
+            <radialGradient id={`clockGradient-${timezone.replace(/\//g, '-')}`} cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="0%" stopColor={isDarkTheme ? '#1e293b' : '#ffffff'} />
+              <stop offset="100%" stopColor={backgroundColor} />
+            </radialGradient>
+          </defs>
+          
+          {/* Main clock face */}
+          <circle 
+            cx={center} 
+            cy={center} 
+            r={radius} 
+            fill={`url(#clockGradient-${timezone.replace(/\//g, '-')})`} 
+            stroke={borderColor} 
+            strokeWidth="1.5" 
+          />
+          
+          {/* Outer ring for depth */}
+          <circle 
+            cx={center} 
+            cy={center} 
+            r={radius+1} 
+            fill="none" 
+            stroke={isDarkTheme ? 'rgba(15, 23, 42, 0.8)' : 'rgba(226, 232, 240, 0.8)'} 
+            strokeWidth="1" 
+          />
+          
+          {/* Inner shadow for depth */}
+          {isDarkTheme && (
+            <circle 
+              cx={center} 
+              cy={center} 
+              r={radius-2} 
+              fill="none" 
+              stroke="rgba(15, 23, 42, 0.6)" 
+              strokeWidth="3" 
+              filter="blur(2px)" 
+            />
+          )}
+          
+          {/* Hour Markers */}
+          {[...Array(12)].map((_, i) => {
+            const angle = (i * 30) * (Math.PI / 180)
+            const x1 = center + (radius * 0.8) * Math.sin(angle)
+            const y1 = center - (radius * 0.8) * Math.cos(angle)
+            const x2 = center + radius * Math.sin(angle)
+            const y2 = center - radius * Math.cos(angle)
+            
+            return (
+              <line 
+                key={i} 
+                x1={x1} 
+                y1={y1} 
+                x2={x2} 
+                y2={y2} 
+                stroke={textColor} 
+                strokeWidth={i % 3 === 0 ? 1.5 : 0.75} 
+                strokeOpacity={i % 3 === 0 ? 0.8 : 0.5} 
+              />
+            )
+          })}
+          
+          {/* Hour Numbers */}
+          {[...Array(12)].map((_, i) => {
+            if (i % 3 === 0) { // Only show 12, 3, 6, 9 for simplicity
+              const hour = i === 0 ? 12 : i
+              const angle = (i * 30) * (Math.PI / 180)
+              const x = center + (radius * 0.65) * Math.sin(angle)
+              const y = center - (radius * 0.65) * Math.cos(angle) + 4 // +4 for text vertical centering
+              
+              return (
+                <text 
+                  key={i} 
+                  x={x} 
+                  y={y} 
+                  textAnchor="middle" 
+                  fill={textColor} 
+                  fontSize={radius * 0.18}
+                  fontWeight="500"
+                >
+                  {hour}
+                </text>
+              )
+            }
+            return null
+          })}
+          
+          {/* Hour Hand */}
+          <line
+            x1={center}
+            y1={center}
+            x2={center + hourHandLength * Math.sin(hourAngle * Math.PI / 180)}
+            y2={center - hourHandLength * Math.cos(hourAngle * Math.PI / 180)}
+            stroke={handColor}
+            strokeWidth={radius * 0.05}
+            strokeLinecap="round"
+          />
+          
+          {/* Minute Hand */}
+          <line
+            x1={center}
+            y1={center}
+            x2={center + minuteHandLength * Math.sin(minuteAngle * Math.PI / 180)}
+            y2={center - minuteHandLength * Math.cos(minuteAngle * Math.PI / 180)}
+            stroke={handColor}
+            strokeWidth={radius * 0.04}
+            strokeLinecap="round"
+          />
+          
+          {/* Second Hand */}
+          <line
+            x1={center}
+            y1={center}
+            x2={center + secondHandLength * Math.sin(secondAngle * Math.PI / 180)}
+            y2={center - secondHandLength * Math.cos(secondAngle * Math.PI / 180)}
+            stroke={secondHandColor}
+            strokeWidth={radius * 0.02}
+            strokeLinecap="round"
+          />
+          
+          {/* Center Circle */}
+          <circle cx={center} cy={center} r={radius * 0.06} fill={handColor} />
+        </svg>
+      )
+    } catch (error) {
+      console.error("Error rendering clock:", error)
+      return <div className="text-red-500">Clock Error</div>
+    }
+  }
+  
   const renderCompactView = () => {
-    const tz = timezones[0] || { timezone: 'UTC' }
+    const tz = timezones[0] || { timezone: 'UTC', name: 'UTC' }
+    
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="text-xl font-semibold">
-            {formatTime(currentTime, tz.timezone)}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {formatTimezoneName(tz.timezone)}
-          </div>
+      <div className="flex flex-col items-center justify-center h-full p-2">
+        {renderClock(tz.timezone, 60, false)}
+        <div className="text-xs font-medium mt-1 text-center">
+          {tz.name}
+        </div>
+      </div>
+    )
+  }
+  
+  const renderDefaultView = () => {
+    return (
+      <div className="flex-1 h-full p-2">
+        <div className="h-full grid grid-cols-2 gap-2">
+          {timezones.slice(0, 2).map(tz => (
+            <div key={tz.id} className="flex flex-col items-center justify-center">
+              {renderClock(tz.timezone, 45, false)}
+              <div className="text-xs font-medium mt-1 text-center">
+                {tz.name}
+              </div>
+              <div className="text-xs text-gray-500">
+                {getRelativeDate(currentTime, tz.timezone)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -86,15 +355,118 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
   
   const renderMediumView = () => {
     return (
-      <div className="flex-1 overflow-y-auto p-2">
-        {timezones.slice(0, 3).map(tz => (
-          <div key={tz.id} className="mb-2 last:mb-0">
-            <div className="text-sm font-medium">{tz.name}</div>
-            <div className="text-xl">{formatTime(currentTime, tz.timezone)}</div>
+      <div className="flex-1 p-2">
+        <div className="grid grid-cols-2 gap-3 h-full">
+          {timezones.slice(0, 4).map(tz => (
+            <div key={tz.id} className="flex flex-col items-center justify-center">
+              {renderClock(tz.timezone, 55, false)}
+              <div className="text-xs font-medium mt-1">
+                {tz.name}
+              </div>
+              <div className="text-xs text-gray-500">
+                {getRelativeDate(currentTime, tz.timezone)}
+              </div>
+              <div className="text-xs text-gray-500">
+                {getTimeDiff(tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  
+  const renderWideView = () => {
+    return (
+      <div className="p-2 flex-1">
+        <div className="grid grid-cols-4 gap-3 h-full">
+          {timezones.slice(0, 4).map(tz => (
+            <div key={tz.id} className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-950 rounded-lg p-3">
+              {renderClock(tz.timezone, 65, false)}
+              <div className="text-sm font-medium mt-1 truncate max-w-full">
+                {tz.name}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {getRelativeDate(currentTime, tz.timezone)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {getTimeDiff(tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  
+  const renderTallView = () => {
+    return (
+      <div className="flex-1 p-3 overflow-auto space-y-3">
+        {timezones.slice(0, 6).map(tz => (
+          <div key={tz.id} className="flex items-center p-3 bg-white/40 dark:bg-gray-950 rounded-lg">
+            <div className="mr-4">
+              {renderClock(tz.timezone, 50, false)}
+            </div>
+            <div className="flex-1">
+              <div className="font-medium">
+                {tz.name}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {getRelativeDate(currentTime, tz.timezone)}
+              </div>
+              <div className="text-sm font-bold tabular-nums">
+                {formatTime(currentTime, tz.timezone)}
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {getTimeDiff(tz.timezone)}
+            </div>
           </div>
         ))}
       </div>
     )
+  }
+  
+  const renderFullView = () => {
+    return (
+      <div className="p-4 flex-1">
+        <div className="grid grid-cols-4 gap-4 h-full">
+          {timezones.map(tz => (
+            <div key={tz.id} className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-950 rounded-lg p-4">
+              <div className="text-xl font-bold tabular-nums mb-2">
+                {formatTime(currentTime, tz.timezone)}
+              </div>
+              {renderClock(tz.timezone, 80, false)}
+              <div className="text-base font-medium mt-2">
+                {tz.name}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {getRelativeDate(currentTime, tz.timezone)}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {getTimeDiff(tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  
+  const renderContent = () => {
+    if (width === 1 && height === 1) {
+      return renderCompactView()
+    } else if (width >= 4 && height >= 4) {
+      return renderFullView()
+    } else if (width >= 3) {
+      return renderWideView()
+    } else if (height >= 3) {
+      return renderTallView()
+    } else if (width >= 2 && height >= 2) {
+      return renderMediumView()
+    } else {
+      return renderDefaultView()
+    }
   }
   
   const renderSettings = () => {
@@ -183,7 +555,7 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
                       >
                         <div>
                           <div className="font-medium text-sm">{tz.name}</div>
-                          <div className="text-xs text-gray-500">{formatTimezoneName(tz.timezone)}</div>
+                          <div className="text-xs text-gray-500">{tz.timezone.replace('_', ' ')}</div>
                         </div>
                         <div className="flex items-center">
                           <div className="text-sm mr-2">
@@ -213,173 +585,6 @@ const WorldClocksWidget = ({ width, height, config }: WorldClocksWidgetProps) =>
         </div>
       </div>,
       document.body
-    )
-  }
-  
-  const renderContent = () => {
-    if (width === 1 && height === 1) {
-      return renderCompactView()
-    } else if (width >= 4 && height >= 4) {
-      return renderFullView()
-    } else if (width >= 3) {
-      return renderWideView()
-    } else if (height >= 3) {
-      return renderTallView()
-    } else {
-      return renderDefaultView()
-    }
-  }
-  
-  const renderDefaultView = () => {
-    return (
-      <div className="flex-1 overflow-y-auto p-2 space-y-2">
-        {timezones.slice(0, 2).map(tz => (
-          <div key={tz.id} className="flex justify-between items-center">
-            <div className="text-sm">{tz.name}</div>
-            <div className="text-sm font-medium">{formatTime(currentTime, tz.timezone)}</div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  
-  const renderWideView = () => {
-    return (
-      <div className="grid grid-cols-3 gap-4 p-4 flex-1">
-        {timezones.map(tz => (
-          <div 
-            key={tz.id} 
-            className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 dark:border-gray-700"
-          >
-            <div className="relative mb-1">
-              <svg width="64" height="64" viewBox="0 0 64 64" className="transform -rotate-90">
-                <circle 
-                  cx="32" 
-                  cy="32" 
-                  r="28" 
-                  fill="none" 
-                  stroke="#e5e7eb" 
-                  strokeWidth="2" 
-                  className="dark:stroke-gray-700"
-                />
-                <circle 
-                  cx="32" 
-                  cy="32" 
-                  r="28" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="4" 
-                  strokeDasharray="175.93"
-                  strokeDashoffset={175.93 - (175.93 * getTimeProgress(tz.timezone))}
-                  className="text-blue-500"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-xl font-bold">
-                  {formatTime(currentTime, tz.timezone)}
-                </div>
-              </div>
-            </div>
-            <div className="text-sm font-medium mt-2">{tz.name}</div>
-            <div className="text-xs text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  
-  // Helper function to get the time progress as a fraction for the circle animation
-  const getTimeProgress = (timezone: string): number => {
-    try {
-      const date = new Date(currentTime)
-      const options: Intl.DateTimeFormatOptions = { timeZone: timezone }
-      const formatter = new Intl.DateTimeFormat('en-US', options)
-      const parts = formatter.formatToParts(date)
-      
-      const hour = parseInt(parts.find(part => part.type === 'hour')?.value || '0')
-      const minute = parseInt(parts.find(part => part.type === 'minute')?.value || '0')
-      const second = parseInt(parts.find(part => part.type === 'second')?.value || '0')
-      
-      // Calculate progress through the day (0-1)
-      return (hour * 3600 + minute * 60 + second) / 86400
-    } catch (error) {
-      console.error(`Error calculating time progress for ${timezone}:`, error)
-      return 0
-    }
-  }
-  
-  const formatTimezoneName = (timezone: string): string => {
-    return timezone
-      .replace(/_/g, ' ')
-      .replace(/\//g, ' / ')
-      .replace(/^(America|Europe|Asia|Africa|Australia|Pacific) \/ /, '')
-  }
-  
-  const renderTallView = () => {
-    return (
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {timezones.map(tz => (
-          <div 
-            key={tz.id} 
-            className="flex justify-between items-center p-2 rounded-lg border border-gray-200 dark:border-gray-700"
-          >
-            <div>
-              <div className="font-medium">{tz.name}</div>
-              <div className="text-xs text-gray-500">{formatTimezoneName(tz.timezone)}</div>
-            </div>
-            <div className="text-xl font-bold">
-              {formatTime(currentTime, tz.timezone)}
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-  
-  const renderFullView = () => {
-    return (
-      <div className="grid grid-cols-3 gap-4 p-4 flex-1">
-        {timezones.map(tz => (
-          <div 
-            key={tz.id} 
-            className="flex flex-col items-center justify-center p-4 rounded-lg border border-gray-200 dark:border-gray-700"
-          >
-            <div className="relative mb-2">
-              <svg width="100" height="100" viewBox="0 0 100 100" className="transform -rotate-90">
-                <circle 
-                  cx="50" 
-                  cy="50" 
-                  r="45" 
-                  fill="none" 
-                  stroke="#e5e7eb" 
-                  strokeWidth="4" 
-                  className="dark:stroke-gray-700"
-                />
-                <circle 
-                  cx="50" 
-                  cy="50" 
-                  r="45" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="6" 
-                  strokeDasharray="282.74"
-                  strokeDashoffset={282.74 - (282.74 * getTimeProgress(tz.timezone))}
-                  className="text-blue-500"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-3xl font-bold">
-                  {formatTime(currentTime, tz.timezone)}
-                </div>
-              </div>
-            </div>
-            <div className="text-lg font-medium mt-3">{tz.name}</div>
-            <div className="text-sm text-gray-500 mt-1">{formatTimezoneName(tz.timezone)}</div>
-          </div>
-        ))}
-      </div>
     )
   }
   

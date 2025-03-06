@@ -265,19 +265,19 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
   
   // Default view for 2x2 layout
   const renderDefaultView = () => {
-    if (!weather) return <div className="flex items-center justify-center h-full">Loading...</div>;
+    if (!weather) return <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300">Loading...</div>;
     
     return (
-      <div className="h-full flex flex-col items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-lg text-gray-800 dark:text-gray-100">
         <div className="text-center">
-          <div className="mb-2">
+          <div className="mb-2 text-yellow-500 dark:text-yellow-400">
             {getWeatherIcon(weather.condition, weather.icon)}
           </div>
-          <div className="text-4xl font-bold mb-1">
+          <div className="text-4xl font-bold mb-1 text-gray-800 dark:text-gray-100">
             {formatTemperature(weather.temperature)}
           </div>
-          <div className="text-sm">{weather.location}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <div className="text-sm text-gray-800 dark:text-gray-100">{weather.location}</div>
+          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
             {weather.description}
           </div>
         </div>
@@ -287,10 +287,10 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
   
   // Wide view for 3x2, 4x2 layouts
   const renderWideView = () => {
-    if (!weather) return <div className="flex items-center justify-center h-full">Loading...</div>;
+    if (!weather) return <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300 animate-pulse">Loading...</div>;
     
     return (
-      <div className="h-full flex">
+      <div className="h-full flex bg-white dark:bg-slate-800 rounded-lg p-2 text-gray-800 dark:text-gray-100">
         <div className="w-1/3 flex flex-col justify-center items-center pr-4">
           <div className="mb-2">
             {getWeatherIcon(weather.condition, weather.icon)}
@@ -305,24 +305,24 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
         </div>
         
         <div className="w-2/3 border-l border-gray-200 dark:border-gray-700 pl-4 py-2">
-          <div className="text-sm font-medium mb-2">5-Day Forecast</div>
-          <div className="grid grid-cols-5 gap-1">
+          <div className="text-sm font-medium mb-2 text-gray-800 dark:text-gray-100">5-Day Forecast</div>
+          <div className="grid grid-cols-5 gap-1 bg-gray-50 dark:bg-slate-700/60 p-2 rounded-lg">
             {weather.forecast.map((day, i) => (
-              <div key={i} className="text-center">
-                <div className="text-xs mb-1">{day.day}</div>
-                <div className="text-center">
+              <div key={i} className="text-center hover:bg-white dark:hover:bg-slate-700 rounded transition-colors p-1">
+                <div className="text-xs mb-1 font-medium text-gray-700 dark:text-gray-300">{day.day}</div>
+                <div className="text-center text-blue-500 dark:text-blue-400">
                   {getWeatherIcon(day.condition, day.icon)}
                 </div>
-                <div className="text-xs mt-1">
+                <div className="text-xs mt-1 font-medium text-gray-800 dark:text-gray-100">
                   {formatTemperature(day.temp.max)}
                 </div>
               </div>
             ))}
           </div>
           
-          <div className="flex justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
-            <div>Humidity: {weather.humidity}%</div>
-            <div>Wind: {weather.windSpeed}m/s</div>
+          <div className="flex justify-between mt-3 text-xs">
+            <div className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-md text-gray-700 dark:text-gray-300">Humidity: <span className="font-medium text-gray-800 dark:text-gray-100">{weather.humidity}%</span></div>
+            <div className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-md text-gray-700 dark:text-gray-300">Wind: <span className="font-medium text-gray-800 dark:text-gray-100">{weather.windSpeed}m/s</span></div>
           </div>
         </div>
       </div>
@@ -331,19 +331,19 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
   
   // Tall view for 2x3, 2x4 layouts
   const renderTallView = () => {
-    if (!weather) return <div className="flex items-center justify-center h-full">Loading...</div>;
+    if (!weather) return <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300 animate-pulse">Loading...</div>;
     
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg p-2 text-gray-800 dark:text-gray-100">
         <div className="flex-shrink-0 text-center py-3">
-          <div className="text-sm mb-1">{weather.location}</div>
-          <div className="flex justify-center mb-2">
+          <div className="text-sm mb-1 font-medium text-gray-800 dark:text-gray-100">{weather.location}</div>
+          <div className="flex justify-center mb-2 text-yellow-500 dark:text-yellow-400">
             {getWeatherIcon(weather.condition, weather.icon)}
           </div>
-          <div className="text-4xl font-bold mb-1">
+          <div className="text-4xl font-bold mb-1 text-gray-800 dark:text-gray-100">
             {formatTemperature(weather.temperature)}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-gray-600 dark:text-gray-300">
             Feels like {formatTemperature(weather.feelsLike)}
           </div>
         </div>
@@ -373,10 +373,10 @@ const WeatherWidget = ({ width, height, config }: WidgetProps<WeatherWidgetConfi
   
   // Full view for 3x3, 4x4, etc
   const renderFullView = () => {
-    if (!weather) return <div className="flex items-center justify-center h-full">Loading...</div>;
+    if (!weather) return <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300 animate-pulse">Loading...</div>;
     
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col bg-white dark:bg-slate-800 rounded-lg p-3 text-gray-800 dark:text-gray-100">
         <div className="flex justify-between items-center mb-3">
           <div>
             <div className="text-xl font-bold">{weather.location}</div>
