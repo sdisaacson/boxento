@@ -58,11 +58,15 @@ const QuickLinksWidget = ({ width, height, config }) => {
         target="_blank"
         rel="noopener noreferrer" 
         className="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        style={{
+          borderLeft: `3px solid ${link.color || '#3B82F6'}`,
+          marginBottom: '2px'
+        }}
       >
         {link.icon && (
           <img src={link.icon} alt="" className="w-5 h-5" />
         )}
-        <span className="truncate">{link.title}</span>
+        <span className="truncate font-medium">{link.title}</span>
       </a>
     ));
   };
@@ -84,44 +88,124 @@ const QuickLinksWidget = ({ width, height, config }) => {
   // Default view for 2x2 layout
   const renderDefaultView = () => {
     return (
-      <div className="h-full">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="h-full overflow-auto py-1">
+        <div className="flex flex-col">
           {renderLinks(4)}
         </div>
+        {links.length < 1 && (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            No links added yet
+          </div>
+        )}
+        {links.length > 0 && links.length < 4 && (
+          <button 
+            onClick={() => startEdit()} 
+            className="mt-2 w-full p-2 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+          >
+            Add Link
+          </button>
+        )}
       </div>
     );
   };
 
   // Wide view for layouts like 4x2, 6x2
   const renderWideView = () => {
+    // Determine number of columns based on width
+    const columns = width <= 4 ? 4 : 6;
+    const maxLinks = columns * 2;
+    
     return (
-      <div className="h-full">
-        <div className="grid grid-cols-4 gap-2">
-          {renderLinks(8)}
+      <div className="h-full overflow-auto">
+        <div className={`grid grid-cols-${columns} gap-2`}>
+          {renderLinks(maxLinks)}
         </div>
+        {links.length < 1 && (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            No links added yet
+          </div>
+        )}
+        {links.length > 0 && links.length < maxLinks && (
+          <button 
+            onClick={() => startEdit()} 
+            className="mt-2 w-full p-2 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+          >
+            Add Link
+          </button>
+        )}
       </div>
     );
   };
 
   // Tall view for layouts like 2x4, 2x6
   const renderTallView = () => {
+    // Calculate how many links we can show based on height
+    const maxLinks = height * 4;
+    
     return (
-      <div className="h-full">
+      <div className="h-full overflow-auto">
         <div className="grid grid-cols-2 gap-2">
-          {renderLinks(8)}
+          {renderLinks(maxLinks)}
         </div>
+        {links.length < 1 && (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            No links added yet
+          </div>
+        )}
+        {links.length > 0 && links.length < maxLinks && (
+          <button 
+            onClick={() => startEdit()} 
+            className="mt-2 w-full p-2 text-sm text-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+          >
+            Add Link
+          </button>
+        )}
       </div>
     );
   };
 
-  // Full view for 2x2 or larger layout
+  // Full view for larger layouts
   const renderFullView = () => {
-    const columns = width >= 3 ? 3 : 2;
-    const maxLinks = width * height * 2;
+    // For full view, we'll show a grid layout with larger icons and more details
+    // Calculate columns based on width - at least 3 for width >= 4
+    const columns = width >= 4 ? Math.min(width, 5) : 3;
     
     return (
-      <div className={`grid grid-cols-${columns} gap-2 overflow-y-auto max-h-full`}>
-        {renderLinks(maxLinks)}
+      <div className="h-full overflow-auto">
+        <div className={`grid grid-cols-${columns} gap-3 p-1`}>
+          {links.map(link => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="flex flex-col items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              style={{
+                borderTop: `3px solid ${link.color || '#3B82F6'}`
+              }}
+            >
+              {link.icon ? (
+                <img src={link.icon} alt="" className="w-10 h-10 mb-2" />
+              ) : (
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center mb-2"
+                  style={{ backgroundColor: link.color || '#3B82F6' }}
+                >
+                  <span className="text-white font-bold">{link.title.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              <span className="text-center font-medium truncate w-full">{link.title}</span>
+            </a>
+          ))}
+          
+          <button 
+            onClick={() => startEdit()} 
+            className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors h-full min-h-[100px]"
+          >
+            <span className="text-3xl text-gray-400 mb-1">+</span>
+            <span className="text-sm text-gray-500">Add Link</span>
+          </button>
+        </div>
       </div>
     );
   };

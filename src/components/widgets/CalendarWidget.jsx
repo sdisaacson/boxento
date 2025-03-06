@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Calendar, X, CircleDot } from 'lucide-react'
+import { Calendar, X, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from '../ui/Modal'
 import { useWidgetSettings } from '../../utils/widgetHelpers'
 import WidgetHeader from '../ui/WidgetHeader'
@@ -32,6 +32,11 @@ const CalendarWidget = ({ width, height, config }) => {
   
   // Simplified settings state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [events, setEvents] = useState([
+    { title: 'Team Meeting', time: '10:00 AM' },
+    { title: 'Lunch with Alex', time: '12:30 PM' },
+    { title: 'Product Demo', time: '3:00 PM' }
+  ])
   
   /**
    * Update the date every minute
@@ -92,54 +97,92 @@ const CalendarWidget = ({ width, height, config }) => {
   }
   
   const renderFullCalendar = () => {
-    const currentYear = date.getFullYear()
-    const currentMonth = date.getMonth()
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth)
-    const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
     
-    const days = []
-    const weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+    // Make sure events is defined and is an array
+    const safeEvents = Array.isArray(events) ? events : [];
     
-    // Add weekday headers
-    weekdays.forEach((day) => {
-      days.push(
-        <div key={`header-${day}`} className="text-center text-xs font-medium py-1">
-          {day}
-        </div>
-      )
-    })
-    
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="p-1" />)
-    }
-    
-    // Add cells for days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = day === date.getDate() && 
-                       currentMonth === date.getMonth() && 
-                       currentYear === date.getFullYear()
-      
-      days.push(
-        <div key={`day-${day}`} className="p-1">
-          <div className={`${isToday ? 'bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} rounded-full w-8 h-8 flex items-center justify-center text-sm cursor-pointer`}>
-            {day}
-          </div>
-        </div>
-      )
-    }
-    
+    // For the full view, let's create a more robust calendar with events
     return (
       <div className="h-full flex flex-col">
-        <div className="text-center mb-2 font-medium">
-          {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        <div className="flex justify-between items-center mb-3">
+          <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+            <ChevronLeft size={16} />
+          </button>
+          <div className="text-base font-medium">
+            {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </div>
+          <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+            <ChevronRight size={16} />
+          </button>
         </div>
-        <div className="grid grid-cols-7 gap-0 flex-grow">
-          {days}
+        
+        {/* Days of week header */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {daysOfWeek.map(day => (
+            <div key={day} className="text-sm font-medium text-center text-gray-500 py-1">
+              {width >= 4 ? day : day.substring(0, 2)}
+            </div>
+          ))}
         </div>
+        
+        {/* Calendar grid with event indicators */}
+        <div className="grid grid-cols-7 gap-1 flex-1">
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="rounded border border-transparent"></div>
+          ))}
+          
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const isToday = day === date.getDate();
+            // Simulate having events on some days
+            const hasEvent = [1, 5, 10, 15, 20, 25].includes(day);
+            
+            return (
+              <div 
+                key={`day-${day}`} 
+                className={`p-1 border border-gray-100 dark:border-gray-800 rounded min-h-[40px] ${
+                  isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                }`}
+              >
+                <div className={`text-sm font-medium ${
+                  isToday ? 'text-blue-600 dark:text-blue-400' : ''
+                }`}>
+                  {day}
+                </div>
+                {hasEvent && (
+                  <div className="mt-1 w-full h-1 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Events for today - only show in larger layouts */}
+        {width >= 4 && (
+          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+            <div className="text-sm font-medium mb-1">Today's Events</div>
+            {safeEvents.length > 0 ? (
+              <div className="space-y-2">
+                {safeEvents.map((event, index) => (
+                  <div key={index} className="text-xs p-1.5 bg-white dark:bg-gray-800 rounded flex justify-between">
+                    <div className="font-medium">{event.title}</div>
+                    <div className="text-gray-500 dark:text-gray-400">{event.time}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-500 dark:text-gray-400">No events today</div>
+            )}
+          </div>
+        )}
       </div>
-    )
-  }
+    );
+  };
 
   // Modal content for settings
   const renderSettingsContent = () => {
@@ -212,13 +255,13 @@ const CalendarWidget = ({ width, height, config }) => {
   const renderDefaultView = () => {
     return (
       <div className="h-full flex flex-col">
-        <div className="text-center mb-2 font-medium">
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400 mb-2">
           {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </div>
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <div className="text-4xl font-bold">{date.getDate()}</div>
-            <div className="text-sm opacity-80">
+            <div className="text-7xl font-bold mb-1">{date.getDate()}</div>
+            <div className="text-sm font-medium">
               {date.toLocaleString('default', { weekday: 'long' })}
             </div>
           </div>
@@ -229,12 +272,109 @@ const CalendarWidget = ({ width, height, config }) => {
 
   // Wide view for layouts like 4x2, 6x2
   const renderWideView = () => {
-    return renderFullCalendar(); // For calendar, wide view can show the full calendar
+    // Make sure events is defined and is an array
+    const safeEvents = Array.isArray(events) ? events : [];
+    
+    return (
+      <div className="h-full flex">
+        <div className="w-2/5 flex flex-col justify-center items-center border-r border-gray-200 dark:border-gray-700 pr-4">
+          <div className="text-center">
+            <div className="text-6xl font-bold mb-1">{date.getDate()}</div>
+            <div className="text-sm font-medium">
+              {date.toLocaleString('default', { weekday: 'long' })}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </div>
+          </div>
+        </div>
+        <div className="w-3/5 pl-4">
+          <div className="text-sm font-medium mb-2">Today's Events</div>
+          {safeEvents.length > 0 ? (
+            <div className="space-y-2 overflow-y-auto max-h-[80px]">
+              {safeEvents.slice(0, 3).map((event, index) => (
+                <div key={index} className="text-xs p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded">
+                  <div className="font-medium">{event.title}</div>
+                  <div className="text-gray-500 dark:text-gray-400">{event.time}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 dark:text-gray-400">No events today</div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   // Tall view for layouts like 2x4, 2x6
   const renderTallView = () => {
-    return renderFullCalendar(); // For calendar, tall view can show the full calendar
+    // In tall view, we'll show a mini calendar at the top, and events below
+    const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    
+    // Make sure events is defined and is an array
+    const safeEvents = Array.isArray(events) ? events : [];
+    
+    return (
+      <div className="h-full flex flex-col">
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+          {date.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        </div>
+        
+        {/* Days of week header */}
+        <div className="grid grid-cols-7 gap-1 text-center mb-1">
+          {daysOfWeek.map(day => (
+            <div key={day} className="text-xs font-medium text-gray-500">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1 text-center mb-4">
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="text-xs p-1"></div>
+          ))}
+          
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const isToday = day === date.getDate();
+            
+            return (
+              <div 
+                key={`day-${day}`} 
+                className={`text-xs p-1 rounded-full w-6 h-6 flex items-center justify-center mx-auto
+                  ${isToday ? 'bg-blue-500 text-white font-medium' : ''}
+                `}
+              >
+                {day}
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Events section */}
+        <div className="flex-1">
+          <div className="text-sm font-medium mb-1">Today's Events</div>
+          {safeEvents.length > 0 ? (
+            <div className="space-y-2 overflow-y-auto max-h-[calc(100%-2rem)]">
+              {safeEvents.map((event, index) => (
+                <div key={index} className="text-xs p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                  <div className="font-medium">{event.title}</div>
+                  <div className="text-gray-500 dark:text-gray-400">{event.time}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 dark:text-gray-400">No events today</div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (

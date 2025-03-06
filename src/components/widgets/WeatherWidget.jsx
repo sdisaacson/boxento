@@ -57,25 +57,25 @@ const WeatherWidget = ({ width, height, config }) => {
     if (width === 2 && height === 2) {
       return renderDefaultView(); // 2x2 default view
     } else if (width > 2 && height === 2) {
-      return renderWideView(); // Wide view (e.g., 4x2)
+      return renderWideView(); // Wide view (e.g., 4x2, 6x2)
     } else if (width === 2 && height > 2) {
-      return renderTallView(); // Tall view (e.g., 2x4)
+      return renderTallView(); // Tall view (e.g., 2x4, 2x6)
     } else {
       return renderFullView(); // Large view (e.g., 4x4, 6x6)
     }
   };
 
-  // Default view for 2x2 layout (previously renderMediumView)
+  // Default view for 2x2 layout
   const renderDefaultView = () => {
     return (
       <div className="flex items-center justify-between h-full">
         <div className="flex flex-col">
-          <div className="text-3xl font-medium">{weather.temperature}°</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
-          <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
+          <div className="text-4xl font-medium">{weather.temperature}°</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{weather.location}</div>
+          <div className="text-xs mt-2">H: {weather.high}° L: {weather.low}°</div>
         </div>
         <div className="flex items-center">
-          {getWeatherIcon(weather.condition, 40)}
+          {getWeatherIcon(weather.condition, 56)}
         </div>
       </div>
     )
@@ -83,24 +83,32 @@ const WeatherWidget = ({ width, height, config }) => {
   
   // Wide view for layouts like 4x2, 6x2
   const renderWideView = () => {
+    // Determine how many forecast days to show based on width
+    const forecastDays = width <= 4 ? 3 : 5;
+    
     return (
-      <div className="flex items-center justify-between h-full">
-        <div className="flex flex-col">
-          <div className="text-3xl font-medium">{weather.temperature}°</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
-          <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
-        </div>
-        <div className="flex items-center gap-4">
-          {getWeatherIcon(weather.condition, 40)}
-          <div className="grid grid-cols-3 gap-2">
-            {weather.forecast.slice(0, 3).map((day, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <div className="text-xs">{day.day}</div>
-                <div className="my-1">{getWeatherIcon(day.condition, 20)}</div>
-                <div className="text-xs font-medium">{day.temp}°</div>
-              </div>
-            ))}
+      <div className="flex h-full">
+        {/* Current weather - takes 40% width */}
+        <div className="flex items-center w-2/5">
+          <div className="flex flex-col">
+            <div className="text-4xl font-medium">{weather.temperature}°</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
+            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
           </div>
+          <div className="flex items-center ml-4">
+            {getWeatherIcon(weather.condition, 56)}
+          </div>
+        </div>
+        
+        {/* Forecast - takes 60% width */}
+        <div className="flex items-center justify-around w-3/5 ml-2 border-l border-gray-200 dark:border-gray-700 pl-4">
+          {weather.forecast.slice(0, forecastDays).map((day, index) => (
+            <div key={index} className="flex flex-col items-center">
+              <div className="text-sm font-medium">{day.day}</div>
+              <div className="my-2">{getWeatherIcon(day.condition, 32)}</div>
+              <div className="text-sm font-medium">{day.temp}°</div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -110,54 +118,68 @@ const WeatherWidget = ({ width, height, config }) => {
   const renderTallView = () => {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-3xl font-medium">{weather.temperature}°</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
-            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
-          </div>
+        {/* Current weather section */}
+        <div className="flex flex-col items-center mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{weather.location}</div>
           <div className="flex items-center">
-            {getWeatherIcon(weather.condition, 40)}
+            {getWeatherIcon(weather.condition, 64)}
+            <div className="text-5xl font-medium ml-2">{weather.temperature}°</div>
           </div>
+          <div className="text-sm mt-1">H: {weather.high}° L: {weather.low}°</div>
         </div>
         
-        <div className="flex flex-col gap-2 mt-auto">
-          {weather.forecast.map((day, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="text-sm">{day.day}</div>
-              <div className="flex items-center gap-2">
-                {getWeatherIcon(day.condition, 16)}
-                <div className="text-sm font-medium">{day.temp}°</div>
+        {/* Forecast section */}
+        <div className="flex-1 bg-white dark:bg-gray-850 rounded-lg p-2">
+          <div className="text-sm font-medium mb-2 text-center">5-Day Forecast</div>
+          <div className="flex flex-col gap-3">
+            {weather.forecast.map((day, index) => (
+              <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-750 rounded">
+                <div className="text-sm font-medium w-12">{day.day}</div>
+                <div className="flex items-center flex-1 justify-between">
+                  {getWeatherIcon(day.condition, 24)}
+                  <div className="text-sm font-medium">{day.temp}°</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     )
   }
   
   const renderFullView = () => {
+    // In full view we show detailed current weather and full forecast
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-3xl font-medium">{weather.temperature}°</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">{weather.location}</div>
-            <div className="text-xs mt-1">H: {weather.high}° L: {weather.low}°</div>
+        {/* Current weather details */}
+        <div className="flex items-start p-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
+          <div className="flex-1">
+            <div className="text-2xl font-medium">{weather.location}</div>
+            <div className="flex items-center mt-2">
+              <span className="text-5xl font-medium">{weather.temperature}°</span>
+              <span className="text-sm ml-3">Feels like 73°</span>
+            </div>
+            <div className="text-sm mt-1">H: {weather.high}° L: {weather.low}°</div>
+            <div className="text-sm mt-3 capitalize">{weather.condition}</div>
           </div>
-          <div className="flex items-center">
-            {getWeatherIcon(weather.condition, 50)}
+          <div className="flex items-start justify-end">
+            {getWeatherIcon(weather.condition, 80)}
           </div>
         </div>
         
-        <div className="grid grid-cols-5 gap-2 mt-auto">
-          {weather.forecast.map((day, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <div className="text-xs">{day.day}</div>
-              <div className="my-1">{getWeatherIcon(day.condition, 20)}</div>
-              <div className="text-xs font-medium">{day.temp}°</div>
-            </div>
-          ))}
+        {/* Forecast section */}
+        <div className="flex-1 bg-white dark:bg-gray-850 rounded-lg p-3">
+          <div className="text-base font-medium mb-3">5-Day Forecast</div>
+          <div className="grid grid-cols-5 gap-4 h-full">
+            {weather.forecast.map((day, index) => (
+              <div key={index} className="flex flex-col items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-lg">
+                <div className="text-sm font-medium mb-2">{day.day}</div>
+                <div className="my-3 flex-grow flex items-center">{getWeatherIcon(day.condition, 40)}</div>
+                <div className="text-lg font-medium">{day.temp}°</div>
+                <div className="text-xs mt-1 capitalize">{day.condition}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )

@@ -77,80 +77,6 @@ const WorldClocksWidget = ({ width, height, config }) => {
     )
   }
   
-  const renderFullView = () => {
-    return (
-      <div className="flex flex-col h-full">
-        {timezones.map((tz) => (
-          <div key={tz.id} className="flex justify-between items-center py-2 border-b dark:border-gray-700 last:border-b-0">
-            <div className="flex items-center">
-              <Clock size={14} className="mr-2 text-gray-500 dark:text-gray-400" />
-              <span>{tz.name}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium mr-2">{formatTime(currentTime, tz.timezone)}</span>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  removeTimezone(tz.id);
-                }}
-                className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
-        
-        {showAddForm ? (
-          <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-            <div className="flex mb-2">
-              <input
-                type="text"
-                placeholder="City name"
-                className="flex-1 p-1 text-sm rounded mr-1 border dark:bg-gray-700 dark:border-gray-600"
-                value={newTimezone.name}
-                onChange={(e) => setNewTimezone({...newTimezone, name: e.target.value})}
-              />
-              <input
-                type="text"
-                placeholder="Timezone (e.g., Europe/Paris)"
-                className="flex-1 p-1 text-sm rounded border dark:bg-gray-700 dark:border-gray-600"
-                value={newTimezone.timezone}
-                onChange={(e) => setNewTimezone({...newTimezone, timezone: e.target.value})}
-              />
-            </div>
-            <div className="flex justify-end">
-              <button 
-                onClick={() => setShowAddForm(false)}
-                className="text-xs mr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={addTimezone}
-                className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowAddForm(true);
-            }}
-            className="mt-2 flex items-center justify-center text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            <Plus size={14} className="mr-1" /> Add Timezone
-          </button>
-        )}
-      </div>
-    )
-  }
-  
   const renderSettings = () => {
     if (!showSettings) return null;
     
@@ -268,58 +194,131 @@ const WorldClocksWidget = ({ width, height, config }) => {
     }
   };
 
-  // Default view for 2x2 layout (previously renderMediumView)
+  // Default view for 2x2 layout
   const renderDefaultView = () => {
     return (
-      <div className="h-full">
-        <div className="flex flex-col gap-2">
+      <div className="h-full pt-1">
+        <div className="flex flex-col gap-3">
           {timezones.slice(0, 3).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center">
-              <div className="text-sm">{tz.name}</div>
-              <div className="text-sm font-medium">
+            <div key={tz.id} className="flex justify-between items-center p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+              <div className="text-sm font-medium truncate mr-2">{tz.name}</div>
+              <div className="text-sm font-medium whitespace-nowrap">
                 {formatTime(currentTime, tz.timezone)}
               </div>
             </div>
           ))}
         </div>
+        {timezones.length === 0 && (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            No timezones added
+          </div>
+        )}
       </div>
     )
   }
   
   // Wide view for layouts like 4x2, 6x2
   const renderWideView = () => {
+    // Determine grid layout based on width
+    const columns = width <= 4 ? 2 : 3;
+    // Calculate how many timezones to show
+    const maxTimezones = columns * 3;
+    
     return (
       <div className="h-full">
-        <div className="grid grid-cols-2 gap-3">
-          {timezones.slice(0, 6).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center">
-              <div className="text-sm">{tz.name}</div>
-              <div className="text-sm font-medium">
+        <div className={`grid grid-cols-${columns} gap-x-4 gap-y-2`}>
+          {timezones.slice(0, maxTimezones).map(tz => (
+            <div key={tz.id} className="flex justify-between items-center p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+              <div className="text-sm truncate mr-2">{tz.name}</div>
+              <div className="text-sm font-medium whitespace-nowrap">
                 {formatTime(currentTime, tz.timezone)}
               </div>
             </div>
           ))}
         </div>
+        {timezones.length === 0 && (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            No timezones added
+          </div>
+        )}
       </div>
     )
   }
   
   // Tall view for layouts like 2x4, 2x6
   const renderTallView = () => {
+    // Calculate how many timezones to show based on height
+    const maxTimezones = height * 3;
+    
     return (
-      <div className="h-full">
+      <div className="h-full overflow-auto">
         <div className="flex flex-col gap-2">
-          {timezones.slice(0, 6).map(tz => (
-            <div key={tz.id} className="flex justify-between items-center">
-              <div className="text-sm">{tz.name}</div>
-              <div className="text-sm font-medium">
+          {timezones.slice(0, maxTimezones).map(tz => (
+            <div key={tz.id} className="flex justify-between items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+              <div className="text-sm truncate mr-2">{tz.name}</div>
+              <div className="text-sm font-medium whitespace-nowrap">
                 {formatTime(currentTime, tz.timezone)}
               </div>
             </div>
           ))}
         </div>
+        {timezones.length === 0 && (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            No timezones added
+          </div>
+        )}
       </div>
     )
+  }
+
+  // Full view for large layouts
+  const renderFullView = () => {
+    // For full view, we'll create a more detailed layout with timezones grouped by region
+    
+    // Group timezones by continent/region
+    const groupedTimezones = timezones.reduce((acc, tz) => {
+      // Extract continent from timezone (e.g., "America/New_York" -> "America")
+      const parts = tz.timezone.split('/');
+      const continent = parts[0];
+      
+      if (!acc[continent]) {
+        acc[continent] = [];
+      }
+      
+      acc[continent].push(tz);
+      return acc;
+    }, {});
+    
+    // Get all continents
+    const continents = Object.keys(groupedTimezones);
+    
+    return (
+      <div className="h-full overflow-auto">
+        {continents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {continents.map(continent => (
+              <div key={continent} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                <h3 className="text-sm font-medium mb-2">{continent}</h3>
+                <div className="flex flex-col gap-2">
+                  {groupedTimezones[continent].map(tz => (
+                    <div key={tz.id} className="flex justify-between items-center p-2 hover:bg-white dark:hover:bg-gray-700 rounded">
+                      <div className="text-sm truncate mr-2">{tz.name}</div>
+                      <div className="text-sm font-medium whitespace-nowrap">
+                        {formatTime(currentTime, tz.timezone)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            No timezones added
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
