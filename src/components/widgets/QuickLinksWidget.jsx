@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, ExternalLink, Plus, Settings, X, Pencil } from 'lucide-react'
+import { Link, ExternalLink, Plus, X, Trash, Edit, CircleDot } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 const QuickLinksWidget = ({ width, height, config }) => {
@@ -211,13 +211,13 @@ const QuickLinksWidget = ({ width, height, config }) => {
                         onClick={() => startEdit(link)}
                         className="text-gray-500 hover:text-gray-700 p-1"
                       >
-                        <Pencil size={16} />
+                        <Edit size={16} />
                       </button>
                       <button
                         onClick={() => removeLink(link.id)}
                         className="text-red-500 hover:text-red-700 p-1"
                       >
-                        <X size={16} />
+                        <Trash size={16} />
                       </button>
                     </div>
                   </div>
@@ -249,22 +249,12 @@ const QuickLinksWidget = ({ width, height, config }) => {
   
   return (
     <div ref={widgetRef} className="widget-container">
-      <div className="flex justify-between items-center mb-2">
-        <div className="widget-drag-handle p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" fill="currentColor" />
-            <path d="M19 14C20.1046 14 21 13.1046 21 12C21 10.8954 20.1046 10 19 10C17.8954 10 17 10.8954 17 12C17 13.1046 17.8954 14 19 14Z" fill="currentColor" />
-            <path d="M5 14C6.10457 14 7 13.1046 7 12C7 10.8954 6.10457 10 5 10C3.89543 10 3 10.8954 3 12C3 13.1046 3.89543 14 5 14Z" fill="currentColor" />
-          </svg>
-        </div>
+      <div className="flex justify-end items-center mb-2">
         <button 
           className="settings-button p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
           onClick={() => setShowSettings(!showSettings)}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
+          <CircleDot size={16} />
         </button>
       </div>
       

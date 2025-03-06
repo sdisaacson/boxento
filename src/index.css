@@ -50,16 +50,6 @@ body.dragging-active {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.widget-container:hover .widget-drag-handle {
-  opacity: 1;
-}
-
-.widget-drag-handle {
-  opacity: 0.8;
-  transition: opacity 0.2s;
-  cursor: move;
-}
-
 .widget-container .settings-button {
   cursor: pointer;
   border-radius: 9999px; /* rounded-full */
