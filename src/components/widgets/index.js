@@ -4,6 +4,31 @@ import WeatherWidget, { weatherWidgetConfig } from './WeatherWidget';
 import WorldClocksWidget, { worldClocksWidgetConfig } from './WorldClocksWidget';
 import QuickLinksWidget, { quickLinksWidgetConfig } from './QuickLinksWidget';
 
+// Enhanced widget configurations with categories and descriptions
+const enhancedCalendarWidgetConfig = {
+  ...calendarWidgetConfig,
+  category: "Productivity",
+  description: "View and manage your calendar events"
+};
+
+const enhancedWeatherWidgetConfig = {
+  ...weatherWidgetConfig,
+  category: "Information",
+  description: "Check current weather and forecasts"
+};
+
+const enhancedWorldClocksWidgetConfig = {
+  ...worldClocksWidgetConfig,
+  category: "Information",
+  description: "Track time across multiple time zones"
+};
+
+const enhancedQuickLinksWidgetConfig = {
+  ...quickLinksWidgetConfig,
+  category: "Productivity",
+  description: "Quick access to your favorite websites"
+};
+
 // Widget Registry - Map of all available widgets
 export const widgetComponents = {
   calendar: CalendarWidget,
@@ -14,10 +39,10 @@ export const widgetComponents = {
 
 // Widget Configurations - Used for the widget picker and defaults
 export const widgetConfigs = [
-  calendarWidgetConfig,
-  weatherWidgetConfig,
-  worldClocksWidgetConfig,
-  quickLinksWidgetConfig
+  enhancedCalendarWidgetConfig,
+  enhancedWeatherWidgetConfig,
+  enhancedWorldClocksWidgetConfig,
+  enhancedQuickLinksWidgetConfig
 ];
 
 /**

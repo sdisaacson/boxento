@@ -3,7 +3,7 @@ import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { widgetConfigs, getWidgetConfigByType, getWidgetComponent } from './components/widgets'
-import { Sun, Moon, Plus, AlertTriangle } from 'lucide-react'
+import { Sun, Moon, Plus, AlertTriangle, ChevronDown, Search, X, Grid, Menu } from 'lucide-react'
 
 /**
  * Error Boundary component to catch errors in widget rendering
@@ -79,6 +79,20 @@ function App() {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [widgetSelectorOpen, setWidgetSelectorOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [widgetCategories, setWidgetCategories] = useState(() => {
+    // Group widgets by category
+    const categories = {};
+    widgetConfigs.forEach(widget => {
+      const category = widget.category || 'General';
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(widget);
+    });
+    return categories;
+  });
   
   // Calculate the rowHeight to match column width for square cells
   const calculateRowHeight = () => {
@@ -223,48 +237,157 @@ function App() {
     document.body.classList.remove('dragging-active');
   }
 
-  // Add this function to render widget buttons
-  const renderWidgetButtons = () => {
-    return widgetConfigs.map(config => (
-      <button 
-        key={config.type}
-        onClick={() => addWidget(config.type)}
-        className="flex items-center gap-1 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-all"
-      >
-        <Plus size={16} /> {config.name}
-      </button>
-    ));
+  const toggleWidgetSelector = () => {
+    setWidgetSelectorOpen(!widgetSelectorOpen);
+    setSearchTerm('');
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  }
+
+  const filteredWidgets = searchTerm 
+    ? widgetConfigs.filter(widget => 
+        widget.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (widget.description && widget.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (widget.category && widget.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : [];
+
+  const renderWidgetSelector = () => {
+    if (!widgetSelectorOpen) return null;
+    
+    return (
+      <div className="widget-selector-overlay" onClick={toggleWidgetSelector}>
+        <div className="widget-selector-modal" onClick={e => e.stopPropagation()}>
+          <div className="widget-selector-header">
+            <h3 className="text-lg font-semibold">Add Widget</h3>
+            <button onClick={toggleWidgetSelector} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="widget-selector-search">
+            <Search size={18} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search widgets..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="widget-search-input"
+            />
+          </div>
+          
+          {searchTerm ? (
+            <div className="widget-selector-results">
+              <h4 className="widget-category-title">Search Results</h4>
+              <div className="widget-grid">
+                {filteredWidgets.length > 0 ? (
+                  filteredWidgets.map(widget => (
+                    <button
+                      key={widget.type}
+                      onClick={() => {
+                        addWidget(widget.type);
+                        toggleWidgetSelector();
+                      }}
+                      className="widget-item"
+                    >
+                      <div className="widget-icon">
+                        {widget.icon || <Grid size={24} />}
+                      </div>
+                      <div className="widget-info">
+                        <span className="widget-name">{widget.name}</span>
+                        {widget.description && (
+                          <span className="widget-description">{widget.description}</span>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className="no-results">No widgets found matching "{searchTerm}"</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="widget-selector-categories">
+              {Object.entries(widgetCategories).map(([category, widgets]) => (
+                <div key={category} className="widget-category">
+                  <h4 className="widget-category-title">{category}</h4>
+                  <div className="widget-grid">
+                    {widgets.map(widget => (
+                      <button
+                        key={widget.type}
+                        onClick={() => {
+                          addWidget(widget.type);
+                          toggleWidgetSelector();
+                        }}
+                        className="widget-item"
+                      >
+                        <div className="widget-icon">
+                          {widget.icon || <Grid size={24} />}
+                        </div>
+                        <div className="widget-info">
+                          <span className="widget-name">{widget.name}</span>
+                          {widget.description && (
+                            <span className="widget-description">{widget.description}</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Boxento</h1>
-        <div className="flex gap-2">
-          <button 
-            onClick={toggleTheme}
-            className="p-2 rounded-full bg-white dark:bg-gray-800 shadow hover:shadow-md transition-all"
-          >
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
+      <header className="app-header">
+        <div className="header-container">
+          <div className="header-left">
+            <h1 className="app-title">Boxento</h1>
+          </div>
+          
+          <div className="header-right">
+            <button 
+              onClick={toggleWidgetSelector}
+              className="header-button"
+              title="Add Widget"
+            >
+              <Plus size={20} />
+              <span>Add Widget</span>
+              <ChevronDown size={16} />
+            </button>
+            
+            <button 
+              onClick={toggleTheme}
+              className="header-button"
+              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+          </div>
         </div>
       </header>
       
+      {renderWidgetSelector()}
+      
       {widgets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[80vh]">
-          <p className="text-xl mb-4">You can add widgets</p>
-          <div className="flex gap-2 flex-wrap justify-center">
-            {renderWidgetButtons()}
-          </div>
+        <div className="empty-dashboard-cta">
+          <p className="text-xl mb-6">Your dashboard is empty</p>
+          <button 
+            onClick={toggleWidgetSelector}
+            className="add-widget-button"
+          >
+            <Plus size={20} /> Add Your First Widget
+          </button>
         </div>
       ) : (
-        <div>
-          <div className="mb-4 flex justify-end">
-            <div className="flex gap-2">
-              {renderWidgetButtons()}
-            </div>
-          </div>
-          
+        <div className="dashboard-container">
           <GridLayout
             className="layout"
             layout={layout}
