@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Moon, Sun } from 'lucide-react'
 import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -10,7 +10,6 @@ import {
   LayoutItem
 } from '@/types'
 import WidgetErrorBoundary from '@/components/ui/WidgetErrorBoundary'
-import ThemeToggle from '@/components/ui/ThemeToggle'
 import WidgetSelector from '@/components/ui/WidgetSelector'
 
 interface WidgetCategory {
@@ -263,8 +262,6 @@ function App() {
 
   return (
     <div className={`app ${theme}`}>
-      <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
         <header className="app-header">
           <div className="header-container">
@@ -275,64 +272,96 @@ function App() {
             <div className="header-right">
               <button 
                 onClick={toggleWidgetSelector}
-                className="header-button"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500 dark:bg-blue-600 text-white 
+                         text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 title="Add Widget"
+                aria-label="Add Widget"
               >
-                <Plus size={20} />
+                <Plus size={16} className="transition-transform group-hover:rotate-90" />
                 <span>Add Widget</span>
+              </button>
+              
+              <button 
+                onClick={toggleTheme}
+                className="p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200
+                         text-gray-700 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? (
+                  <Moon size={16} className="text-slate-700" />
+                ) : (
+                  <Sun size={16} className="text-yellow-400" />
+                )}
               </button>
             </div>
           </div>
         </header>
         
-        <WidgetSelector 
-          isOpen={widgetSelectorOpen}
-          onClose={toggleWidgetSelector}
-          onAddWidget={addWidget}
-          widgetRegistry={WIDGET_REGISTRY}
-          widgetCategories={widgetCategories}
-        />
-        
-        {widgets.length === 0 ? (
-          <div className="empty-dashboard-cta">
-            <p className="text-xl mb-6">Your dashboard is empty</p>
-            <button 
-              onClick={toggleWidgetSelector}
-              className="add-widget-button"
-            >
-              <Plus size={20} /> Add Your First Widget
-            </button>
-          </div>
-        ) : (
-          <div className="dashboard-container">
-            <GridLayout
-              className="layout"
-              layout={layout}
-              cols={12}
-              rowHeight={rowHeight}
-              width={windowWidth}
-              onLayoutChange={handleLayoutChange}
-              onDragStart={handleDragStart}
-              onDragStop={handleDragStop}
-              onResizeStart={handleResizeStart}
-              onResizeStop={handleResizeStop}
-              margin={[10, 10]}
-              containerPadding={[20, 20]}
-              draggableHandle=".widget-drag-handle"
-              draggableCancel=".settings-button"
-              children={widgets.map(widget => {
-                return (
-                  <div 
-                    key={widget.id} 
-                    className="grid-item-container"
-                  >
-                    {renderWidget(widget)}
-                  </div>
-                )
-              })}
-            />
-          </div>
-        )}
+        <main className="pt-16 md:pt-20">
+          <WidgetSelector 
+            isOpen={widgetSelectorOpen}
+            onClose={toggleWidgetSelector}
+            onAddWidget={addWidget}
+            widgetRegistry={WIDGET_REGISTRY}
+            widgetCategories={widgetCategories}
+          />
+          
+          {widgets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[80vh] px-4 text-center">
+              <div className="w-64 h-64 mb-8 opacity-80">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M21 7.5V6.75C21 5.50736 19.9926 4.5 18.75 4.5H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M16.5 19.5H18.75C19.9926 19.5 21 18.4926 21 17.25V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 16.5V17.25C3 18.4926 4.00736 19.5 5.25 19.5H7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7.5 4.5H5.25C4.00736 4.5 3 5.50736 3 6.75V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M10.5 9H13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 7.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M13.5 15H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="text-2xl font-medium text-gray-600 dark:text-gray-300 mb-8">Your dashboard is ready to be customized</p>
+              <button 
+                onClick={toggleWidgetSelector}
+                className="group flex items-center gap-2 py-3.5 px-6 bg-blue-500 text-white font-medium rounded-xl
+                         shadow-md hover:shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 text-base
+                         transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
+                aria-label="Add your first widget"
+              >
+                <Plus size={22} className="transition-transform group-hover:rotate-90" /> Add Your First Widget
+              </button>
+            </div>
+          ) : (
+            <div className="px-6 max-w-[1600px] mx-auto">
+              <GridLayout
+                className="layout"
+                layout={layout}
+                cols={12}
+                rowHeight={rowHeight}
+                width={windowWidth}
+                onLayoutChange={handleLayoutChange}
+                onDragStart={handleDragStart}
+                onDragStop={handleDragStop}
+                onResizeStart={handleResizeStart}
+                onResizeStop={handleResizeStop}
+                margin={[10, 10]}
+                containerPadding={[20, 20]}
+                draggableHandle=".widget-drag-handle"
+                draggableCancel=".settings-button"
+                children={widgets.map(widget => {
+                  return (
+                    <div 
+                      key={widget.id} 
+                      className="grid-item-container"
+                    >
+                      {renderWidget(widget)}
+                    </div>
+                  )
+                })}
+              />
+            </div>
+          )}
+        </main>
       </div>
     </div>
   )

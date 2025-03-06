@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, Plus, ChevronDown } from 'lucide-react';
 import { WidgetConfig } from '@/types';
 
@@ -29,6 +29,18 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
+  // Initialize with all categories expanded
+  useEffect(() => {
+    if (isOpen) {
+      const allCategories = Object.keys(widgetCategories).reduce((acc, category) => {
+        acc[category] = true;
+        return acc;
+      }, {} as { [key: string]: boolean });
+      
+      setExpandedCategories(allCategories);
+    }
+  }, [isOpen, widgetCategories]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(e.target.value);
   };
@@ -54,7 +66,7 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
     <div className="widget-selector-overlay" onClick={onClose}>
       <div className="widget-selector-modal" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="widget-selector-header">
-          <h3 className="text-lg font-semibold">Add Widget</h3>
+          <h3>Add Widget</h3>
           <button 
             onClick={onClose} 
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -73,6 +85,7 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
             onChange={handleSearchChange}
             className="widget-search-input"
             aria-label="Search widgets"
+            autoFocus
           />
         </div>
         
@@ -84,7 +97,7 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                 filteredWidgets.map(widget => (
                   <button
                     key={widget.type}
-                    className="widget-item"
+                    className="widget-item group"
                     onClick={() => onAddWidget(widget.type)}
                     aria-label={`Add ${widget.name} widget`}
                   >
@@ -105,7 +118,7 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
             </div>
           </div>
         ) : (
-          <div className="widget-categories">
+          <div className="widget-selector-categories">
             {Object.entries(widgetCategories).map(([category, widgets]) => (
               <div key={category} className="widget-category">
                 <button 
@@ -126,7 +139,7 @@ const WidgetSelector: React.FC<WidgetSelectorProps> = ({
                     {widgets.map(widget => (
                       <button
                         key={widget.type}
-                        className="widget-item"
+                        className="widget-item group"
                         onClick={() => onAddWidget(widget.type)}
                         aria-label={`Add ${widget.name} widget`}
                       >

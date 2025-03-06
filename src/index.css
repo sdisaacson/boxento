@@ -164,11 +164,11 @@ body.dragging-active {
 
 /* App Header Styles */
 .app-header {
-  @apply p-4 md:p-6 backdrop-blur-md;
+  @apply fixed top-0 left-0 right-0 p-2 md:p-3 backdrop-blur-sm z-40 bg-transparent;
 }
 
 .header-container {
-  @apply max-w-[1600px] mx-auto flex justify-between items-center px-6;
+  @apply max-w-[1600px] mx-auto flex justify-between items-center px-6 py-0;
 }
 
 .header-left {
@@ -176,7 +176,7 @@ body.dragging-active {
 }
 
 .app-title {
-  @apply text-2xl font-bold text-gray-900 dark:text-gray-50;
+  @apply text-xl font-bold text-gray-900 dark:text-gray-50;
 }
 
 .header-right {
@@ -184,28 +184,64 @@ body.dragging-active {
 }
 
 .header-button {
-  @apply flex items-center gap-2 px-3 py-2 rounded-lg bg-white dark:bg-gray-700 
-         border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300
+  @apply flex items-center gap-2 px-4 py-2.5 rounded-lg 
+         bg-blue-500 dark:bg-blue-600 text-white 
          text-sm font-medium transition-all duration-200
-         hover:bg-gray-50 dark:hover:bg-gray-600 hover:shadow-sm;
+         shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
+         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+}
+
+.header-button svg {
+  @apply transition-transform duration-200;
+}
+
+.header-button:hover svg {
+  @apply transform rotate-90;
+}
+
+.theme-toggle-button {
+  @apply p-2.5 rounded-full bg-white dark:bg-gray-800 shadow-sm
+         hover:shadow-md transition-all duration-200
+         text-gray-700 dark:text-yellow-400
+         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
 
 /* Widget Selector Styles */
 .widget-selector-overlay {
-  @apply fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4;
+  @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4
+         opacity-0 transition-opacity duration-300 ease-in-out;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 
 .widget-selector-modal {
-  @apply bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:border dark:border-gray-700
-         w-full max-w-4xl max-h-[80vh] overflow-y-auto flex flex-col;
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-2xl dark:border dark:border-gray-700
+         w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col
+         transform scale-95 transition-all duration-300;
+  animation: scaleIn 0.3s forwards;
+}
+
+@keyframes scaleIn {
+  to { transform: scale(1); }
 }
 
 .widget-selector-header {
-  @apply flex justify-between items-center p-4 md:p-6 border-b border-gray-200 dark:border-gray-700;
+  @apply flex justify-between items-center p-5 md:p-6 border-b border-gray-200 dark:border-gray-700;
+}
+
+.widget-selector-header h3 {
+  @apply text-xl font-bold text-gray-800 dark:text-white;
+}
+
+.widget-selector-header button {
+  @apply p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200;
 }
 
 .widget-selector-search {
-  @apply relative p-4 md:p-6 border-b border-gray-200 dark:border-gray-700;
+  @apply relative p-5 md:p-6 border-b border-gray-200 dark:border-gray-700;
 }
 
 .search-icon {
@@ -213,52 +249,61 @@ body.dragging-active {
 }
 
 .widget-search-input {
-  @apply w-full py-2.5 px-4 pl-10 rounded-md border border-gray-200 dark:border-gray-600
+  @apply w-full py-3 px-5 pl-10 rounded-lg border border-gray-200 dark:border-gray-600
          bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100
-         focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30;
+         focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
+         transition-all duration-200;
 }
 
 .widget-selector-categories,
 .widget-selector-results {
-  @apply p-4 md:p-6;
+  @apply p-5 md:p-6 overflow-y-auto flex-1;
 }
 
 .widget-category {
-  @apply mb-6;
+  @apply mb-8;
+}
+
+.widget-category-header {
+  @apply flex justify-between items-center w-full py-2 px-1 mb-4 
+         transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400;
 }
 
 .widget-category-title {
-  @apply text-base font-semibold mb-3 text-gray-600 dark:text-gray-300;
+  @apply text-base font-semibold text-gray-700 dark:text-gray-200;
 }
 
 .widget-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3;
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4;
 }
 
 .widget-item {
-  @apply flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600
+  @apply flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-600
          bg-white dark:bg-gray-700 text-left transition-all duration-200
-         hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm;
+         hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 
+         hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30;
 }
 
 .widget-icon {
-  @apply flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300;
+  @apply flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-900/30 
+         text-blue-600 dark:text-blue-400 transition-all duration-200
+         group-hover:bg-blue-500 group-hover:text-white;
 }
 
 .widget-info {
-  @apply flex flex-col flex-1;
+  @apply flex flex-col flex-1 pt-1;
 }
 
 .widget-name {
-  @apply font-medium text-gray-900 dark:text-white;
+  @apply font-medium text-gray-900 dark:text-white text-sm;
 }
 
 .widget-description {
-  @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2;
 }
 
 .no-results {
-  @apply text-center py-8 text-gray-500 dark:text-gray-400;
+  @apply text-center py-8 text-gray-500 dark:text-gray-400 text-sm;
 }
 
 .dashboard-container {
@@ -267,13 +312,30 @@ body.dragging-active {
 
 /* Empty dashboard call to action */
 .empty-dashboard-cta {
-  @apply flex flex-col items-center justify-center h-[80vh];
+  @apply flex flex-col items-center justify-center h-[80vh] px-4 text-center;
+}
+
+.empty-dashboard-cta p {
+  @apply text-2xl font-medium text-gray-600 dark:text-gray-300 mb-8;
+}
+
+.empty-dashboard-cta .illustration {
+  @apply w-64 h-64 mb-8 opacity-80;
 }
 
 .add-widget-button {
-  @apply flex items-center gap-2 py-3 px-5 bg-blue-500 text-white font-medium rounded-xl
+  @apply flex items-center gap-2 py-3.5 px-6 bg-blue-500 text-white font-medium rounded-xl
          shadow-md shadow-blue-500/20 dark:shadow-blue-500/40 transition-all duration-200
-         hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50 hover:-translate-y-0.5;
+         hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50 
+         hover:-translate-y-0.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2;
+}
+
+.add-widget-button svg {
+  @apply transition-transform duration-200;
+}
+
+.add-widget-button:hover svg {
+  @apply transform rotate-90;
 }
 
 /* Override for widget buttons to ensure they're always clickable */
