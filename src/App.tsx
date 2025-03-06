@@ -1,61 +1,79 @@
-import { useState, useEffect, Component } from 'react'
-import GridLayout from 'react-grid-layout'
+import React, { useState, useEffect } from 'react'
+import { Settings, Plus, Search, Sun, Moon, X, Grid, Menu, AlertTriangle, ChevronDown } from 'lucide-react'
+import GridLayout, { Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { widgetConfigs, getWidgetConfigByType, getWidgetComponent } from './components/widgets'
-import { Sun, Moon, Plus, AlertTriangle, ChevronDown, Search, X, Grid, Menu } from 'lucide-react'
+import { getWidgetComponent, getWidgetConfigByType, WIDGET_REGISTRY, EnhancedWidgetConfig } from '@/components/widgets'
+import { 
+  WidgetProps, 
+  WidgetConfig, 
+  Widget,
+  LayoutItem,
+  WidgetSize
+} from '@/types'
+
+interface WidgetErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface WidgetErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
 
 /**
  * Error Boundary component to catch errors in widget rendering
  */
-class WidgetErrorBoundary extends Component {
-  constructor(props) {
+class WidgetErrorBoundary extends React.Component<WidgetErrorBoundaryProps, WidgetErrorBoundaryState> {
+  constructor(props: WidgetErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): WidgetErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.error("Widget error:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('Widget error:', error, errorInfo);
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={20} />
-            <h3 className="font-medium">Widget Error</h3>
-          </div>
-          <p className="text-sm opacity-80">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg">
+          <AlertTriangle className="mb-2" size={24} />
+          <h3 className="text-sm font-medium mb-1">Widget Error</h3>
+          <p className="text-xs text-center">
             {this.state.error?.message || "An error occurred while rendering this widget"}
           </p>
         </div>
       );
     }
-
+    
     return this.props.children;
   }
 }
 
+interface WidgetCategory {
+  [category: string]: WidgetConfig[];
+}
+
 function App() {
-  const [theme, setTheme] = useState(() => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'light'
+      return (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
     }
     return 'light'
   })
   
-  const [layout, setLayout] = useState(() => {
+  const [layout, setLayout] = useState<LayoutItem[]>(() => {
     if (typeof window !== 'undefined') {
       const savedLayout = localStorage.getItem('boxento-layout')
       if (savedLayout) {
         // Enforce 2x2 minimum size on any existing layout items
         const parsedLayout = JSON.parse(savedLayout);
-        return parsedLayout.map(item => ({
+        return parsedLayout.map((item: LayoutItem) => ({
           ...item,
           w: Math.max(item.w, 2),
           h: Math.max(item.h, 2),
@@ -68,7 +86,7 @@ function App() {
     return []
   })
   
-  const [widgets, setWidgets] = useState(() => {
+  const [widgets, setWidgets] = useState<Widget[]>(() => {
     if (typeof window !== 'undefined') {
       const savedWidgets = localStorage.getItem('boxento-widgets')
       return savedWidgets ? JSON.parse(savedWidgets) : []
@@ -76,15 +94,15 @@ function App() {
     return []
   })
 
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
-  const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [widgetSelectorOpen, setWidgetSelectorOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [widgetCategories, setWidgetCategories] = useState(() => {
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
+  const [windowHeight, setWindowHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight : 800)
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
+  const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [widgetCategories, setWidgetCategories] = useState<WidgetCategory>(() => {
     // Group widgets by category
-    const categories = {};
-    widgetConfigs.forEach(widget => {
+    const categories: WidgetCategory = {};
+    WIDGET_REGISTRY.forEach(widget => {
       const category = widget.category || 'General';
       if (!categories[category]) {
         categories[category] = [];
@@ -95,14 +113,14 @@ function App() {
   });
   
   // Calculate the rowHeight to match column width for square cells
-  const calculateRowHeight = () => {
+  const calculateRowHeight = (): number => {
     const totalMarginWidth = 11 * 10; // 11 margins between 12 columns
     const availableWidth = windowWidth - 40 - totalMarginWidth; // Subtract container padding and margins
     const columnWidth = availableWidth / 12;
     return columnWidth; // This makes each cell square
   }
   
-  const rowHeight = calculateRowHeight();
+  const rowHeight: number = calculateRowHeight();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -138,20 +156,17 @@ function App() {
     };
   }, [sidebarOpen]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
-  const addWidget = (type) => {
-    const id = `${type}-${Date.now()}`;
-    const widgetConfig = getWidgetConfigByType(type);
+  const addWidget = (type: string): void => {
+    const id = `widget-${Date.now()}`
+    const widgetConfig = getWidgetConfigByType(type)
     
-    if (!widgetConfig) {
-      console.error(`Widget type "${type}" not found in registry`);
-      return;
-    }
+    if (!widgetConfig) return
     
-    // Add default config
+    // Add widget to state
     setWidgets([
       ...widgets,
       {
@@ -161,9 +176,9 @@ function App() {
       }
     ])
     
-    // Use the defaultSize from the widget config
-    const widgetWidth = widgetConfig.defaultSize.w;
-    const widgetHeight = widgetConfig.defaultSize.h;
+    // Use the widget config for dimensions
+    const widgetWidth = widgetConfig.defaultWidth;
+    const widgetHeight = widgetConfig.defaultHeight;
     
     // Add layout position - let react-grid-layout handle exact positioning
     setLayout([
@@ -174,15 +189,15 @@ function App() {
         y: 0, // Let library determine placement
         w: widgetWidth,
         h: widgetHeight,
-        minW: widgetConfig.minSize?.w || 2, // Minimum width
-        minH: widgetConfig.minSize?.h || 2, // Minimum height
-        maxW: widgetConfig.maxSize?.w || 6,
-        maxH: widgetConfig.maxSize?.h || 6
+        minW: widgetConfig.minWidth || 1, // Minimum width
+        minH: widgetConfig.minHeight || 1, // Minimum height
+        maxW: 6, // Maximum width
+        maxH: 6  // Maximum height
       }
     ])
   }
 
-  const handleLayoutChange = (newLayout) => {
+  const handleLayoutChange = (newLayout: LayoutItem[]): void => {
     // Enforce minimum size of 2x2 for all widgets
     const updatedLayout = newLayout.map(item => {
       // Ensure all widgets are at least 2x2
@@ -200,7 +215,7 @@ function App() {
     setLayout(updatedLayout);
   }
 
-  const renderWidget = (widget) => {
+  const renderWidget = (widget: Widget): React.ReactNode => {
     const layoutItem = layout.find(item => item.i === widget.id)
     if (!layoutItem) return null
     
@@ -214,47 +229,48 @@ function App() {
     }
     
     return (
-      <WidgetErrorBoundary>
+      <WidgetErrorBoundary children={
         <WidgetComponent width={w} height={h} config={widget.config} />
+      }>
       </WidgetErrorBoundary>
     )
   }
 
   // Handle drag and resize start/stop for text selection prevention
-  const handleDragStart = () => {
+  const handleDragStart = (): void => {
     document.body.classList.add('dragging-active');
   }
   
-  const handleDragStop = () => {
+  const handleDragStop = (): void => {
     document.body.classList.remove('dragging-active');
   }
   
-  const handleResizeStart = () => {
+  const handleResizeStart = (): void => {
     document.body.classList.add('dragging-active');
   }
   
-  const handleResizeStop = () => {
+  const handleResizeStop = (): void => {
     document.body.classList.remove('dragging-active');
   }
 
-  const toggleWidgetSelector = () => {
+  const toggleWidgetSelector = (): void => {
     setWidgetSelectorOpen(!widgetSelectorOpen);
-    setSearchTerm('');
+    setSearchQuery('');
   }
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  }
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setSearchQuery(e.target.value);
+  };
 
-  const filteredWidgets = searchTerm 
-    ? widgetConfigs.filter(widget => 
-        widget.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (widget.description && widget.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (widget.category && widget.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredWidgets = searchQuery 
+    ? WIDGET_REGISTRY.filter(widget => 
+        widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (widget.description && widget.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (widget.category && widget.category.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : [];
 
-  const renderWidgetSelector = () => {
+  const renderWidgetSelector = (): React.ReactNode => {
     if (!widgetSelectorOpen) return null;
     
     return (
@@ -272,13 +288,13 @@ function App() {
             <input
               type="text"
               placeholder="Search widgets..."
-              value={searchTerm}
+              value={searchQuery}
               onChange={handleSearchChange}
               className="widget-search-input"
             />
           </div>
           
-          {searchTerm ? (
+          {searchQuery ? (
             <div className="widget-selector-results">
               <h4 className="widget-category-title">Search Results</h4>
               <div className="widget-grid">
@@ -304,7 +320,7 @@ function App() {
                     </button>
                   ))
                 ) : (
-                  <p className="no-results">No widgets found matching "{searchTerm}"</p>
+                  <p className="no-results">No widgets found matching "{searchQuery}"</p>
                 )}
               </div>
             </div>
@@ -394,7 +410,6 @@ function App() {
             cols={12}
             rowHeight={rowHeight}
             width={windowWidth}
-            height={windowHeight}
             onLayoutChange={handleLayoutChange}
             onDragStart={handleDragStart}
             onDragStop={handleDragStop}
@@ -403,8 +418,7 @@ function App() {
             margin={[10, 10]}
             containerPadding={[20, 20]}
             draggableCancel=".settings-button"
-          >
-            {widgets.map(widget => {
+            children={widgets.map(widget => {
               const layoutItem = layout.find(item => item.i === widget.id);
               
               return (
@@ -417,7 +431,7 @@ function App() {
                 </div>
               );
             })}
-          </GridLayout>
+          />
         </div>
       )}
     </div>

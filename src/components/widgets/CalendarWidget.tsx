@@ -3,6 +3,7 @@ import { Calendar, X, CircleDot, ChevronLeft, ChevronRight } from 'lucide-react'
 import Modal from '../ui/Modal'
 import { useWidgetSettings } from '../../utils/widgetHelpers'
 import WidgetHeader from '../ui/WidgetHeader'
+import { WidgetProps, CalendarWidgetConfig, CalendarEvent, WidgetConfig } from '../../types'
 
 /**
  * Calendar Widget Component
@@ -16,23 +17,15 @@ import WidgetHeader from '../ui/WidgetHeader'
  * The widget supports configuration through a settings modal:
  * - First day of week (Sunday/Monday)
  * - Show/hide week numbers
- * 
- * @param {Object} props - Component props
- * @param {number} props.width - Width of the widget in grid units
- * @param {number} props.height - Height of the widget in grid units
- * @param {Object} props.config - Widget configuration
- * @param {string} [props.config.startDay='sunday'] - First day of the week
- * @param {boolean} [props.config.showWeekNumbers=false] - Whether to show week numbers
- * @returns {JSX.Element} Calendar widget component
  */
-const CalendarWidget = ({ width, height, config }) => {
-  const [date, setDate] = useState(new Date())
-  const [localConfig, setLocalConfig] = useState(config || {})
-  const widgetRef = useRef(null)
+const CalendarWidget = ({ width, height, config }: WidgetProps<CalendarWidgetConfig>) => {
+  const [date, setDate] = useState<Date>(new Date())
+  const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(config || { id: '' })
+  const widgetRef = useRef<HTMLDivElement>(null)
   
   // Simplified settings state
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [events, setEvents] = useState([
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
+  const [events, setEvents] = useState<CalendarEvent[]>([
     { title: 'Team Meeting', time: '10:00 AM' },
     { title: 'Lunch with Alex', time: '12:30 PM' },
     { title: 'Product Demo', time: '3:00 PM' }
@@ -51,10 +44,8 @@ const CalendarWidget = ({ width, height, config }) => {
   
   /**
    * Format a date using Intl.DateTimeFormat
-   * @param {Date} date - The date to format
-   * @returns {string} Formatted date string
    */
-  const formatDate = (date) => {
+  const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       month: 'long',
@@ -65,21 +56,15 @@ const CalendarWidget = ({ width, height, config }) => {
   
   /**
    * Get the number of days in a month
-   * @param {number} year - The year
-   * @param {number} month - The month (0-11)
-   * @returns {number} Number of days in the month
    */
-  const getDaysInMonth = (year, month) => {
+  const getDaysInMonth = (year: number, month: number): number => {
     return new Date(year, month + 1, 0).getDate()
   }
   
   /**
    * Get the day of the week for the first day of a month
-   * @param {number} year - The year
-   * @param {number} month - The month (0-11)
-   * @returns {number} Day of the week (0-6, where 0 is Sunday)
    */
-  const getFirstDayOfMonth = (year, month) => {
+  const getFirstDayOfMonth = (year: number, month: number): number => {
     return new Date(year, month, 1).getDay()
   }
   
@@ -193,7 +178,7 @@ const CalendarWidget = ({ width, height, config }) => {
           <select 
             className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600"
             value={localConfig.startDay || 'sunday'}
-            onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value})}
+            onChange={(e) => setLocalConfig({...localConfig, startDay: e.target.value as 'sunday' | 'monday'})}
           >
             <option value="sunday">Sunday</option>
             <option value="monday">Monday</option>
@@ -407,19 +392,23 @@ const CalendarWidget = ({ width, height, config }) => {
           onClose={() => setIsSettingsOpen(false)}
           title="Calendar Settings"
           footer={renderSettingsFooter()}
-        >
-          {renderSettingsContent()}
-        </Modal>
+          children={renderSettingsContent()}
+        />
       )}
     </div>
   )
 }
 
 // Widget configuration for registration
-export const calendarWidgetConfig = {
+export const calendarWidgetConfig: WidgetConfig = {
   type: 'calendar',
   name: 'Calendar',
+  icon: 'Calendar',
   description: 'Shows today\'s date and upcoming events',
+  minWidth: 2,
+  minHeight: 2,
+  defaultWidth: 3,
+  defaultHeight: 3,
   defaultSize: { w: 2, h: 2 },
   minSize: { w: 2, h: 2 },
   maxSize: { w: 6, h: 6 }

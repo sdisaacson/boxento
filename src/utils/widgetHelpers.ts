@@ -4,7 +4,16 @@
  * This file contains reusable helper functions for widgets
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, RefObject, MutableRefObject } from 'react';
+
+interface WidgetSettingsHook {
+  showSettings: boolean;
+  showSettingsRef: MutableRefObject<boolean>;
+  toggleSettings: () => void;
+  settingsRef: RefObject<HTMLDivElement>;
+  settingsButtonRef: RefObject<HTMLButtonElement>;
+  portalContainer: HTMLElement | null;
+}
 
 /**
  * Custom hook for managing widget settings with portal support
@@ -13,20 +22,13 @@ import { useEffect, useRef, useState } from 'react';
  * that need to use React portals, which can be problematic when
  * components are wrapped in error boundaries or when React StrictMode
  * causes double-rendering.
- * 
- * @returns {Object} Hook interface
- * @property {boolean} showSettings - Current setting visibility state
- * @property {Function} toggleSettings - Function to toggle settings visibility
- * @property {Object} settingsRef - Ref to attach to the settings modal
- * @property {Object} settingsButtonRef - Ref to attach to the settings button
- * @property {Object} portalContainer - DOM node to render the portal in 
  */
-export const useWidgetSettings = () => {
-  const [showSettings, setShowSettings] = useState(false);
-  const [portalContainer, setPortalContainer] = useState(null);
-  const showSettingsRef = useRef(false);
-  const settingsRef = useRef(null);
-  const settingsButtonRef = useRef(null);
+export const useWidgetSettings = (): WidgetSettingsHook => {
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const showSettingsRef = useRef<boolean>(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   // Set portal container on mount
   useEffect(() => {
@@ -37,13 +39,13 @@ export const useWidgetSettings = () => {
 
   // Handle clicks outside the settings modal
   useEffect(() => {
-    const handleOutsideClick = (e) => {
+    const handleOutsideClick = (e: MouseEvent) => {
       if (
         showSettingsRef.current && 
         settingsRef.current && 
-        !settingsRef.current.contains(e.target) &&
+        !settingsRef.current.contains(e.target as Node) &&
         settingsButtonRef.current &&
-        !settingsButtonRef.current.contains(e.target)
+        !settingsButtonRef.current.contains(e.target as Node)
       ) {
         showSettingsRef.current = false;
         setShowSettings(false);
@@ -62,7 +64,7 @@ export const useWidgetSettings = () => {
   }, [showSettings]);
 
   // Toggle settings with ref tracking for stability
-  const toggleSettings = () => {
+  const toggleSettings = (): void => {
     const newValue = !showSettingsRef.current;
     showSettingsRef.current = newValue;
     
@@ -81,4 +83,4 @@ export const useWidgetSettings = () => {
     settingsButtonRef,
     portalContainer
   };
-}; 
+};
