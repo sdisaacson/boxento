@@ -9,7 +9,7 @@ import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSourc
  * 
  * Displays a calendar with different views based on the widget size:
  * - 2x2 (minimum): Shows current date with day of week and minimal event count
- * - 2x3: Shows current week view with events for each day
+ * - 2x3: Shows day, date, and today's events in a list view
  * - 3x2: Shows a compact month calendar with minimal event details
  * - 3x3 or larger: Shows a full calendar with week numbers and detailed daily events
  * - 4x4 or larger: Shows an expanded view with month calendar and weekly agenda
@@ -558,87 +558,78 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   }
 
   /**
-   * Renders a weekly view for tall narrow widgets (2x3)
+   * Renders a daily view for tall narrow widgets (2x3)
+   * Shows today's day, date, and events
    * 
-   * @returns Weekly view
+   * @returns Daily view with today's events
    */
-  const renderWeeklyView = () => {
+  const renderDailyView = () => {
     const today = new Date()
-    const currentDay = today.getDay()
-    const weekStart = new Date(today)
+    const dayOfWeek = today.toLocaleDateString('default', { weekday: 'long' })
+    const dayOfMonth = today.getDate()
+    const month = today.toLocaleDateString('default', { month: 'long' })
+    const year = today.getFullYear()
     
-    // Start from either Sunday or Monday based on settings
-    const startDay = localConfig.startDay === 'monday' ? 1 : 0
-    const daysToSubtract = (currentDay - startDay + 7) % 7
-    weekStart.setDate(today.getDate() - daysToSubtract)
+    // Filter events for today
+    const todayEvents = events.filter(event => {
+      if (!event.start) return false;
+      const eventDate = new Date(event.start);
+      return eventDate.getDate() === today.getDate() &&
+             eventDate.getMonth() === today.getMonth() &&
+             eventDate.getFullYear() === today.getFullYear();
+    });
     
-    // Get full day names instead of abbreviated
-    const dayNames = startDay === 1 
-      ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    // Sort events by time
+    const sortedEvents = [...todayEvents].sort((a, b) => {
+      if (!a.start || !b.start) return 0;
+      return new Date(a.start).getTime() - new Date(b.start).getTime();
+    });
     
     return (
       <div className="h-full flex flex-col">
-        <div className="text-center mb-3">
-          <h3 className="text-sm font-medium">
-            {weekStart.toLocaleDateString('default', { month: 'long' })} {weekStart.getFullYear()}
-          </h3>
+        {/* Today's header */}
+        <div className="flex flex-col items-center mb-3">
+          <div className="text-base font-medium text-gray-700 dark:text-gray-300">
+            {dayOfWeek}
+          </div>
+          
+          <div className="flex flex-col items-center mt-1">
+            <span className="text-4xl font-bold text-blue-500">{dayOfMonth}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{month} {year}</span>
+          </div>
         </div>
         
-        <div className="flex-1 flex flex-col overflow-y-auto">
-          <div className="space-y-1">
-            {/* Weekday slots - simplified */}
-            {Array.from({ length: 7 }).map((_, index) => {
-              const dayOffset = (index + startDay) % 7
-              const currentDayOfWeek = (today.getDay() + 7 - daysToSubtract) % 7
-              const isToday = dayOffset === currentDayOfWeek
-              const dayDate = new Date(weekStart)
-              dayDate.setDate(weekStart.getDate() + index)
-              
-              // Filter events for this day
-              
-              const dayEvents = events.filter(event => {
-                if (!event.start) return false;
-                const eventDate = new Date(event.start);
-                return eventDate.getDate() === dayDate.getDate() &&
-                      eventDate.getMonth() === dayDate.getMonth() &&
-                      eventDate.getFullYear() === dayDate.getFullYear();
-              });
-              
-              const hasEvents = dayEvents.length > 0
-              
-              return (
+        {/* Today's events list */}
+        <div className="flex-1 overflow-y-auto mt-2">
+          <h3 className="text-sm font-medium mb-2 text-gray-600 dark:text-gray-400">
+            Today's Events
+          </h3>
+          
+          <div className="space-y-2">
+            {sortedEvents.length > 0 ? (
+              sortedEvents.map((event, index) => (
                 <div 
-                  key={`day-${index}`}
-                  className={`flex items-center py-1.5 px-2 rounded-lg ${
-                    isToday ? 'bg-blue-100 dark:bg-blue-900/30' : ''
-                  }`}
+                  key={`event-${index}`}
+                  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 flex items-start"
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center mr-2.5 ${
-                    isToday ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'
-                  }`}>
-                    <span className="text-sm font-medium">{dayDate.getDate()}</span>
+                  <div className="min-w-12 text-blue-500 font-medium mr-1.5 text-xs">
+                    {event.time}
                   </div>
-                  
-                  <div className="flex-1">
-                    <div className={`text-xs ${isToday ? 'font-medium' : ''}`}>
-                      {dayNames[dayOffset].substring(0, 3)}
-                    </div>
+                  <div className="flex-1 text-xs">
+                    <div className="font-medium">{event.title}</div>
+                    {event.location && (
+                      <div className="text-gray-500 dark:text-gray-400 text-2xs mt-0.5 truncate">
+                        {event.location}
+                      </div>
+                    )}
                   </div>
-                  
-                  {hasEvents && (
-                    <div className="flex space-x-1">
-                      {[...Array(Math.min(dayEvents.length, 3))].map((_, i) => (
-                        <div 
-                          key={i} 
-                          className="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400"
-                        ></div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              )
-            })}
+              ))
+            ) : (
+              <div className="text-sm text-center text-gray-400 dark:text-gray-500 italic py-4">
+                No events scheduled for today
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -670,13 +661,27 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     return (
       <div ref={widgetRef} className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-3">
-          <button 
-            onClick={() => setDate(new Date(year, month - 1, 1))}
-            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={16} />
-          </button>
+          <div className="flex space-x-1">
+            <button 
+              onClick={() => setDate(new Date(year, month - 1, 1))}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            <button
+              onClick={() => {
+                const today = new Date();
+                setDate(today);
+                setSelectedDate(today);
+              }}
+              className="px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              aria-label="Today"
+            >
+              Today
+            </button>
+          </div>
           
           <h3 className="text-base font-medium">
             {date.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
@@ -715,14 +720,20 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             return (
               <div 
                 key={`day-${day}`} 
-                className={`flex items-center justify-center ${
+                className={`flex items-center justify-center cursor-pointer ${
                   isToday 
                     ? 'font-medium' 
                     : ''
                 }`}
+                onClick={() => {
+                  const clickedDate = new Date(year, month, day);
+                  setSelectedDate(clickedDate);
+                }}
               >
-                <div className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                  isToday ? 'bg-blue-500 text-white' : ''
+                <div className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                  isToday 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}>
                   {day}
                 </div>
@@ -762,13 +773,27 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     return (
       <div className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-4">
-          <button 
-            onClick={() => setDate(new Date(year, month - 1, 1))}
-            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={18} />
-          </button>
+          <div className="flex space-x-1">
+            <button 
+              onClick={() => setDate(new Date(year, month - 1, 1))}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            
+            <button
+              onClick={() => {
+                const today = new Date();
+                setDate(today);
+                setSelectedDate(today);
+              }}
+              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              aria-label="Today"
+            >
+              Today
+            </button>
+          </div>
           
           <h3 className="text-lg font-medium">
             {date.toLocaleDateString('default', { month: 'long' })} {date.getFullYear()}
@@ -839,12 +864,12 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 }}
               >
                 <div 
-                  className={`w-10 h-10 flex items-center justify-center rounded-lg text-base ${
+                  className={`w-10 h-10 flex items-center justify-center rounded-lg text-base transition-colors ${
                     isToday
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-blue-500 text-white hover:bg-blue-600'
                       : isSelected
-                        ? 'bg-blue-200 dark:bg-blue-800'
-                        : ''
+                        ? 'bg-blue-200 dark:bg-blue-800 hover:bg-blue-300 dark:hover:bg-blue-700'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   {day}
@@ -935,14 +960,28 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       <div className="h-full flex flex-col">
         {/* Calendar header with controls */}
         <div className="flex justify-between items-center mb-4">
-          <button 
-            onClick={() => setDate(new Date(year, month - 1, 1))}
-            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={16} />
-            <span className="ml-1 text-sm hidden sm:inline">{new Date(year, month - 1, 1).toLocaleDateString('default', { month: 'short' })}</span>
-          </button>
+          <div className="flex space-x-1">
+            <button 
+              onClick={() => setDate(new Date(year, month - 1, 1))}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={16} />
+              <span className="ml-1 text-sm hidden sm:inline">{new Date(year, month - 1, 1).toLocaleDateString('default', { month: 'short' })}</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                const today = new Date();
+                setDate(today);
+                setSelectedDate(today);
+              }}
+              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              aria-label="Today"
+            >
+              Today
+            </button>
+          </div>
           
           <h3 className="text-base font-medium">
             {date.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
@@ -1329,7 +1368,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     } else if (width >= 3) {
       return renderStandardCalendar()
     } else if (height >= 3) {
-      return renderWeeklyView()
+      return renderDailyView()
     } else {
       return renderCompactCalendar()
     }
