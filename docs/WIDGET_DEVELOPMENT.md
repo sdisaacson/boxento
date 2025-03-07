@@ -24,7 +24,7 @@ Here's a template for a basic widget:
 import { useState, useEffect, useRef } from 'react'
 import { Settings, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import WidgetHeader from '../ui/WidgetHeader'
+import WidgetHeader from '../components/widgets/common/WidgetHeader'
 
 /**
  * My Widget Component

@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog'
-import WidgetHeader from '../../ui/WidgetHeader'
+import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 
 /**

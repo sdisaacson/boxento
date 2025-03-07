@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
-import WidgetHeader from '../../ui/WidgetHeader';
+import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 
 /**

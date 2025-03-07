@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Trash, X } from 'lucide-react'
-import WidgetHeader from '../../ui/WidgetHeader'
+import { Plus, Trash } from 'lucide-react'
+import WidgetHeader from '../../widgets/common/WidgetHeader'
 import {
   Dialog,
   DialogContent,

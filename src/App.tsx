@@ -9,8 +9,8 @@ import {
   Widget,
   LayoutItem
 } from '@/types'
-import WidgetErrorBoundary from '@/components/ui/WidgetErrorBoundary'
-import WidgetSelector from '@/components/ui/WidgetSelector'
+import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary'
+import WidgetSelector from '@/components/widgets/common/WidgetSelector'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];

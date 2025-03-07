@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
-import { ExternalLink, Plus, X, Trash, Edit } from 'lucide-react'
-import WidgetHeader from '../../ui/WidgetHeader'
+import { ExternalLink, Plus, Trash, Edit } from 'lucide-react'
+import WidgetHeader from '../../widgets/common/WidgetHeader'
 import {
   Dialog,
   DialogContent,
@@ -26,22 +26,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
-  const settingsRef = useRef<HTMLDivElement | null>(null)
-  
-  // Handle click outside modal to close it
-  const handleModalBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
-      setShowSettings(false);
-      setEditingLink(null);
-    }
-  };
-  
-  // Handle form submission for adding/editing links
-  const handleLinkFormSubmit = () => {
-    if (editingLink) {
-      addLink();
-    }
-  };
 
   // Check if there are any links in the configuration
   React.useEffect(() => {
