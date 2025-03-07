@@ -9,6 +9,7 @@ import QuickLinksWidget from './QuickLinksWidget/index';
 import NotesWidget from './NotesWidget/index';
 import TodoWidget from './TodoWidget/index';
 import PomodoroWidget from './PomodoroWidget/index';
+import CurrencyConverterWidget from './CurrencyConverterWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -20,6 +21,7 @@ export * from './QuickLinksWidget/types';
 export * from './NotesWidget/types';
 export * from './TodoWidget/types';
 export * from './PomodoroWidget/types';
+export * from './CurrencyConverterWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -107,6 +109,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Time management with the Pomodoro Technique'
+  },
+  {
+    type: 'currency-converter',
+    name: 'Currency Converter',
+    icon: 'DollarSign',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Finance',
+    description: 'Convert between currencies using live exchange rates'
   }
 ];
 
@@ -137,6 +150,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return TodoWidget;
     case 'pomodoro':
       return PomodoroWidget;
+    case 'currency-converter':
+      return CurrencyConverterWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
