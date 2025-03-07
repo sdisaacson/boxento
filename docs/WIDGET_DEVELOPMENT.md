@@ -8,40 +8,92 @@ Widgets in Boxento follow a consistent architecture:
 
 1. **React Component**: Each widget is a React component that accepts `width`, `height`, and `config` props.
 2. **Configuration Object**: Each widget exports a configuration object with metadata about the widget.
-3. **Registry**: Widgets are registered in the central registry (`src/components/widgets/index.js`).
+3. **Registry**: Widgets are registered in the central registry (`src/components/widgets/index.ts`).
 
 ## Creating a New Widget
 
-### Step 1: Create the Widget File
+### Step 1: Create the Widget Directory and Files
 
-Create a new file in the `src/components/widgets` directory. Name it according to its functionality, e.g., `MyWidget.jsx`.
+Create a new directory in the `src/components/widgets` directory. Name it according to its functionality, e.g., `MyWidget`. Inside this directory, create three main files:
 
-### Step 2: Implement the Widget Component
+1. `index.tsx` - The main widget component
+2. `types.ts` - TypeScript type definitions for the widget
+3. `README.md` - Documentation for the widget
 
-Here's a template for a basic widget:
+### Step 2: Define Widget Types
 
-```jsx
-import { useState, useEffect, useRef } from 'react'
-import { Settings, X } from 'lucide-react'
-import { createPortal } from 'react-dom'
-import WidgetHeader from '../components/widgets/common/WidgetHeader'
+First, define the types for your widget in the `types.ts` file:
+
+```typescript
+import { WidgetProps } from '@/types';
+
+/**
+ * Configuration options for the My widget
+ * 
+ * @interface MyWidgetConfig
+ * @property {string} [id] - Unique identifier for the widget instance
+ * @property {string} [someConfig] - Description of this config option
+ */
+export interface MyWidgetConfig {
+  id?: string;
+  someConfig?: string;
+  onUpdate?: (config: MyWidgetConfig) => void;
+  onDelete?: () => void;
+}
+
+/**
+ * Props for the My widget component
+ * 
+ * @type MyWidgetProps
+ */
+export type MyWidgetProps = WidgetProps<MyWidgetConfig>;
+```
+
+### Step 3: Implement the Widget Component
+
+Implement the widget component in the `index.tsx` file:
+
+```tsx
+import React, { useState, useEffect, useRef } from 'react'
+import { Settings } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog'
+import WidgetHeader from '../common/WidgetHeader'
+import { MyWidgetProps, MyWidgetConfig } from './types'
 
 /**
  * My Widget Component
  * 
  * [Description of what your widget does]
  * 
- * @param {Object} props - Component props
- * @param {number} props.width - Width of the widget in grid units
- * @param {number} props.height - Height of the widget in grid units
- * @param {Object} props.config - Widget configuration
+ * @param {MyWidgetProps} props - Component props
  * @returns {JSX.Element} Widget component
  */
-const MyWidget = ({ width, height, config }) => {
-  const [showSettings, setShowSettings] = useState(false)
-  const [localConfig, setLocalConfig] = useState(config || {})
-  const settingsRef = useRef(null)
-  const widgetRef = useRef(null)
+const MyWidget: React.FC<MyWidgetProps> = ({ width, height, config }) => {
+  const defaultConfig: MyWidgetConfig = {
+    someConfig: 'default value'
+  };
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [localConfig, setLocalConfig] = useState<MyWidgetConfig>({
+    ...defaultConfig,
+    ...config
+  });
+  
+  const widgetRef = useRef<HTMLDivElement>(null);
+  
+  // Update local config when props change
+  useEffect(() => {
+    setLocalConfig(prevConfig => ({
+      ...prevConfig,
+      ...config
+    }));
+  }, [config]);
   
   // Render different views based on widget size
   const renderContent = () => {
@@ -93,116 +145,125 @@ const MyWidget = ({ width, height, config }) => {
     );
   };
   
-  // Settings modal
+  // Save settings
+  const saveSettings = () => {
+    if (config?.onUpdate) {
+      config.onUpdate(localConfig);
+    }
+    setShowSettings(false);
+  };
+  
+  // Settings modal using shadcn/ui Dialog
   const renderSettings = () => {
-    if (!showSettings) return null;
-    
-    return createPortal(
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
-        onClick={() => setShowSettings(false)}
-      >
-        <div 
-          ref={settingsRef}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 shadow-lg max-w-[90vw] max-h-[90vh] overflow-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Widget Settings</h3>
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <X size={20} />
-            </button>
+    return (
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Widget Settings</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {/* Your settings form here */}
           </div>
           
-          {/* Your settings form here */}
-          
-          <div className="flex justify-end gap-2 mt-6">
+          <DialogFooter>
             <button 
-              onClick={() => setShowSettings(false)}
-              className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={() => {
-                // Save settings
-                setShowSettings(false)
-              }}
+              onClick={saveSettings}
               className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               Save
             </button>
-          </div>
-        </div>
-      </div>,
-      document.body
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   };
 
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div ref={widgetRef} className="widget-container h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow">
       <WidgetHeader 
         title="My Widget" 
         onSettingsClick={() => setShowSettings(!showSettings)}
       />
       
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden p-2">
         {renderContent()}
       </div>
       
       {/* Settings modal */}
       {renderSettings()}
     </div>
-  )
-}
-
-// Widget configuration for registration
-export const myWidgetConfig = {
-  type: 'mywidget', // Unique identifier for this widget type
-  name: 'My Widget', // Display name in the widget picker
-  description: 'Description of what my widget does', // Description for the widget picker
-  defaultSize: { w: 2, h: 2 }, // Default size when added
-  minSize: { w: 2, h: 2 }, // Minimum size (must be at least 2x2)
-  maxSize: { w: 6, h: 6 } // Maximum size
-}
-
-export default MyWidget
-```
-
-### Step 3: Register the Widget
-
-Add your widget to the registry in `src/components/widgets/index.js`:
-
-```jsx
-// Widget Components
-import CalendarWidget, { calendarWidgetConfig } from './CalendarWidget';
-import WeatherWidget, { weatherWidgetConfig } from './WeatherWidget';
-import WorldClocksWidget, { worldClocksWidgetConfig } from './WorldClocksWidget';
-import QuickLinksWidget, { quickLinksWidgetConfig } from './QuickLinksWidget';
-import MyWidget, { myWidgetConfig } from './MyWidget'; // Import your widget
-
-// Widget Registry - Map of all available widgets
-export const widgetComponents = {
-  calendar: CalendarWidget,
-  weather: WeatherWidget,
-  worldclocks: WorldClocksWidget,
-  quicklinks: QuickLinksWidget,
-  mywidget: MyWidget // Add your widget
+  );
 };
 
-// Widget Configurations - Used for the widget picker and defaults
-export const widgetConfigs = [
-  calendarWidgetConfig,
-  weatherWidgetConfig,
-  worldClocksWidgetConfig,
-  quickLinksWidgetConfig,
-  myWidgetConfig // Add your widget config
+export default MyWidget;
+```
+
+### Step 4: Document Your Widget
+
+Create a README.md file for your widget with usage instructions and examples:
+
+```markdown
+# My Widget
+
+[Brief description of what your widget does and its purpose]
+
+## Features
+
+- [Feature 1]
+- [Feature 2]
+- [Feature 3]
+
+## Usage
+
+[Instructions on how to use the widget]
+
+## Settings
+
+[Description of available settings]
+
+## Responsive Sizing
+
+[How the widget responds to different sizes]
+```
+
+### Step 5: Register the Widget
+
+Update the widget registry in `src/components/widgets/index.ts`:
+
+```typescript
+// Add import at the top
+import MyWidget from './MyWidget/index';
+
+// Add types export
+export * from './MyWidget/types';
+
+// Add to WIDGET_REGISTRY array
+export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
+  // ... existing widgets
+  {
+    type: 'my-widget',
+    name: 'My Widget',
+    icon: 'Icon',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Category',
+    description: 'Description of what my widget does'
+  }
 ];
 
-// ... rest of the file
+// Add to getWidgetComponent function
+export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<any>> | null => {
+  switch (type) {
+    // ... existing cases
+    case 'my-widget':
+      return MyWidget;
+    default:
+      return null;
+  }
+};
 ```
 
 ## Widget Requirements
@@ -229,7 +290,9 @@ Widgets must support both light and dark themes:
 
 If your widget has configurable options:
 
-- Implement a settings modal using `createPortal`
+- **Always use shadcn/ui Dialog components for settings modals**
+- Import Dialog components from '../../ui/dialog'
+- Follow the pattern shown in the example above
 - Store settings in the widget's config object
 - Provide sensible defaults
 
@@ -255,18 +318,18 @@ If your widget has configurable options:
 
 ## Submitting Your Widget
 
-1. Commit your changes: `git add src/components/widgets/MyWidget.jsx src/components/widgets/index.js`
+1. Commit your changes: `git add src/components/widgets/MyWidget src/components/widgets/index.ts`
 2. Create a commit message: `git commit -m "Add MyWidget: Description of what it does"`
 3. Push to your fork: `git push origin main`
 4. Create a pull request on GitHub
 
 ## Examples
 
-For examples, look at the existing widgets:
+For examples, look at the existing widgets in the respective directories:
 
-- `CalendarWidget.jsx`
-- `WeatherWidget.jsx`
-- `WorldClocksWidget.jsx`
-- `QuickLinksWidget.jsx`
+- `CalendarWidget/`
+- `WeatherWidget/`
+- `WorldClocksWidget/`
+- `QuickLinksWidget/`
 
 These widgets demonstrate best practices for Boxento widget development. 

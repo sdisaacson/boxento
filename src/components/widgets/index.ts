@@ -6,12 +6,14 @@ import CalendarWidget from './CalendarWidget/index';
 import WeatherWidget from './WeatherWidget/index';
 import WorldClocksWidget from './WorldClocksWidget/index';
 import QuickLinksWidget from './QuickLinksWidget/index';
+import NotesWidget from './NotesWidget/index';
 
 // Export widget types
 export * from './CalendarWidget/types';
 export * from './WeatherWidget/types';
 export * from './WorldClocksWidget/types';
 export * from './QuickLinksWidget/types';
+export * from './NotesWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -64,6 +66,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Save and quickly access your favorite links'
+  },
+  {
+    type: 'notes',
+    name: 'Notes',
+    icon: 'StickyNote',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Take and save quick notes'
   }
 ];
 
@@ -88,6 +101,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return WorldClocksWidget;
     case 'quick-links':
       return QuickLinksWidget;
+    case 'notes':
+      return NotesWidget;
     default:
       return null;
   }
