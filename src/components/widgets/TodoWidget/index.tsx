@@ -10,8 +10,6 @@ import {
   Check,
   Plus,
   Trash2,
-  Settings,
-  X
 } from 'lucide-react';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoWidgetProps, TodoWidgetConfig, TodoItem } from './types';

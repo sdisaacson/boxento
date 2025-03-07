@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
-import { Settings } from 'lucide-react';
 import WidgetHeader from '../common/WidgetHeader';
 import { WidgetProps } from '@/types';
 

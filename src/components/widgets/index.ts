@@ -8,6 +8,7 @@ import WorldClocksWidget from './WorldClocksWidget/index';
 import QuickLinksWidget from './QuickLinksWidget/index';
 import NotesWidget from './NotesWidget/index';
 import TodoWidget from './TodoWidget/index';
+import PomodoroWidget from './PomodoroWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -18,6 +19,7 @@ export * from './WorldClocksWidget/types';
 export * from './QuickLinksWidget/types';
 export * from './NotesWidget/types';
 export * from './TodoWidget/types';
+export * from './PomodoroWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -94,6 +96,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Manage your tasks and to-dos'
+  },
+  {
+    type: 'pomodoro',
+    name: 'Pomodoro Timer',
+    icon: 'Timer',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Time management with the Pomodoro Technique'
   }
 ];
 
@@ -122,6 +135,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return NotesWidget;
     case 'todo':
       return TodoWidget;
+    case 'pomodoro':
+      return PomodoroWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
