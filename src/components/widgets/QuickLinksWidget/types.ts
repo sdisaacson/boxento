@@ -22,10 +22,14 @@ export interface LinkItem {
  * @interface QuickLinksWidgetConfig
  * @property {string} [id] - Unique identifier for the widget instance
  * @property {LinkItem[]} [links] - Array of link items
+ * @property {() => void} [onDelete] - Callback to delete the widget
+ * @property {(config: QuickLinksWidgetConfig) => void} [onUpdate] - Callback to update widget configuration
  */
 export interface QuickLinksWidgetConfig {
   id?: string;
   links?: LinkItem[];
+  onDelete?: () => void;
+  onUpdate?: (config: QuickLinksWidgetConfig) => void;
 }
 
 /**

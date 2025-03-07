@@ -42,17 +42,31 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
    */
   const addLink = () => {
     if (editingLink && editingLink.title && editingLink.url) {
+      let updatedLinks: LinkItem[];
+
       if (editingLink.id) {
         // Update existing link
-        setLinks(links.map(link => 
+        updatedLinks = links.map(link => 
           link.id === editingLink.id ? editingLink : link
-        ))
+        );
       } else {
         // Add new link
-        const newId = Math.max(0, ...links.map(link => link.id)) + 1
-        setLinks([...links, { ...editingLink, id: newId }])
+        const newId = Math.max(0, ...links.map(link => link.id)) + 1;
+        updatedLinks = [...links, { ...editingLink, id: newId }];
       }
-      setEditingLink(null)
+
+      // Update state
+      setLinks(updatedLinks);
+      
+      // Save using onUpdate callback to persist
+      if (config?.onUpdate) {
+        config.onUpdate({
+          ...config,
+          links: updatedLinks
+        });
+      }
+      
+      setEditingLink(null);
     }
   }
 
@@ -62,7 +76,18 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
    * @param {number} id - The id of the link to remove
    */
   const removeLink = (id: number) => {
-    setLinks(links.filter(link => link.id !== id))
+    const updatedLinks = links.filter(link => link.id !== id);
+    
+    // Update state
+    setLinks(updatedLinks);
+    
+    // Save using onUpdate callback to persist
+    if (config?.onUpdate) {
+      config.onUpdate({
+        ...config,
+        links: updatedLinks
+      });
+    }
   }
 
   /**

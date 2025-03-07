@@ -145,10 +145,22 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const addTimezone = (): void => {
     if (newTimezone.name && newTimezone.timezone) {
-      const newId = Math.max(0, ...timezones.map(tz => tz.id || 0)) + 1
-      setTimezones([...timezones, { ...newTimezone, id: newId }])
-      setNewTimezone({ name: '', timezone: '' })
-      setShowAddForm(false)
+      const newId = Math.max(0, ...timezones.map(tz => tz.id || 0)) + 1;
+      const updatedTimezones = [...timezones, { ...newTimezone, id: newId }];
+      
+      // Update state
+      setTimezones(updatedTimezones);
+      
+      // Save using onUpdate callback to persist
+      if (config?.onUpdate) {
+        config.onUpdate({
+          ...config,
+          timezones: updatedTimezones
+        });
+      }
+      
+      setNewTimezone({ name: '', timezone: '' });
+      setShowAddForm(false);
     }
   }
 
@@ -158,7 +170,18 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * @param {number} id - The id of the timezone to remove
    */
   const removeTimezone = (id: number): void => {
-    setTimezones(timezones.filter(tz => tz.id !== id))
+    const updatedTimezones = timezones.filter(tz => tz.id !== id);
+    
+    // Update state
+    setTimezones(updatedTimezones);
+    
+    // Save using onUpdate callback to persist
+    if (config?.onUpdate) {
+      config.onUpdate({
+        ...config,
+        timezones: updatedTimezones
+      });
+    }
   }
 
   /**
@@ -966,6 +989,15 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
               if (newTimezone.name && newTimezone.timezone) {
                 addTimezone();
               }
+              
+              // Explicitly save current timezone list to ensure persistence
+              if (config?.onUpdate) {
+                config.onUpdate({
+                  ...config,
+                  timezones: timezones
+                });
+              }
+              
               setShowSettings(false);
               setShowAddForm(false);
             }}
