@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -133,27 +132,16 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
 
   // Render different views based on widget size
   const renderContent = () => {
-    const paperColor = localConfig.paperColor || defaultConfig.paperColor;
-    const darkPaperColor = localConfig.darkPaperColor || defaultConfig.darkPaperColor;
     
     return (
       <div 
-        className="h-full relative bg-white dark:bg-gray-900 overflow-hidden rounded-md"
+        className="h-full relative bg-amber-50 dark:bg-gray-900 overflow-hidden rounded-md"
         style={{
           background: getLinedPaperBackground(),
           backgroundSize: `100% ${localConfig.lineHeight || defaultConfig.lineHeight}px`,
           backgroundRepeat: 'repeat-y',
-          backgroundColor: `var(--paper-color, ${paperColor})`,
         }}
       >
-        <style jsx>{`
-          :root {
-            --paper-color: ${paperColor};
-          }
-          :root.dark {
-            --paper-color: ${darkPaperColor};
-          }
-        `}</style>
         <textarea
           ref={textareaRef}
           value={localConfig.content || ''}
@@ -259,7 +247,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   };
 
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div ref={widgetRef} className="widget-container notes-widget h-full flex flex-col rounded-lg shadow overflow-hidden">
       <WidgetHeader 
         title={localConfig.title || 'Notes'} 
         onSettingsClick={() => setShowSettings(!showSettings)}

@@ -20,9 +20,19 @@ body.dragging-active {
 /* Widget container - contains styling ONLY for widgets themselves */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  @apply bg-white dark:bg-slate-800 shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
+  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
   /* Prevent text selection during any interaction */
   -webkit-touch-callout: none; /* iOS Safari */
+}
+
+/* Notes widget specific styling */
+.widget-container.notes-widget {
+  @apply bg-amber-50 dark:bg-slate-800;
+}
+
+/* Default styling for other widgets */
+.widget-container:not(.notes-widget) {
+  @apply bg-white dark:bg-slate-800;
 }
 
 /* Fix for the drag handle */
