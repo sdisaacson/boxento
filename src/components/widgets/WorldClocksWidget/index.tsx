@@ -282,20 +282,25 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   }
 
   /**
-   * Renders a compact view for the standard widget size (2x2)
+   * Renders a compact view for the smallest widget size (1x1)
    * 
    * @returns {JSX.Element} Compact view
    */
   const renderCompactView = () => {
     const mainTimezone = timezones[0] || { id: 0, name: 'Local', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+    const timeString = formatTime(currentTime, mainTimezone.timezone).split(':').slice(0, 2).join(':');
+    const period = formatTime(currentTime, mainTimezone.timezone).split(' ')[1];
     
     return (
       <div className="flex flex-col items-center justify-center h-full p-2">
-        <div className="text-xl font-bold">
-          {formatTime(currentTime, mainTimezone.timezone).split(':').slice(0, 2).join(':')}
+        <div className="text-2xl font-bold leading-none">
+          {timeString}
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-xs leading-tight mt-0.5 font-medium text-center">
           {mainTimezone.name}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+          {period}
         </div>
       </div>
     );
@@ -307,15 +312,40 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * @returns {JSX.Element} Default view
    */
   const renderDefaultView = () => {
+    // For small number of timezones, use a cleaner layout
+    if (timezones.length <= 2) {
+      return (
+        <div className="grid grid-cols-1 gap-1 p-1 h-full">
+          {timezones.map(tz => (
+            <div key={tz.id} className="flex justify-between items-center h-full bg-gray-50 dark:bg-slate-700/50 rounded px-2 py-1.5">
+              <div className="flex flex-col">
+                <div className="font-medium text-sm">{tz.name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{getTimeDiff(tz.timezone)}</div>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="text-xl font-bold leading-tight">
+                  {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+                  {formatTime(currentTime, tz.timezone).split(' ')[1]}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For 3+ timezones, use a more compact list view with scrolling
     return (
-      <div className="flex flex-col space-y-2 overflow-y-auto p-1">
-        {timezones.slice(0, 3).map(tz => (
-          <div key={tz.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded">
-            <div>
-              <div className="font-medium text-sm">{tz.name}</div>
+      <div className="flex flex-col space-y-1 overflow-y-auto h-full p-1">
+        {timezones.map(tz => (
+          <div key={tz.id} className="flex justify-between items-center py-1 px-1.5 bg-gray-50 dark:bg-slate-700/50 rounded">
+            <div className="flex flex-col min-w-0">
+              <div className="font-medium text-xs truncate">{tz.name}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{getTimeDiff(tz.timezone)}</div>
             </div>
-            <div className="text-lg font-bold">
+            <div className="text-base font-bold whitespace-nowrap ml-1">
               {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
             </div>
           </div>
@@ -331,13 +361,13 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderMediumView = () => {
     return (
-      <div className="grid grid-cols-2 gap-2 p-1">
-        {timezones.slice(0, 4).map(tz => (
-          <div key={tz.id} className="flex flex-col items-center justify-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded">
-            <div className="text-lg font-bold">
+      <div className="grid grid-cols-2 gap-1 p-1 h-full overflow-y-auto">
+        {timezones.map(tz => (
+          <div key={tz.id} className="flex flex-col items-center justify-center p-1.5 bg-gray-50 dark:bg-slate-700/50 rounded">
+            <div className="text-base font-bold">
               {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
             </div>
-            <div className="text-xs font-medium">{tz.name}</div>
+            <div className="text-xs font-medium truncate w-full text-center">{tz.name}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">{getTimeDiff(tz.timezone)}</div>
           </div>
         ))}
@@ -346,24 +376,59 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders a wider view with analog clocks
+   * Renders a wider view with analog or digital clocks based on number of timezones
    * 
    * @returns {JSX.Element} Wide view
    */
   const renderWideView = () => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
-    return (
-      <div className="grid grid-cols-3 gap-2 p-1">
-        {timezones.slice(0, 3).map(tz => (
-          <div key={tz.id} className="flex flex-col items-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded">
-            <div className="mb-1">
-              {renderClock(tz.timezone, 60, isDarkMode)}
+    // For 1-3 timezones, show analog clocks
+    if (timezones.length <= 3) {
+      return (
+        <div className="grid grid-cols-3 gap-1 p-1 h-full">
+          {timezones.map(tz => (
+            <div key={tz.id} className="flex flex-col items-center p-1 bg-gray-50 dark:bg-slate-700/50 rounded">
+              <div className="mb-0.5">
+                {renderClock(tz.timezone, 50, isDarkMode)}
+              </div>
+              <div className="text-xs font-medium truncate w-full text-center">{tz.name}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+              </div>
             </div>
-            <div className="text-sm font-medium">{tz.name}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+          ))}
+        </div>
+      );
+    }
+    
+    // For 4-6 timezones, show digital clocks in a 3x2 grid
+    if (timezones.length <= 6) {
+      return (
+        <div className="grid grid-cols-3 grid-rows-2 gap-1 p-1 h-full">
+          {timezones.slice(0, 6).map(tz => (
+            <div key={tz.id} className="flex flex-col items-center justify-center p-1 bg-gray-50 dark:bg-slate-700/50 rounded">
+              <div className="text-base font-bold leading-tight">
+                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+              </div>
+              <div className="text-xs font-medium truncate w-full text-center">{tz.name}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{getTimeDiff(tz.timezone)}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For 7+ timezones, use a more compact grid with scrolling
+    return (
+      <div className="grid grid-cols-3 auto-rows-min gap-1 p-1 h-full overflow-y-auto">
+        {timezones.map(tz => (
+          <div key={tz.id} className="flex flex-col items-center justify-center py-1 px-0.5 bg-gray-50 dark:bg-slate-700/50 rounded">
+            <div className="text-sm font-bold leading-none">
               {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
             </div>
+            <div className="text-xs truncate w-full text-center">{tz.name}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 leading-none">{getTimeDiff(tz.timezone)}</div>
           </div>
         ))}
       </div>
@@ -378,19 +443,42 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   const renderTallView = () => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
+    // For 1-4 timezones, show larger clocks with more details
+    if (timezones.length <= 4) {
+      return (
+        <div className="grid grid-cols-2 gap-2 p-1 h-full">
+          {timezones.map(tz => (
+            <div key={tz.id} className="flex flex-col items-center p-1.5 bg-gray-50 dark:bg-slate-700/50 rounded">
+              <div className="text-xs font-medium mb-0.5 truncate w-full text-center">{tz.name}</div>
+              <div className="mb-0.5">
+                {renderClock(tz.timezone, 50, isDarkMode)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+              </div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                {getTimeDiff(tz.timezone)}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For 5+ timezones, use a compact layout with smaller clocks
     return (
-      <div className="grid grid-cols-2 gap-3 p-2">
-        {timezones.slice(0, 6).map(tz => (
-          <div key={tz.id} className="flex flex-col items-center p-2 bg-gray-50 dark:bg-slate-700/50 rounded">
-            <div className="text-sm font-medium mb-1">{tz.name}</div>
-            <div className="mb-1">
-              {renderClock(tz.timezone, 50, isDarkMode)}
+      <div className="grid grid-cols-2 auto-rows-min gap-1 p-1 h-full overflow-y-auto">
+        {timezones.map(tz => (
+          <div key={tz.id} className="flex items-center p-1 bg-gray-50 dark:bg-slate-700/50 rounded">
+            <div className="mr-1.5">
+              {renderClock(tz.timezone, 30, isDarkMode)}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {formatTime(currentTime, tz.timezone)}
-            </div>
-            <div className="text-xs text-gray-400 dark:text-gray-500">
-              {getRelativeDate(currentTime, tz.timezone)}
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="text-xs font-medium truncate">{tz.name}</div>
+              <div className="text-xs font-bold">
+                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{getTimeDiff(tz.timezone)}</div>
             </div>
           </div>
         ))}
@@ -433,7 +521,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Determines which view to render based on widget dimensions
+   * Determines which view to render based on widget dimensions and number of timezones
    * 
    * @returns {JSX.Element} The appropriate view for the current dimensions
    */
@@ -452,19 +540,55 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
       );
     }
     
-    if (width >= 4 && height >= 4) {
-      return renderFullView();
-    } else if (width >= 3 && height >= 3) {
-      return renderTallView();
-    } else if (width >= 3) {
-      return renderWideView();
-    } else if (width >= 2 && height >= 2) {
-      return renderMediumView();
-    } else if (width >= 2 || height >= 2) {
-      return renderDefaultView();
-    } else {
+    // Single timezone for very small widgets
+    if (width === 1 && height === 1) {
       return renderCompactView();
     }
+    
+    // Determine the best view based on dimensions and timezone count
+    
+    // Full size widgets - use the most detailed view
+    if (width >= 4 && height >= 4) {
+      return renderFullView();
+    }
+    
+    // Tall layout - 2x3+
+    if (width === 2 && height >= 3) {
+      // For many timezones in this layout, the tall view with compact list is best
+      return renderTallView();
+    }
+    
+    // Wide layout - 3x2+
+    if (width >= 3 && height === 2) {
+      return renderWideView();
+    }
+    
+    // Square 2x2 layout
+    if (width === 2 && height === 2) {
+      // Choose based on number of timezones
+      if (timezones.length <= 2) {
+        return renderDefaultView(); // Cleaner look for fewer timezones
+      } else if (timezones.length <= 4) {
+        return renderMediumView(); // Grid for 3-4 timezones
+      } else {
+        return renderDefaultView(); // Scrollable list for many timezones
+      }
+    }
+    
+    // 3x3 and similar sizes
+    if (width >= 3 && height >= 3) {
+      return renderTallView();
+    }
+    
+    // For all other irregular sizes, choose based on aspect ratio
+    if (width > height) {
+      return renderWideView(); // Wider than tall
+    } else if (height > width) {
+      return renderTallView(); // Taller than wide
+    }
+    
+    // Default fallback for other dimensions
+    return renderDefaultView();
   };
 
   /**
