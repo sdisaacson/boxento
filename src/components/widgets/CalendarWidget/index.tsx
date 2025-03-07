@@ -585,59 +585,61 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           </h3>
         </div>
         
-        <div className="flex-1 flex flex-col justify-between">
-          {/* Weekday slots - simplified */}
-          {Array.from({ length: 7 }).map((_, index) => {
-            const dayOffset = (index + startDay) % 7
-            const currentDayOfWeek = (today.getDay() + 7 - daysToSubtract) % 7
-            const isToday = dayOffset === currentDayOfWeek
-            const dayDate = new Date(weekStart)
-            dayDate.setDate(weekStart.getDate() + index)
-            
-            // Filter events for this day
-            
-            const dayEvents = events.filter(event => {
-              if (!event.start) return false;
-              const eventDate = new Date(event.start);
-              return eventDate.getDate() === dayDate.getDate() &&
-                     eventDate.getMonth() === dayDate.getMonth() &&
-                     eventDate.getFullYear() === dayDate.getFullYear();
-            });
-            
-            const hasEvents = dayEvents.length > 0
-            
-            return (
-              <div 
-                key={`day-${index}`}
-                className={`flex items-center py-1.5 px-2 rounded-lg ${
-                  isToday ? 'bg-blue-100 dark:bg-blue-900/30' : ''
-                }`}
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center mr-2.5 ${
-                  isToday ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'
-                }`}>
-                  <span className="text-sm font-medium">{dayDate.getDate()}</span>
-                </div>
-                
-                <div className="flex-1">
-                  <div className={`text-xs ${isToday ? 'font-medium' : ''}`}>
-                    {dayNames[dayOffset].substring(0, 3)}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="space-y-1">
+            {/* Weekday slots - simplified */}
+            {Array.from({ length: 7 }).map((_, index) => {
+              const dayOffset = (index + startDay) % 7
+              const currentDayOfWeek = (today.getDay() + 7 - daysToSubtract) % 7
+              const isToday = dayOffset === currentDayOfWeek
+              const dayDate = new Date(weekStart)
+              dayDate.setDate(weekStart.getDate() + index)
+              
+              // Filter events for this day
+              
+              const dayEvents = events.filter(event => {
+                if (!event.start) return false;
+                const eventDate = new Date(event.start);
+                return eventDate.getDate() === dayDate.getDate() &&
+                      eventDate.getMonth() === dayDate.getMonth() &&
+                      eventDate.getFullYear() === dayDate.getFullYear();
+              });
+              
+              const hasEvents = dayEvents.length > 0
+              
+              return (
+                <div 
+                  key={`day-${index}`}
+                  className={`flex items-center py-1.5 px-2 rounded-lg ${
+                    isToday ? 'bg-blue-100 dark:bg-blue-900/30' : ''
+                  }`}
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center mr-2.5 ${
+                    isToday ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    <span className="text-sm font-medium">{dayDate.getDate()}</span>
                   </div>
-                </div>
-                
-                {hasEvents && (
-                  <div className="flex space-x-1">
-                    {[...Array(Math.min(dayEvents.length, 3))].map((_, i) => (
-                      <div 
-                        key={i} 
-                        className="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400"
-                      ></div>
-                    ))}
+                  
+                  <div className="flex-1">
+                    <div className={`text-xs ${isToday ? 'font-medium' : ''}`}>
+                      {dayNames[dayOffset].substring(0, 3)}
+                    </div>
                   </div>
-                )}
-              </div>
-            )
-          })}
+                  
+                  {hasEvents && (
+                    <div className="flex space-x-1">
+                      {[...Array(Math.min(dayEvents.length, 3))].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400"
+                        ></div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     )
@@ -854,13 +856,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         
         {/* Selected day events - only shown if there's enough space */}
         {height > 3 && (
-          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
             <h4 className="text-sm font-medium mb-2">
               {selectedDate.toDateString() === new Date().toDateString() 
                 ? "Today's Events" 
                 : `Events for ${selectedDate.toLocaleDateString('default', { month: 'short', day: 'numeric' })}`}
             </h4>
-            <div className="space-y-2 overflow-y-auto max-h-[200px]">
+            <div className="space-y-2 overflow-y-auto flex-1 max-h-full">
               {(() => {
                 // Filter events for selected date
                 const selectedDateEvents = events.filter(event => {
@@ -1071,7 +1073,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           </div>
           
           {/* Right side - Weekly agenda with more details */}
-          <div className="flex flex-col border-l border-gray-200 dark:border-slate-700 pl-4">
+          <div className="flex flex-col border-l border-gray-200 dark:border-slate-700 pl-4 min-h-0">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-medium">
                 This Week
@@ -1084,76 +1086,78 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             </div>
             
             <div className="flex-1 overflow-y-auto">
-              {/* Weekday slots */}
-              {Array.from({ length: 7 }).map((_, index) => {
-                const dayOffset = index
-                const dayDate = new Date(weekStart)
-                dayDate.setDate(weekStart.getDate() + dayOffset)
-                const isToday = dayDate.getDate() === today.getDate() && 
-                                dayDate.getMonth() === today.getMonth() && 
-                                dayDate.getFullYear() === today.getFullYear()
-                
-                // Filter events for this day
-                const dayEvents = events.filter(event => {
-                  if (!event.start) return false;
-                  const eventDate = new Date(event.start);
-                  return eventDate.getDate() === dayDate.getDate() &&
-                        eventDate.getMonth() === dayDate.getMonth() &&
-                        eventDate.getFullYear() === dayDate.getFullYear();
-                });
-                
-                return (
-                  <div 
-                    key={`weekday-${index}`}
-                    className={`mb-3 pb-2 ${index < 6 ? 'border-b border-gray-100 dark:border-slate-800' : ''}`}
-                  >
-                    <div className={`flex items-center mb-1.5 ${isToday ? 'text-blue-500' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full mr-2 flex items-center justify-center ${
-                        isToday ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-slate-700'
-                      }`}>
-                        <span className="text-sm font-medium">{dayDate.getDate()}</span>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium">
-                          {dayDate.toLocaleDateString('default', { weekday: 'long' })}
-                          {isToday && ' (Today)'}
+              <div className="space-y-1 pr-1">
+                {/* Weekday slots */}
+                {Array.from({ length: 7 }).map((_, index) => {
+                  const dayOffset = index
+                  const dayDate = new Date(weekStart)
+                  dayDate.setDate(weekStart.getDate() + dayOffset)
+                  const isToday = dayDate.getDate() === today.getDate() && 
+                                  dayDate.getMonth() === today.getMonth() && 
+                                  dayDate.getFullYear() === today.getFullYear()
+                  
+                  // Filter events for this day
+                  const dayEvents = events.filter(event => {
+                    if (!event.start) return false;
+                    const eventDate = new Date(event.start);
+                    return eventDate.getDate() === dayDate.getDate() &&
+                          eventDate.getMonth() === dayDate.getMonth() &&
+                          eventDate.getFullYear() === dayDate.getFullYear();
+                  });
+                  
+                  return (
+                    <div 
+                      key={`weekday-${index}`}
+                      className={`mb-3 pb-2 ${index < 6 ? 'border-b border-gray-100 dark:border-slate-800' : ''}`}
+                    >
+                      <div className={`flex items-center mb-1.5 ${isToday ? 'text-blue-500' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full mr-2 flex items-center justify-center ${
+                          isToday ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-slate-700'
+                        }`}>
+                          <span className="text-sm font-medium">{dayDate.getDate()}</span>
                         </div>
-                        <div className="text-2xs text-gray-500 dark:text-gray-400">
-                          {dayDate.toLocaleDateString('default', { month: 'long', day: 'numeric' })}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Events for this day */}
-                    <div className="overflow-y-auto max-h-[150px]">
-                      {dayEvents.length > 0 ? (
-                        dayEvents.map((event, eventIndex) => (
-                          <div 
-                            key={eventIndex}
-                            className="text-xs p-2 mb-1.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800 flex items-start"
-                          >
-                            <div className="min-w-8 text-blue-500 font-medium mr-1.5">
-                              {event.time}
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-medium">{event.title}</div>
-                              {event.location && (
-                                <div className="text-gray-500 dark:text-gray-400 text-2xs mt-0.5">
-                                  {event.location}
-                                </div>
-                              )}
-                            </div>
+                        <div>
+                          <div className="text-xs font-medium">
+                            {dayDate.toLocaleDateString('default', { weekday: 'long' })}
+                            {isToday && ' (Today)'}
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-xs text-gray-400 dark:text-gray-500 italic pl-2">
-                          No events
+                          <div className="text-2xs text-gray-500 dark:text-gray-400">
+                            {dayDate.toLocaleDateString('default', { month: 'long', day: 'numeric' })}
+                          </div>
                         </div>
-                      )}
+                      </div>
+                      
+                      {/* Events for this day */}
+                      <div className="space-y-1.5">
+                        {dayEvents.length > 0 ? (
+                          dayEvents.map((event, eventIndex) => (
+                            <div 
+                              key={eventIndex}
+                              className="text-xs p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800 flex items-start"
+                            >
+                              <div className="min-w-8 text-blue-500 font-medium mr-1.5">
+                                {event.time}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium">{event.title}</div>
+                                {event.location && (
+                                  <div className="text-gray-500 dark:text-gray-400 text-2xs mt-0.5">
+                                    {event.location}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-xs text-gray-400 dark:text-gray-500 italic pl-2">
+                            No events
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
