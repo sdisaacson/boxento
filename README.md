@@ -92,6 +92,7 @@ Boxento comes with these widgets:
 - **Weather**: Displays local weather
 - **World Clocks**: Shows times in multiple timezones
 - **Quick Links**: Editable grid of clickable bookmarks
+- **Notes**: A minimalist notepad for capturing thoughts and ideas
 
 ### Creating Your Own Widgets
 Boxento is open-source, and anyone can create and contribute widgets! For detailed instructions, see our [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md).

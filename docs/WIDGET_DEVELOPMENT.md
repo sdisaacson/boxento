@@ -379,5 +379,6 @@ For examples, look at the existing widgets in the respective directories:
 - `WeatherWidget/`
 - `WorldClocksWidget/`
 - `QuickLinksWidget/`
+- `NotesWidget/`
 
 These widgets demonstrate best practices for Boxento widget development. 
