@@ -22,6 +22,24 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null)
   
+  // Handle escape key to close settings modal
+  React.useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showSettings) {
+        setShowSettings(false);
+        setEditingLink(null);
+      }
+    };
+
+    if (showSettings) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showSettings]);
+  
   /**
    * Adds or updates a link in the links collection
    * 

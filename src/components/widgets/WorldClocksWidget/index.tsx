@@ -36,6 +36,24 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     return () => clearInterval(timer)
   }, [])
 
+  // Handle escape key to close settings modal
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showSettings) {
+        setShowSettings(false);
+        setShowAddForm(false);
+      }
+    };
+
+    if (showSettings) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showSettings]);
+
   /**
    * Formats a date for a specific timezone
    * 

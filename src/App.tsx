@@ -259,6 +259,27 @@ function App() {
   const toggleWidgetSelector = (): void => {
     setWidgetSelectorOpen(!widgetSelectorOpen);
   }
+  
+  // Handle escape key to close any open modals
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // Close any open modals
+        if (widgetSelectorOpen) {
+          setWidgetSelectorOpen(false);
+        }
+        // Add other modal closing logic here if needed in the future
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [widgetSelectorOpen]);
 
   return (
     <div className={`app ${theme}`}>
