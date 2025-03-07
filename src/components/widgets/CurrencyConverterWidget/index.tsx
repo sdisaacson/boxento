@@ -413,9 +413,18 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
 
     // If we have rates data, show the content regardless of API key presence
     if (hasRatesData) {
-      // If we have conversion data, show the appropriate view based on widget size
-      if (width === 2 && height === 2) {
+      // Determine which view to render based on available space
+      // Using a more nuanced approach similar to other widgets
+      if (width >= 4 && height >= 4) {
         return renderLargeView();
+      } else if (width >= 4 && height >= 2) {
+        return renderWideView();
+      } else if (width >= 2 && height >= 3) {
+        return renderTallView();
+      } else if (width >= 3 && height >= 2) {
+        return renderWideView();
+      } else if (width === 2 && height === 2) {
+        return renderDefaultView();
       } else if (width === 2 && height === 1) {
         return renderWideView();
       } else if (width === 1 && height === 2) {
@@ -449,46 +458,40 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             onClick={() => setShowSettings(true)}
             className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-md transition-colors"
           >
-            Configure API Key
+            Add API Key
           </button>
         </div>
       );
     }
-    
-    // For other errors, show a general error message
+
+    // For other errors
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center h-full p-4">
-          <div className="text-red-500 mb-2">
+        <div className="flex flex-col items-center justify-center h-full p-4 text-red-500">
+          <div className="mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div className="text-sm text-center text-gray-700 dark:text-gray-300 mb-2">{error}</div>
-          <button
-            onClick={refetch}
-            className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-md transition-colors"
-          >
-            Try Again
-          </button>
+          <div className="text-sm text-center">{error}</div>
         </div>
       );
     }
-    
-    // Default case: No data yet but no error either (could be initial state)
+
+    // Default - should never reach here but shows a gentle reminder to configure
     return (
       <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="text-amber-500 mb-2">
+        <div className="text-gray-500 dark:text-gray-400 mb-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
         </div>
-        <div className="text-sm text-center mb-2">Please configure currency settings</div>
+        <div className="text-sm text-center mb-2">Configure your currency converter</div>
         <button
           onClick={() => setShowSettings(true)}
           className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-md transition-colors"
         >
-          Configure Settings
+          Settings
         </button>
       </div>
     );
@@ -496,11 +499,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
   
   // Default view (2x2)
   const renderDefaultView = () => {
-    // In the small view, only show one conversion
-    const conversion = conversions.find((c: ConversionResult) => c.code === selectedCurrency) || conversions[0];
+    // In the small view, prioritize the most important currency
+    const primaryConversion = conversions[0]; // Show just the primary currency by default
     
     return (
-      <div className="flex flex-col h-full justify-between">
+      <div className="flex flex-col h-full p-2.5 gap-1">
         {!localConfig.apiKey ? (
           <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
             <p>Please add an API key in settings</p>
@@ -515,48 +518,47 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           </div>
         ) : (
           <>
-            {/* Input amount */}
-            <div className="flex items-center mb-2">
-              <input
-                type="text"
-                value={amount}
-                onChange={handleAmountChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                aria-label={`Amount in ${localConfig.baseCurrency}`}
-                placeholder={localConfig.baseCurrency}
-              />
-            </div>
-            
-            {/* Result */}
-            {conversion && (
-              <div className="flex-grow flex flex-col items-center justify-center">
-                {/* Currency selector */}
-                <select 
-                  value={selectedCurrency}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCurrency(e.target.value)}
-                  className="mb-2 px-2 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium"
-                  aria-label="Select target currency"
-                >
-                  {conversions.map((c: ConversionResult) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Conversion result - large and prominent */}
-                <div className="text-center">
-                  <p className="text-2xl font-bold">
-                    {conversion.symbol}{conversion.value}
-                  </p>
+            {/* Input with proper currency indication */}
+            <div className="mb-2">
+              <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={handleAmountChange}
+                  className="flex-grow w-full px-3 py-2 text-base border-0 dark:bg-gray-700 dark:text-white focus:ring-0 focus:outline-none"
+                  aria-label={`Amount in ${localConfig.baseCurrency}`}
+                />
+                <div className="flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border-l border-gray-300 dark:border-gray-600">
+                  {localConfig.baseCurrency}
                 </div>
               </div>
-            )}
+            </div>
             
-            {/* Last updated footer */}
+            {/* Target currency and exchange rate */}
+            <div className="text-center">
+              <div className="text-gray-500 dark:text-gray-400 text-sm">
+                {primaryConversion.code}
+              </div>
+            </div>
+            
+            {/* Conversion result */}
+            <div className="flex-grow flex items-center justify-center">
+              <div className="text-2xl font-bold">
+                {primaryConversion.symbol}
+                {parseFloat(primaryConversion.value).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </div>
+            </div>
+            
+            {/* Footer with exchange rate and timestamp in compact form */}
+            <div className="text-xs text-center text-gray-500 dark:text-gray-400">
+              1 {localConfig.baseCurrency} = {primaryConversion.rate.toFixed(4)}
+            </div>
             {lastUpdated && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              <div className="text-xs text-center text-gray-400 dark:text-gray-500">
+                {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             )}
           </>
@@ -565,10 +567,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     );
   };
   
-  // Wide view (4x2 or larger width)
+  // Wide view (3x2 or larger width)
   const renderWideView = () => {
+    // For wider views, show 3-4 most important currencies in a row
+    const wideConversions = conversions.slice(0, 3);
+    
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full p-3">
         {!localConfig.apiKey ? (
           <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
             <p>Please add an API key in settings</p>
@@ -583,22 +588,23 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <div className="flex items-center">
-                <label htmlFor="amount-input" className="block text-sm font-medium mr-2">
-                  {localConfig.baseCurrency}
-                </label>
+            {/* Input with currency indicator - same style as 2x2 */}
+            <div className="mb-3">
+              <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <input
-                  id="amount-input"
+                  id="amount-input-wide"
                   type="text"
                   value={amount}
                   onChange={handleAmountChange}
-                  className="w-40 px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                  className="flex-grow w-full px-3 py-2 text-base border-0 dark:bg-gray-700 dark:text-white focus:ring-0 focus:outline-none"
                   aria-label={`Amount in ${localConfig.baseCurrency}`}
                 />
+                <div className="flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border-l border-gray-300 dark:border-gray-600">
+                  {localConfig.baseCurrency}
+                </div>
                 <button
                   onClick={refetch}
-                  className="ml-2 p-1 text-gray-500 hover:text-blue-500"
+                  className="p-2 text-gray-500 hover:text-blue-500 bg-gray-100 dark:bg-gray-800 border-l border-gray-300 dark:border-gray-600"
                   aria-label="Refresh rates"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -608,23 +614,32 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-2 overflow-y-auto">
-              {conversions.map((conversion: ConversionResult) => (
-                <div key={conversion.code} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{conversion.code}</span>
-                    <span className="text-lg font-bold">{conversion.symbol}{conversion.value}</span>
+            {/* Grid of conversion cards */}
+            <div className="flex-grow grid grid-cols-3 gap-2">
+              {wideConversions.map((conversion) => (
+                <div 
+                  key={conversion.code}
+                  className="flex flex-col p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="mb-1 flex justify-between items-center">
+                    <span className="font-medium">{conversion.code}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{conversion.rate.toFixed(4)}</span>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    1 {localConfig.baseCurrency} = {conversion.rate.toFixed(4)} {conversion.code}
+                  <div className="text-xl font-bold mt-auto">
+                    {conversion.symbol}
+                    {parseFloat(conversion.value).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
                   </div>
                 </div>
               ))}
             </div>
             
+            {/* Simple timestamp footer */}
             {lastUpdated && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Updated: {lastUpdated.toLocaleTimeString()}
+                Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             )}
           </>
@@ -633,10 +648,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     );
   };
   
-  // Tall view (2x4 or larger height)
+  // Tall view (2x3 or larger height)
   const renderTallView = () => {
+    // For tall views, show 3 currencies
+    const displayConversions = conversions.slice(0, 3);
+    
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full p-3">
         {!localConfig.apiKey ? (
           <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
             <p>Please add an API key in settings</p>
@@ -651,43 +669,56 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <div className="flex items-center">
-                <label htmlFor="amount-input-tall" className="block text-sm font-medium mr-2">
-                  {localConfig.baseCurrency}
-                </label>
+            {/* Input with currency indicator - same style as 2x2 */}
+            <div className="mb-3">
+              <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <input
-                  id="amount-input-tall"
                   type="text"
                   value={amount}
                   onChange={handleAmountChange}
-                  className="w-full px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                  className="flex-grow w-full px-3 py-2 text-base border-0 dark:bg-gray-700 dark:text-white focus:ring-0 focus:outline-none"
                   aria-label={`Amount in ${localConfig.baseCurrency}`}
                 />
+                <div className="flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border-l border-gray-300 dark:border-gray-600">
+                  {localConfig.baseCurrency}
+                </div>
               </div>
             </div>
             
-            <div className="space-y-2 overflow-y-auto flex-grow">
-              {conversions.map((conversion: ConversionResult) => (
-                <div key={conversion.code} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{conversion.code}</span>
-                    <span className="text-lg font-bold">{conversion.symbol}{conversion.value}</span>
+            {/* Currency conversion cards */}
+            <div className="flex-grow overflow-y-auto">
+              <div className="space-y-2">
+                {displayConversions.map((conversion) => (
+                  <div 
+                    key={conversion.code}
+                    className="flex items-center justify-between p-2.5 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <div>
+                      <div className="font-medium">{conversion.code}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {CURRENCIES[conversion.code as keyof typeof CURRENCIES]?.name}
+                      </div>
+                    </div>
+                    <div className="text-xl font-bold">
+                      {conversion.symbol}
+                      {parseFloat(conversion.value).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    1 {localConfig.baseCurrency} = {conversion.rate.toFixed(4)} {conversion.code}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
             
-            <div className="mt-2 flex justify-between items-center">
+            {/* Footer with rate and refresh */}
+            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {lastUpdated && `Updated: ${lastUpdated.toLocaleTimeString()}`}
+                Updated: {lastUpdated ? lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Never'}
               </div>
               <button
                 onClick={refetch}
-                className="p-1 text-gray-500 hover:text-blue-500"
+                className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
                 aria-label="Refresh rates"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -703,8 +734,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
   
   // Large view (4x4 or larger)
   const renderLargeView = () => {
+    // For large view, show 4 currencies in 2 columns like in the screenshot
+    const displayConversions = conversions.slice(0, 4);
+    
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full p-4">
         {!localConfig.apiKey ? (
           <div className="text-center text-gray-500 dark:text-gray-400 h-full flex items-center justify-center">
             <p>Please add an API key in settings</p>
@@ -719,65 +753,93 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           </div>
         ) : (
           <>
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex-1 relative">
+            {/* Top input section */}
+            <div className="mb-5 flex gap-2">
+              <div className="flex-1 flex overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
                 <input
-                  id="amount-input-large"
                   type="text"
                   value={amount}
                   onChange={handleAmountChange}
-                  className="w-full pl-3 pr-12 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                  aria-label={`Amount in ${localConfig.baseCurrency}`}
-                  placeholder="Amount"
+                  className="flex-1 px-4 py-3 text-lg border-0 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-0"
                 />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                <div className="flex items-center px-5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                   {localConfig.baseCurrency}
                 </div>
               </div>
               
               <button
                 onClick={refetch}
-                className="ml-2 p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center"
                 aria-label="Refresh rates"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1">
-              {conversions.slice(0, 4).map((conversion: ConversionResult) => (
-                <div 
-                  key={conversion.code} 
-                  className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-850 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow transition-all"
-                >
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="flex items-center">
-                      <span className="w-6 h-6 flex items-center justify-center bg-blue-50 dark:bg-gray-700 rounded-full mr-1.5">
-                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">{conversion.code.slice(0, 1)}</span>
-                      </span>
-                      <span className="text-sm font-medium truncate">{conversion.name}</span>
-                    </span>
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-medium">
-                      {conversion.code}
-                    </span>
+            {/* Currency cards with detailed conversion info */}
+            <div className="flex-grow overflow-auto">
+              <div className="grid grid-cols-2 gap-4">
+                {displayConversions.map((conversion) => (
+                  <div 
+                    key={conversion.code}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                  >
+                    {/* Currency info section */}
+                    <div className="p-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline">
+                          <span className="text-2xl font-bold mr-2">{conversion.code}</span>
+                          <span className="text-gray-500 dark:text-gray-400">({conversion.rate.toFixed(4)})</span>
+                        </div>
+                        <div className="text-gray-500 dark:text-gray-400 mb-3">
+                          {CURRENCIES[conversion.code as keyof typeof CURRENCIES]?.name}
+                        </div>
+                        <div className="text-3xl font-bold truncate">
+                          {conversion.symbol}{conversion.value.split('.')[0]}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Conversion rates in detail */}
+                    <div className="flex border-t border-gray-200 dark:border-gray-700 text-sm">
+                      <div className="flex-1 p-3 border-r border-gray-200 dark:border-gray-700">
+                        <div className="text-gray-500 dark:text-gray-400">1 {localConfig.baseCurrency} =</div>
+                        <div className="font-medium">{conversion.rate.toFixed(4)} {conversion.code}</div>
+                      </div>
+                      <div className="flex-1 p-3">
+                        <div className="text-gray-500 dark:text-gray-400">1 {conversion.code} =</div>
+                        <div className="font-medium">{(1 / conversion.rate).toFixed(4)} {localConfig.baseCurrency}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xl font-bold">
-                    {conversion.symbol}{conversion.value}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    1 {localConfig.baseCurrency} = {conversion.rate.toFixed(4)} {conversion.code}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
             
-            {lastUpdated && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
-                Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            {/* Footer with update info */}
+            <div className="mt-5 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+              <div className="text-gray-500 dark:text-gray-400">
+                Last Updated: {lastUpdated ? lastUpdated.toLocaleTimeString([], {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'Never'}
               </div>
-            )}
+              <div>
+                <a 
+                  href="https://openexchangerates.org" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  Data by Open Exchange Rates
+                </a>
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -837,6 +899,8 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     
     // Filter function for search
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('general'); // Tabs: general, currencies, advanced
+    
     const filteredCurrencies = organizedCurrencyCodes.filter(code => {
       const currencyName = CURRENCIES[code as keyof typeof CURRENCIES]?.name || '';
       return code.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -850,50 +914,197 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             <DialogTitle>Currency Converter Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
-            {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
-                id="title-input"
-                type="text"
-                value={localConfig.title || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, title: e.target.value})
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
-            {/* API Key setting */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                API Key Settings
-              </label>
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 border-b mb-4">
+            <button 
+              onClick={() => setActiveTab('general')}
+              className={`px-3 py-2 text-sm font-medium ${activeTab === 'general' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            >
+              General
+            </button>
+            <button 
+              onClick={() => setActiveTab('currencies')}
+              className={`px-3 py-2 text-sm font-medium ${activeTab === 'currencies' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            >
+              Currencies
+            </button>
+            <button 
+              onClick={() => setActiveTab('advanced')}
+              className={`px-3 py-2 text-sm font-medium ${activeTab === 'advanced' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+            >
+              Advanced
+            </button>
+          </div>
+          
+          {/* General Tab */}
+          {activeTab === 'general' && (
+            <div className="space-y-4">
+              {/* Title setting */}
+              <div>
+                <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Widget Title
+                </label>
+                <input
+                  id="title-input"
+                  type="text"
+                  value={localConfig.title || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setLocalConfig({...localConfig, title: e.target.value})
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
               
-              <div className="mb-2">
-                <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                  <input
-                    type="checkbox"
-                    id="useSharedCredential"
-                    checked={localConfig.useSharedCredential}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, useSharedCredential: e.target.checked})}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
-                  />
-                  <div>
-                    <label htmlFor="useSharedCredential" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Use shared API key
-                    </label>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"} • Reuse across all currency widgets
-                    </p>
-                  </div>
+              {/* Base Currency setting - more compact */}
+              <div>
+                <label htmlFor="base-currency-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Base Currency
+                </label>
+                <select
+                  id="base-currency-select"
+                  value={localConfig.baseCurrency || 'USD'}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
+                    setLocalConfig({...localConfig, baseCurrency: e.target.value})
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {/* Show popular currencies first */}
+                  <optgroup label="Popular Currencies">
+                    {POPULAR_CURRENCIES.map(code => (
+                      <option key={code} value={code}>
+                        {code} - {CURRENCIES[code as keyof typeof CURRENCIES]?.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+          )}
+          
+          {/* Currencies Tab */}
+          {activeTab === 'currencies' && (
+            <div className="space-y-4">
+              {/* Target Currencies setting - horizontal chip layout */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Target Currencies
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    Selected: {localConfig.targetCurrencies?.length || 0}
+                  </span>
                 </div>
                 
-                {localConfig.useSharedCredential ? (
-                  <div>
+                {/* Search box */}
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                    placeholder="Search currencies..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                  />
+                </div>
+                
+                {/* Selected currencies as chips */}
+                {(localConfig.targetCurrencies?.length || 0) > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {localConfig.targetCurrencies?.map(code => (
+                      <div key={`selected-${code}`} className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full px-2 py-1 text-xs">
+                        <span>{code}</span>
+                        <button 
+                          onClick={() => {
+                            setLocalConfig({
+                              ...localConfig, 
+                              targetCurrencies: (localConfig.targetCurrencies || []).filter(c => c !== code)
+                            });
+                          }}
+                          className="ml-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Currency selection list with fixed height */}
+                <div className="h-36 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
+                  {filteredCurrencies.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      No currencies match your search
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1">
+                      {filteredCurrencies.map(code => (
+                        <div key={code} className="flex items-center text-sm">
+                          <input
+                            type="checkbox"
+                            id={`currency-${code}`}
+                            checked={localConfig.targetCurrencies?.includes(code) || false}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              const currentTargets = localConfig.targetCurrencies || [];
+                              if (e.target.checked) {
+                                setLocalConfig({
+                                  ...localConfig, 
+                                  targetCurrencies: [...currentTargets, code]
+                                });
+                              } else {
+                                setLocalConfig({
+                                  ...localConfig, 
+                                  targetCurrencies: currentTargets.filter(c => c !== code)
+                                });
+                              }
+                            }}
+                            className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={`currency-${code}`} className="ml-1 truncate">
+                            {code}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Advanced Tab */}
+          {activeTab === 'advanced' && (
+            <div className="space-y-4">
+              {/* API Key setting */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  API Key Settings
+                </label>
+                
+                <div className="mb-2">
+                  <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <input
+                      type="checkbox"
+                      id="useSharedCredential"
+                      checked={localConfig.useSharedCredential}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, useSharedCredential: e.target.checked})}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                    />
+                    <div>
+                      <label htmlFor="useSharedCredential" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Use shared API key
+                      </label>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {localConfig.useSharedCredential ? (
                     <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -904,12 +1115,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                         updateSharedApiKey(e.target.value);
                       }}
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      This API key will be used by all currency converter widgets that opt to use the shared key.
-                    </p>
-                  </div>
-                ) : (
-                  <div>
+                  ) : (
                     <input
                       id="api-key-input"
                       type="text"
@@ -920,155 +1126,56 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Widget-specific API Key"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      This API key will only be used by this widget instance.
-                    </p>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-1">
+                    <a href="https://openexchangerates.org/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
+                  </p>
+                </div>
+              </div>
+              
+              {/* Auto Refresh setting in a row */}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <input
+                    id="auto-refresh-checkbox"
+                    type="checkbox"
+                    checked={localConfig.autoRefresh || false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                      setLocalConfig({...localConfig, autoRefresh: e.target.checked})
+                    }
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="auto-refresh-checkbox" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Auto Refresh
+                  </label>
+                </div>
+                
+                {localConfig.autoRefresh && (
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">Every</span>
+                    <input
+                      id="refresh-interval-input"
+                      type="number"
+                      min="1"
+                      max="1440"
+                      value={localConfig.refreshInterval || 60}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                        setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 60})
+                      }
+                      className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 ml-2">min</span>
                   </div>
                 )}
-                
-                <p className="text-xs text-gray-500 mt-2">
-                  Get an API key at <a href="https://openexchangerates.org/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">openexchangerates.org</a>
-                </p>
               </div>
             </div>
-            
-            {/* Base Currency setting */}
-            <div>
-              <label htmlFor="base-currency-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Base Currency
-              </label>
-              <select
-                id="base-currency-select"
-                value={localConfig.baseCurrency || 'USD'}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
-                  setLocalConfig({...localConfig, baseCurrency: e.target.value})
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {/* Show popular currencies first */}
-                <optgroup label="Popular Currencies">
-                  {POPULAR_CURRENCIES.map(code => (
-                    <option key={code} value={code}>
-                      {code} - {CURRENCIES[code as keyof typeof CURRENCIES]?.name}
-                    </option>
-                  ))}
-                </optgroup>
-                
-                {/* Then show all other currencies */}
-                <optgroup label="All Currencies">
-                  {allCurrencyCodes
-                    .filter(code => !POPULAR_CURRENCIES.includes(code))
-                    .map(code => (
-                      <option key={code} value={code}>
-                        {code} - {CURRENCIES[code as keyof typeof CURRENCIES]?.name}
-                      </option>
-                    ))
-                  }
-                </optgroup>
-              </select>
-            </div>
-            
-            {/* Target Currencies setting */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Target Currencies
-              </label>
-              
-              {/* Search box */}
-              <div className="mb-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  placeholder="Search currencies..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                />
-              </div>
-              
-              <div className="max-h-40 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
-                {filteredCurrencies.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                    No currencies match your search
-                  </p>
-                ) : (
-                  filteredCurrencies.map(code => (
-                    <div key={code} className="flex items-center mb-1">
-                      <input
-                        type="checkbox"
-                        id={`currency-${code}`}
-                        checked={localConfig.targetCurrencies?.includes(code) || false}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const currentTargets = localConfig.targetCurrencies || [];
-                          if (e.target.checked) {
-                            setLocalConfig({
-                              ...localConfig, 
-                              targetCurrencies: [...currentTargets, code]
-                            });
-                          } else {
-                            setLocalConfig({
-                              ...localConfig, 
-                              targetCurrencies: currentTargets.filter(c => c !== code)
-                            });
-                          }
-                        }}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor={`currency-${code}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                        {code} - {CURRENCIES[code as keyof typeof CURRENCIES]?.name}
-                      </label>
-                    </div>
-                  ))
-                )}
-              </div>
-              
-              <div className="mt-2 text-sm text-gray-500">
-                Selected: {localConfig.targetCurrencies?.length || 0} currencies
-              </div>
-            </div>
-            
-            {/* Auto Refresh setting */}
-            <div>
-              <div className="flex items-center">
-                <input
-                  id="auto-refresh-checkbox"
-                  type="checkbox"
-                  checked={localConfig.autoRefresh || false}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                    setLocalConfig({...localConfig, autoRefresh: e.target.checked})
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="auto-refresh-checkbox" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Auto Refresh
-                </label>
-              </div>
-            </div>
-            
-            {/* Refresh Interval setting (only shown if autoRefresh is enabled) */}
-            {localConfig.autoRefresh && (
-              <div>
-                <label htmlFor="refresh-interval-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Refresh Interval (minutes)
-                </label>
-                <input
-                  id="refresh-interval-input"
-                  type="number"
-                  min="1"
-                  max="1440"
-                  value={localConfig.refreshInterval || 60}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                    setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 60})
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            )}
-          </div>
+          )}
           
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             {config?.onDelete && (
               <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                className="px-3 py-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
                 onClick={() => {
                   if (config.onDelete) {
                     config.onDelete();
@@ -1076,13 +1183,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 }}
                 aria-label="Delete this widget"
               >
-                Delete Widget
+                Delete
               </button>
             )}
             <button
               type="button"
               onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="ml-2 py-1 px-3 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Save
             </button>
