@@ -9,6 +9,7 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
+import { useSharedCredential } from '@/lib/sharedCredentials';
 
 /**
  * Weather Widget Component
@@ -26,6 +27,9 @@ import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
  * @returns {JSX.Element} Weather widget component
  */
 const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) => {
+  // Access shared credentials first to ensure it's available before other hooks
+  const { credential: sharedApiKey, updateCredential: updateSharedApiKey, hasCredential: hasSharedApiKey } = useSharedCredential('openweathermap-api');
+  
   // State for weather data and UI
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -33,7 +37,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   const [unit, setUnit] = useState<'celsius' | 'fahrenheit'>('celsius');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [localConfig, setLocalConfig] = useState<WeatherWidgetConfig>(
-    config || { id: '', location: 'New York', units: 'metric', apiKey: '' }
+    config || { id: '', location: 'New York', units: 'metric', apiKey: '', useSharedCredential: false }
   );
   const widgetRef = useRef<HTMLDivElement | null>(null);
 
@@ -96,14 +100,17 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
     setLoading(true);
     
     try {
+      // Determine which API key to use
+      const apiKey = localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey;
+      
       // If we have an API key, fetch real data, otherwise use mock data
-      if (localConfig.apiKey) {
+      if (apiKey) {
         const units = localConfig.units || 'metric';
         const location = localConfig.location || 'New York';
         
         // Fetch current weather
         const currentResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${localConfig.apiKey}`
+          `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${apiKey}`
         );
         
         if (!currentResponse.ok) {
@@ -114,7 +121,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         
         // Fetch forecast
         const forecastResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=${units}&appid=${localConfig.apiKey}`
+          `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=${units}&appid=${apiKey}`
         );
         
         if (!forecastResponse.ok) {
@@ -192,7 +199,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
     };
     
     fetchData();
-  }, [localConfig.location, localConfig.units, localConfig.apiKey]);
+  }, [localConfig.location, localConfig.units, localConfig.apiKey, localConfig.useSharedCredential, sharedApiKey]);
 
   /**
    * Format temperature with unit
@@ -258,12 +265,14 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
    * @returns {JSX.Element} Error indicator
    */
   const renderError = () => {
+    const hasApiKey = localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey;
+    
     return (
       <div className="flex flex-col items-center justify-center h-full p-3 text-center">
         <Info className="text-amber-500 mb-2" size={24} />
         <p className="text-sm text-amber-500 mb-1">{error}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {localConfig.apiKey ? 'Check your API key or network connection.' : 'Add an API key in settings.'}
+          {hasApiKey ? 'Check your API key or network connection.' : 'Add an API key in settings.'}
         </p>
       </div>
     );
@@ -602,18 +611,60 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         
         <div>
           <label className="block text-sm font-medium mb-1">
-            API Key
+            API Key Settings
           </label>
-          <input
-            type="text"
-            className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
-            placeholder="OpenWeatherMap API Key"
-            value={localConfig.apiKey || ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, apiKey: e.target.value})}
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>
-          </p>
+          
+          <div className="mb-2">
+            <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+              <input
+                type="checkbox"
+                id="useSharedCredential"
+                checked={localConfig.useSharedCredential}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, useSharedCredential: e.target.checked})}
+                className="mr-2 h-4 w-4"
+              />
+              <div>
+                <label htmlFor="useSharedCredential" className="text-sm font-medium">
+                  Use shared API key
+                </label>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"} • Reuse across all weather widgets
+                </p>
+              </div>
+            </div>
+            
+            {localConfig.useSharedCredential ? (
+              <div>
+                <input
+                  type="text"
+                  className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
+                  placeholder="OpenWeatherMap shared API Key"
+                  value={sharedApiKey || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSharedApiKey(e.target.value)}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  This API key will be used by all weather widgets that opt to use the shared key.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="text"
+                  className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
+                  placeholder="OpenWeatherMap widget-specific API Key"
+                  value={localConfig.apiKey || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, apiKey: e.target.value})}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  This API key will only be used by this widget instance.
+                </p>
+              </div>
+            )}
+            
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>
+            </p>
+          </div>
         </div>
         
         <div>
@@ -683,8 +734,15 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <button
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
             onClick={() => {
+              // Make sure shared API key is saved properly if using shared credentials
+              if (localConfig.useSharedCredential && sharedApiKey) {
+                console.log('[WeatherWidget] Saving shared API key on settings close');
+                updateSharedApiKey(sharedApiKey);
+              }
+              
               // Save settings via onUpdate callback (will use configManager in App.tsx)
               if (config?.onUpdate) {
+                console.log('[WeatherWidget] Saving local config to parent component');
                 config.onUpdate(localConfig);
               }
               
@@ -693,8 +751,13 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
               setIsSettingsOpen(false);
               
               // Trigger a weather refresh with new settings
+              console.log('[WeatherWidget] Triggering weather refresh with new settings');
               setLoading(true);
-              fetchWeather();
+              
+              // Short delay to ensure all state updates are processed
+              setTimeout(() => {
+                fetchWeather();
+              }, 300);
             }}
           >
             Save

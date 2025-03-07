@@ -7,6 +7,7 @@ import { WidgetProps } from '@/types';
  * @property {string} [id] - Unique identifier for the widget instance
  * @property {string} [title] - Title to display in the widget header
  * @property {string} [apiKey] - Open Exchange Rates API key
+ * @property {boolean} [useSharedCredential] - Whether to use shared API key
  * @property {string} [baseCurrency] - Base currency for conversion
  * @property {string[]} [targetCurrencies] - List of target currencies to display
  * @property {boolean} [autoRefresh] - Whether to automatically refresh rates
@@ -16,6 +17,7 @@ export interface CurrencyConverterWidgetConfig {
   id?: string;
   title?: string;
   apiKey?: string;
+  useSharedCredential?: boolean;
   baseCurrency?: string;
   targetCurrencies?: string[];
   autoRefresh?: boolean;

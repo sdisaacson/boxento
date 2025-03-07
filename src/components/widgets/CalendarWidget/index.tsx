@@ -83,11 +83,26 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   }, [localConfig]);
   
   /**
+   * Get widget-specific token keys
+   */
+  const getTokenKeys = React.useCallback(() => {
+    // Safely handle cases where localConfig might not be fully initialized
+    // This prevents "cannot access getTokenKeys before initialization" errors
+    const widgetId = localConfig?.id || 'default'; 
+    return {
+      accessTokenKey: `googleAccessToken-${widgetId}`,
+      refreshTokenKey: `googleRefreshToken-${widgetId}`,
+      tokenExpiryKey: `googleTokenExpiry-${widgetId}`
+    };
+  }, [localConfig?.id]);
+
+  /**
    * Disconnects from Google Calendar
    */
   const disconnectGoogleCalendar = React.useCallback(() => {
     // Revoke access token if available
-    const accessToken = localStorage.getItem('googleAccessToken');
+    const { accessTokenKey, refreshTokenKey, tokenExpiryKey } = getTokenKeys();
+    const accessToken = localStorage.getItem(accessTokenKey);
     if (accessToken) {
       // Revoke the token
       fetch(`https://oauth2.googleapis.com/revoke?token=${accessToken}`, {
@@ -99,9 +114,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
     
     // Clear stored tokens
-    localStorage.removeItem('googleAccessToken');
-    localStorage.removeItem('googleRefreshToken');
-    localStorage.removeItem('googleTokenExpiry');
+    localStorage.removeItem(accessTokenKey);
+    localStorage.removeItem(refreshTokenKey);
+    localStorage.removeItem(tokenExpiryKey);
     localStorage.removeItem('googleOAuthState');
     
     // Update state
@@ -115,14 +130,15 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     
     // Clear the saved widget config for this connection
     localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
-  }, [localConfig])
+  }, [localConfig, getTokenKeys])
   
   /**
    * Refreshes the access token when it expires
    */
   const refreshAccessToken = async () => {
     try {
-      const refreshToken = localStorage.getItem('googleRefreshToken');
+      const { refreshTokenKey, accessTokenKey, tokenExpiryKey } = getTokenKeys();
+      const refreshToken = localStorage.getItem(refreshTokenKey);
       
       if (!refreshToken) {
         throw new Error('No refresh token available');
@@ -147,8 +163,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       
       const tokenData = await response.json();
       
-      localStorage.setItem('googleAccessToken', tokenData.access_token);
-      localStorage.setItem('googleTokenExpiry', (Date.now() + tokenData.expires_in * 1000).toString());
+      localStorage.setItem(accessTokenKey, tokenData.access_token);
+      localStorage.setItem(tokenExpiryKey, (Date.now() + tokenData.expires_in * 1000).toString());
       
       return tokenData.access_token;
     } catch (err) {
@@ -163,8 +179,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    * Gets a valid access token, refreshing if necessary
    */
   const getValidAccessToken = React.useCallback(async () => {
-    const accessToken = localStorage.getItem('googleAccessToken');
-    const tokenExpiry = localStorage.getItem('googleTokenExpiry');
+    const { accessTokenKey, tokenExpiryKey } = getTokenKeys();
+    const accessToken = localStorage.getItem(accessTokenKey);
+    const tokenExpiry = localStorage.getItem(tokenExpiryKey);
     
     if (!accessToken || !tokenExpiry) {
       return null;
@@ -176,17 +193,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
     
     return accessToken;
-  }, []);
+  }, [getTokenKeys]);
   
   /**
    * Fetches events from Google Calendar
    */
-  const fetchEvents = React.useCallback(async () => {
+  const fetchEvents = React.useCallback(async (silentMode = false) => {
     if (!isGoogleConnected) {
-      console.log('Google Calendar not connected, skipping fetchEvents');
+      if (!silentMode) console.log('Google Calendar not connected, skipping fetchEvents');
       return;
     }
-    console.log('Fetching Google Calendar events...');
+    
+    if (!silentMode) console.log('Fetching Google Calendar events...');
     
     try {
       setIsLoading(true);
@@ -201,10 +219,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       
       // Get selected calendars
       const selectedCalendars = localConfig.calendars?.filter(cal => cal.selected) || [];
-      console.log('Selected calendars:', selectedCalendars);
+      
+      if (!silentMode) console.log('Selected calendars:', selectedCalendars);
       
       if (selectedCalendars.length === 0) {
-        console.log('No calendars selected, clearing events');
+        if (!silentMode) console.log('No calendars selected, clearing events');
         setEvents([]);
         setIsLoading(false);
         return;
@@ -291,11 +310,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         return 0;
       });
       
-      console.log('Fetched events:', allEvents);
+      if (!silentMode) console.log('Fetched events:', allEvents);
       setEvents(allEvents);
       setIsLoading(false);
     } catch (err) {
-      console.error('Failed to fetch events', err);
+      if (!silentMode) console.error('Failed to fetch events', err);
       setIsLoading(false);
       setError('Failed to fetch events');
     }
@@ -404,9 +423,14 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       
       // Store the tokens securely
       // Note: In a production app, tokens should be stored server-side or in HttpOnly cookies
-      localStorage.setItem('googleAccessToken', tokenData.access_token);
-      localStorage.setItem('googleRefreshToken', tokenData.refresh_token);
-      localStorage.setItem('googleTokenExpiry', (Date.now() + tokenData.expires_in * 1000).toString());
+      // Store tokens in widget-specific storage to prevent overwriting between instances
+      const widgetTokenKey = `googleAccessToken-${localConfig.id || 'default'}`;
+      const widgetRefreshTokenKey = `googleRefreshToken-${localConfig.id || 'default'}`;
+      const widgetTokenExpiryKey = `googleTokenExpiry-${localConfig.id || 'default'}`;
+      
+      localStorage.setItem(widgetTokenKey, tokenData.access_token);
+      localStorage.setItem(widgetRefreshTokenKey, tokenData.refresh_token);
+      localStorage.setItem(widgetTokenExpiryKey, (Date.now() + tokenData.expires_in * 1000).toString());
       
       // Fetch user's calendars
       const calendars = await fetchCalendars(tokenData.access_token);
@@ -462,74 +486,114 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
   }, [handleOAuthCallback]);
   
+  // Ref to track initial run state to avoid excessive logging and token checks
+  const isInitialRun = useRef(true);
+
   // Update the initialization code to check both localStorage and configuration
   useEffect(() => {
+    // Don't run the check until the component is fully initialized
+    if (!localConfig) {
+      return;
+    }
+    
     const checkTokens = async () => {
-      console.log('Checking Google Calendar tokens...');
-      const accessToken = localStorage.getItem('googleAccessToken');
-      const refreshToken = localStorage.getItem('googleRefreshToken');
-      console.log('Tokens exist:', !!accessToken && !!refreshToken);
+      // Only log during initial run or debugging
+      if (isInitialRun.current) {
+        console.log('Checking Google Calendar tokens...');
+      }
       
-      // Check stored config for Google Calendar connection status
-      const isConnectedInConfig = localConfig.googleCalendarConnected === true;
-      
-      if (accessToken && refreshToken) {
-        try {
-          // Validate the token
-          console.log('Validating access token...');
-          await getValidAccessToken();
-          console.log('Token validated, setting Google as connected');
-          setIsGoogleConnected(true);
-          
-          // If we have tokens but the config doesn't reflect it, make sure to update the config
-          if (!isConnectedInConfig && localConfig.calendars?.length === 0) {
-            // We need to fetch calendars since we have valid tokens but no calendars in config
-            const validToken = await getValidAccessToken();
-            if (validToken) {
-              try {
-                const calendars = await fetchCalendars(validToken);
-                setLocalConfig(prevConfig => {
-                  const updatedConfig = {
-                    ...prevConfig,
-                    googleCalendarConnected: true,
-                    calendars: calendars
-                  };
-                  
-                  // Save the updated config
-                  localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
-                  
-                  return updatedConfig;
-                });
-              } catch (e) {
-                console.error('Failed to fetch calendars during initialization', e);
+      try {
+        const { accessTokenKey, refreshTokenKey } = getTokenKeys();
+        const accessToken = localStorage.getItem(accessTokenKey);
+        const refreshToken = localStorage.getItem(refreshTokenKey);
+        
+        // Only log during initial run or debugging
+        if (isInitialRun.current) {
+          console.log('Tokens exist:', !!accessToken && !!refreshToken);
+        }
+        
+        // Check stored config for Google Calendar connection status
+        const isConnectedInConfig = localConfig.googleCalendarConnected === true;
+        
+        if (accessToken && refreshToken) {
+          try {
+            // Validate the token (silently after first run)
+            if (isInitialRun.current) {
+              console.log('Validating access token...');
+            }
+            
+            await getValidAccessToken();
+            
+            if (isInitialRun.current) {
+              console.log('Token validated, setting Google as connected');
+            }
+            
+            setIsGoogleConnected(true);
+            
+            // If we have tokens but the config doesn't reflect it, make sure to update the config
+            if (!isConnectedInConfig && localConfig.calendars?.length === 0) {
+              // We need to fetch calendars since we have valid tokens but no calendars in config
+              const validToken = await getValidAccessToken();
+              if (validToken) {
+                try {
+                  const calendars = await fetchCalendars(validToken);
+                  setLocalConfig(prevConfig => {
+                    const updatedConfig = {
+                      ...prevConfig,
+                      googleCalendarConnected: true,
+                      calendars: calendars
+                    };
+                    
+                    // Save the updated config
+                    localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
+                    
+                    return updatedConfig;
+                  });
+                } catch (e) {
+                  console.error('Failed to fetch calendars during initialization', e);
+                }
               }
             }
+            
+            // Only fetch events on initial run or if explicitly needed
+            if (isInitialRun.current) {
+              // Use silent mode to reduce console noise
+              fetchEvents(true);
+            }
+          } catch (err) {
+            console.error('Failed to validate tokens', err);
+            disconnectGoogleCalendar();
           }
-          
-          fetchEvents();
-        } catch (err) {
-          console.error('Failed to validate tokens', err);
-          disconnectGoogleCalendar();
+        } else if (isConnectedInConfig) {
+          // Config says connected but no tokens found
+          setIsGoogleConnected(false);
+          setLocalConfig(prevConfig => {
+            const updatedConfig = {
+              ...prevConfig,
+              googleCalendarConnected: false
+            };
+            
+            // Save the updated config
+            localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
+            
+            return updatedConfig;
+          });
         }
-      } else if (isConnectedInConfig) {
-        // Config says connected but no tokens found
-        setIsGoogleConnected(false);
-        setLocalConfig(prevConfig => {
-          const updatedConfig = {
-            ...prevConfig,
-            googleCalendarConnected: false
-          };
-          
-          // Save the updated config
-          localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
-          
-          return updatedConfig;
-        });
+      } catch (err) {
+        console.error('Error checking tokens:', err);
       }
+      
+      // Mark initialization as complete
+      isInitialRun.current = false;
     };
     
     checkTokens();
-  }, [localConfig.googleCalendarConnected, fetchEvents, disconnectGoogleCalendar, getValidAccessToken]);
+    
+    // Return cleanup function
+    return () => {
+      isInitialRun.current = false;
+    };
+  }, [localConfig?.id, getTokenKeys, getValidAccessToken, fetchCalendars, disconnectGoogleCalendar]); // Include necessary dependencies, but not ones that change frequently
   
   // Update date every minute
   useEffect(() => {
@@ -545,7 +609,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     if (!isGoogleConnected) return
     
     const refreshTimer = setInterval(() => {
-      fetchEvents()
+      // Use silent mode for background refreshes to reduce console noise
+      fetchEvents(true)
     }, 300000) // Refresh every 5 minutes
     
     return () => clearInterval(refreshTimer)

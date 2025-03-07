@@ -64,6 +64,7 @@ export interface WeatherData {
  * @property {'celsius' | 'fahrenheit'} [unit] - Temperature unit
  * @property {string} [units] - Units system ('metric' or 'imperial')
  * @property {string} [apiKey] - API key for weather service
+ * @property {boolean} [useSharedCredential] - Whether to use shared API key
  * @property {WeatherData} [weatherData] - Weather data
  * @property {() => void} [onDelete] - Callback to delete the widget
  * @property {(config: WeatherWidgetConfig) => void} [onUpdate] - Callback to update widget configuration
@@ -74,6 +75,7 @@ export interface WeatherWidgetConfig {
   unit?: 'celsius' | 'fahrenheit';
   units?: string;
   apiKey?: string;
+  useSharedCredential?: boolean;
   weatherData?: WeatherData;
   onDelete?: () => void;
   onUpdate?: (config: WeatherWidgetConfig) => void;

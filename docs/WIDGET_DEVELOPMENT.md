@@ -388,7 +388,12 @@ The delete button should:
 ### 5. Performance
 
 - Avoid unnecessary re-renders
-```
+
+### 6. Shared Credentials
+
+If your widget requires API keys or other sensitive credentials, consider implementing the shared credentials system to improve user experience. This allows multiple instances of the same widget type to share API keys.
+
+For detailed instructions on implementing shared credentials, refer to the [Shared Credentials documentation](./SHARED_CREDENTIALS.md).
 
 ## Examples
 
