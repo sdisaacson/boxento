@@ -1331,7 +1331,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    */
   const renderSettingsFooter = () => {
     return (
-      <div className="flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700">
+      <>
         {config?.onDelete && (
           <button
             className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
@@ -1366,7 +1366,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             Save
           </button>
         </div>
-      </div>
+      </>
     )
   }
 

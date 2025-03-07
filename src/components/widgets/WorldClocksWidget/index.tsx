@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Plus, Trash, X } from 'lucide-react'
-import { createPortal } from 'react-dom'
 import WidgetHeader from '../../ui/WidgetHeader'
+import Modal from '../../ui/Modal'
 import { WorldClocksWidgetProps, TimezoneItem, NewTimezoneItem } from './types'
 
 /**
@@ -480,13 +480,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the settings panel for managing timezones
+   * Renders the settings content for the modal
    * 
-   * @returns {JSX.Element | null} Settings panel or null if not shown
+   * @returns Settings content
    */
-  const renderSettings = () => {
-    if (!showSettings) return null;
-    
+  const renderSettingsContent = () => {
     // Common timezones for easy selection
     const commonTimezones = [
       { name: 'New York', timezone: 'America/New_York' },
@@ -501,149 +499,141 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
       { name: 'São Paulo', timezone: 'America/Sao_Paulo' }
     ];
     
-    return createPortal(
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
-        <div 
-          ref={settingsRef}
-          className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-auto"
-        >
-          <div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
-            <h3 className="font-semibold text-gray-800 dark:text-slate-100">World Clocks Settings</h3>
-            <button 
-              onClick={() => setShowSettings(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          
-          <div className="p-4">
-            <div className="space-y-4">
-              {showAddForm ? (
-                <div className="space-y-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-sm">Add Timezone</h4>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Location Name
-                    </label>
-                    <input 
-                      type="text" 
-                      value={newTimezone.name} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                      placeholder="San Francisco"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Timezone
-                    </label>
-                    <select
-                      value={newTimezone.timezone}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewTimezone({...newTimezone, timezone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                    >
-                      <option value="">Select a timezone</option>
-                      {commonTimezones.map((tz, index) => (
-                        <option key={index} value={tz.timezone}>
-                          {tz.name} ({tz.timezone})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <button 
-                      onClick={() => setShowAddForm(false)}
-                      className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={addTimezone}
-                      className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-                      disabled={!newTimezone.name || !newTimezone.timezone}
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="w-full py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <Plus size={16} className="mr-1" />
-                  <span>Add Timezone</span>
-                </button>
-              )}
-              
-              {timezones.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-sm mb-2">Current Timezones</h4>
-                  <div className="space-y-2">
-                    {timezones.map(tz => (
-                      <div 
-                        key={tz.id} 
-                        className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded"
-                      >
-                        <div>
-                          <div className="font-medium">{tz.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{tz.timezone}</div>
-                        </div>
-                        <button 
-                          onClick={() => removeTimezone(tz.id)}
-                          className="p-1 text-gray-500 hover:text-red-500"
-                        >
-                          <Trash size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+    return (
+      <div className="space-y-4">
+        {showAddForm ? (
+          <div className="space-y-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <h4 className="font-medium text-sm">Add Timezone</h4>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Location Name
+              </label>
+              <input 
+                type="text" 
+                value={newTimezone.name} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
+                placeholder="San Francisco"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Timezone
+              </label>
+              <select
+                value={newTimezone.timezone}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewTimezone({...newTimezone, timezone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
+              >
+                <option value="">Select a timezone</option>
+                {commonTimezones.map((tz, index) => (
+                  <option key={index} value={tz.timezone}>
+                    {tz.name} ({tz.timezone})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2 pt-2">
+              <button 
+                onClick={() => setShowAddForm(false)}
+                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={addTimezone}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
+                disabled={!newTimezone.name || !newTimezone.timezone}
+              >
+                Add
+              </button>
             </div>
           </div>
-          <div className="modal-footer p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center">
-              {config?.onDelete && (
-                <button
-                  className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-md text-sm font-medium transition-colors"
-                  onClick={() => {
-                    if (config.onDelete) {
-                      config.onDelete();
-                    }
-                  }}
-                  aria-label="Delete this widget"
+        ) : (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="w-full py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <Plus size={16} className="mr-1" />
+            <span>Add Timezone</span>
+          </button>
+        )}
+        
+        {timezones.length > 0 && (
+          <div>
+            <h4 className="font-medium text-sm mb-2">Current Timezones</h4>
+            <div className="space-y-2">
+              {timezones.map(tz => (
+                <div 
+                  key={tz.id} 
+                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded"
                 >
-                  Delete Widget
-                </button>
-              )}
-              
-              <div className="flex space-x-2">
-                <button 
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md text-sm"
-                  onClick={() => setShowSettings(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm"
-                  onClick={() => {
-                    // Save the updated timezones
-                    if (newTimezone.name && newTimezone.timezone) {
-                      addTimezone();
-                    }
-                    setShowSettings(false);
-                  }}
-                >
-                  Save
-                </button>
-              </div>
+                  <div>
+                    <div className="font-medium">{tz.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{tz.timezone}</div>
+                  </div>
+                  <button 
+                    onClick={() => removeTimezone(tz.id)}
+                    className="p-1 text-gray-500 hover:text-red-500"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
+        )}
+      </div>
+    );
+  };
+
+  /**
+   * Renders the settings footer for the modal
+   * 
+   * @returns Settings footer
+   */
+  const renderSettingsFooter = () => {
+    return (
+      <>
+        {config?.onDelete && (
+          <button
+            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+            onClick={() => {
+              if (config.onDelete) {
+                config.onDelete();
+              }
+            }}
+            aria-label="Delete this widget"
+          >
+            Delete Widget
+          </button>
+        )}
+        
+        <div className="flex space-x-2">
+          <button 
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+            onClick={() => {
+              setShowSettings(false);
+              setShowAddForm(false);
+            }}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+            onClick={() => {
+              // Save the updated timezones
+              if (newTimezone.name && newTimezone.timezone) {
+                addTimezone();
+              }
+              setShowSettings(false);
+              setShowAddForm(false);
+            }}
+          >
+            Save
+          </button>
         </div>
-      </div>,
-      document.body
+      </>
     );
   };
 
@@ -658,7 +648,19 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         {renderContent()}
       </div>
       
-      {renderSettings()}
+      {showSettings && (
+        <Modal
+          isOpen={showSettings}
+          onClose={() => {
+            setShowSettings(false);
+            setShowAddForm(false);
+          }}
+          title="World Clocks Settings"
+          size="md"
+          footer={renderSettingsFooter()}
+          children={renderSettingsContent()}
+        />
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { ExternalLink, Plus, X, Trash, Edit } from 'lucide-react'
-import { createPortal } from 'react-dom'
 import WidgetHeader from '../../ui/WidgetHeader'
+import Modal from '../../ui/Modal'
 import { QuickLinksWidgetProps, LinkItem } from './types'
 
 /**
@@ -285,170 +285,153 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   }
 
   /**
-   * Renders the settings panel for managing links
+   * Renders the settings content for the modal
    * 
-   * @returns {JSX.Element} Settings panel with form controls
+   * @returns Settings content
    */
-  const renderSettings = () => {
-    if (!showSettings) return null;
-    
-    return createPortal(
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
-        <div 
-          ref={settingsRef}
-          className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-auto"
-        >
-          <div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
-            <h3 id="settings-title" className="font-semibold text-gray-800 dark:text-slate-100">
-              {editingLink ? 'Edit Link' : 'Quick Links Settings'}
-            </h3>
+  const renderSettingsContent = () => {
+    return (
+      <div>
+        {editingLink ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Link Title
+              </label>
+              <input 
+                type="text" 
+                value={editingLink.title} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                placeholder="Google"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                URL
+              </label>
+              <input 
+                type="url" 
+                value={editingLink.url} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, url: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                placeholder="https://google.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Color
+              </label>
+              <div className="flex items-center">
+                <input 
+                  type="color" 
+                  value={editingLink.color} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
+                  className="w-10 h-10 p-1 rounded border border-gray-300 dark:border-slate-600"
+                />
+                <input 
+                  type="text" 
+                  value={editingLink.color} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
+                  className="flex-1 ml-2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-1">
+              {links.map(link => (
+                <div 
+                  key={link.id} 
+                  className="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                >
+                  <div className="flex items-center">
+                    <div 
+                      className="w-3 h-3 rounded-full mr-2" 
+                      style={{ backgroundColor: link.color }}
+                    />
+                    <span className="font-medium">{link.title}</span>
+                  </div>
+                  <div className="flex space-x-1">
+                    <button 
+                      onClick={() => startEdit(link)}
+                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      aria-label={`Edit ${link.title} link`}
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      onClick={() => removeLink(link.id)}
+                      className="p-1 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                      aria-label={`Remove ${link.title} link`}
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => startEdit()}
+              className="w-full py-2 border border-dashed border-gray-300 dark:border-slate-600 rounded-md flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 mt-4"
+              aria-label="Add new link"
+            >
+              <Plus size={16} className="text-gray-500 mr-1" />
+              <span className="text-sm text-gray-500">Add new link</span>
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  /**
+   * Renders the settings footer for the modal
+   * 
+   * @returns Settings footer
+   */
+  const renderSettingsFooter = () => {
+    return (
+      <>
+        {config?.onDelete && !editingLink && (
+          <button
+            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+            onClick={() => {
+              if (config.onDelete) {
+                config.onDelete();
+              }
+            }}
+            aria-label="Delete this widget"
+          >
+            Delete Widget
+          </button>
+        )}
+        
+        <div className="flex space-x-2">
+          <button
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+            onClick={() => {
+              setShowSettings(false);
+              setEditingLink(null);
+            }}
+          >
+            {editingLink ? 'Cancel' : 'Close'}
+          </button>
+          
+          {editingLink && (
             <button 
               onClick={() => {
-                setShowSettings(false);
-                setEditingLink(null);
+                addLink();
               }}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+              disabled={!editingLink.title || !editingLink.url}
             >
-              <X size={20} />
+              {editingLink.id ? 'Update' : 'Add'}
             </button>
-          </div>
-          
-          <div className="p-4">
-            {editingLink ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    Link Title
-                  </label>
-                  <input 
-                    type="text" 
-                    value={editingLink.title} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                    placeholder="Google"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    URL
-                  </label>
-                  <input 
-                    type="url" 
-                    value={editingLink.url} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, url: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                    placeholder="https://google.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    Color
-                  </label>
-                  <div className="flex items-center">
-                    <input 
-                      type="color" 
-                      value={editingLink.color} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
-                      className="w-10 h-10 p-1 rounded border border-gray-300 dark:border-slate-600"
-                    />
-                    <input 
-                      type="text" 
-                      value={editingLink.color} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
-                      className="flex-1 ml-2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2 pt-2">
-                  <button 
-                    onClick={() => setEditingLink(null)}
-                    className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm text-gray-700 dark:text-slate-200"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={() => {
-                      addLink();
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-                    disabled={!editingLink.title || !editingLink.url}
-                  >
-                    {editingLink.id ? 'Update' : 'Add'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-1">
-                  {links.map(link => (
-                    <div 
-                      key={link.id} 
-                      className="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                    >
-                      <div className="flex items-center">
-                        <div 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: link.color }}
-                        />
-                        <span className="font-medium">{link.title}</span>
-                      </div>
-                      <div className="flex space-x-1">
-                        <button 
-                          onClick={() => startEdit(link)}
-                          className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                          aria-label={`Edit ${link.title} link`}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          onClick={() => removeLink(link.id)}
-                          className="p-1 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                          aria-label={`Remove ${link.title} link`}
-                        >
-                          <Trash size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => startEdit()}
-                  className="w-full py-2 border border-dashed border-gray-300 dark:border-slate-600 rounded-md flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 mt-4"
-                  aria-label="Add new link"
-                >
-                  <Plus size={16} className="text-gray-500 mr-1" />
-                  <span className="text-sm text-gray-500">Add new link</span>
-                </button>
-                <div className="mt-4 pt-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
-                  {config?.onDelete && (
-                    <button
-                      className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                      onClick={() => {
-                        if (config.onDelete) {
-                          config.onDelete();
-                        }
-                      }}
-                      aria-label="Delete this widget"
-                    >
-                      Delete Widget
-                    </button>
-                  )}
-                  
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => setShowSettings(false)} 
-                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          )}
         </div>
-      </div>,
-      document.body
+      </>
     );
   };
 
@@ -461,7 +444,20 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       <div className="flex-1 overflow-auto p-1">
         {renderContent()}
       </div>
-      {renderSettings()}
+      
+      {showSettings && (
+        <Modal
+          isOpen={showSettings}
+          onClose={() => {
+            setShowSettings(false);
+            setEditingLink(null);
+          }}
+          title={editingLink ? 'Edit Link' : 'Quick Links Settings'}
+          size="md"
+          footer={renderSettingsFooter()}
+          children={renderSettingsContent()}
+        />
+      )}
     </div>
   )
 }

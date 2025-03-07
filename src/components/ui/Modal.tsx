@@ -102,7 +102,7 @@ const Modal: React.FC<ModalProps> = ({
         </div>
         
         {footer && (
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700 mt-4">
             {footer}
           </div>
         )}
