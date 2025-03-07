@@ -20,7 +20,9 @@ export interface WidgetConfig {
 export interface WidgetProps<T = any> {
   width: number;
   height: number;
-  config?: T;
+  config?: T & {
+    onDelete?: () => void;
+  };
 }
 
 // UI component types

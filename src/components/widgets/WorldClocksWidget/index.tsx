@@ -603,6 +603,44 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
               )}
             </div>
           </div>
+          <div className="modal-footer p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center">
+              {config?.onDelete && (
+                <button
+                  className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-md text-sm font-medium transition-colors"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </button>
+              )}
+              
+              <div className="flex space-x-2">
+                <button 
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md text-sm"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm"
+                  onClick={() => {
+                    // Save the updated timezones
+                    if (newTimezone.name && newTimezone.timezone) {
+                      addTimezone();
+                    }
+                    setShowSettings(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>,
       document.body

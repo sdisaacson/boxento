@@ -179,6 +179,18 @@ function App() {
     setWidgetSelectorOpen(false);
   };
   
+  /**
+   * Delete a widget from the dashboard
+   * @param widgetId The ID of the widget to delete
+   */
+  const deleteWidget = (widgetId: string): void => {
+    // Remove widget from state
+    setWidgets(widgets.filter(widget => widget.id !== widgetId));
+    
+    // Remove layout item from state
+    setLayout(layout.filter(item => item.i !== widgetId));
+  };
+  
   const handleLayoutChange = (newLayout: LayoutItem[]): void => {
     // Enforce minimum size constraints
     const validatedLayout = newLayout.map(item => ({
@@ -209,7 +221,10 @@ function App() {
         <WidgetComponent
           width={layoutItem?.w || 2}
           height={layoutItem?.h || 2}
-          config={widget.config}
+          config={{
+            ...widget.config,
+            onDelete: () => deleteWidget(widget.id)
+          }}
         />
       } />
     );

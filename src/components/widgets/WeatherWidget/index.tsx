@@ -565,35 +565,49 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   };
 
   /**
-   * Renders the settings footer for the modal
+   * Renders the settings footer
    * 
    * @returns {JSX.Element} Settings footer
    */
   const renderSettingsFooter = () => {
     return (
-      <>
-        <button 
-          onClick={() => setIsSettingsOpen(false)}
-          className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm text-gray-700 dark:text-slate-200"
-          aria-label="Cancel settings changes"
-        >
-          Cancel
-        </button>
-        <button 
-          onClick={() => {
-            // Apply the local config settings
-            setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
-            setIsSettingsOpen(false);
-            // Trigger a weather refresh with new settings
-            setLoading(true);
-            fetchWeather();
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-          aria-label="Save weather settings"
-        >
-          Save
-        </button>
-      </>
+      <div className="flex justify-between items-center p-4 border-t border-gray-200 dark:border-gray-700">
+        {config?.onDelete && (
+          <button
+            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+            onClick={() => {
+              if (config.onDelete) {
+                config.onDelete();
+              }
+            }}
+            aria-label="Delete this widget"
+          >
+            Delete Widget
+          </button>
+        )}
+        
+        <div className="flex space-x-2">
+          <button
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-sm font-medium"
+            onClick={() => setIsSettingsOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+            onClick={() => {
+              // Apply the local config settings
+              setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
+              setIsSettingsOpen(false);
+              // Trigger a weather refresh with new settings
+              setLoading(true);
+              fetchWeather();
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
     );
   };
 

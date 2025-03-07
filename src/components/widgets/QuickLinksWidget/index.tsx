@@ -22,6 +22,21 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const settingsRef = useRef<HTMLDivElement | null>(null)
   
+  // Handle click outside modal to close it
+  const handleModalBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+      setShowSettings(false);
+      setEditingLink(null);
+    }
+  };
+  
+  // Handle form submission for adding/editing links
+  const handleLinkFormSubmit = () => {
+    if (editingLink) {
+      addLink();
+    }
+  };
+
   // Handle escape key to close settings modal
   React.useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -275,7 +290,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
    * @returns {JSX.Element} Settings panel with form controls
    */
   const renderSettings = () => {
-    if (!showSettings) return null
+    if (!showSettings) return null;
     
     return createPortal(
       <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
@@ -284,11 +299,13 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-auto"
         >
           <div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
-            <h3 id="settings-title" className="font-semibold text-gray-800 dark:text-slate-100">Quick Links Settings</h3>
+            <h3 id="settings-title" className="font-semibold text-gray-800 dark:text-slate-100">
+              {editingLink ? 'Edit Link' : 'Quick Links Settings'}
+            </h3>
             <button 
               onClick={() => {
-                setShowSettings(false)
-                setEditingLink(null)
+                setShowSettings(false);
+                setEditingLink(null);
               }}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
@@ -351,7 +368,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                   </button>
                   <button 
                     onClick={() => {
-                      addLink()
+                      addLink();
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
                     disabled={!editingLink.title || !editingLink.url}
@@ -402,14 +419,38 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                   <Plus size={16} className="text-gray-500 mr-1" />
                   <span className="text-sm text-gray-500">Add new link</span>
                 </button>
+                <div className="mt-4 pt-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
+                  {config?.onDelete && (
+                    <button
+                      className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                      onClick={() => {
+                        if (config.onDelete) {
+                          config.onDelete();
+                        }
+                      }}
+                      aria-label="Delete this widget"
+                    >
+                      Delete Widget
+                    </button>
+                  )}
+                  
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => setShowSettings(false)} 
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
               </>
             )}
           </div>
         </div>
       </div>,
       document.body
-    )
-  }
+    );
+  };
 
   return (
     <div ref={widgetRef} className="widget-container h-full flex flex-col">
