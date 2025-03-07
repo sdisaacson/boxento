@@ -683,9 +683,15 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <button
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
             onClick={() => {
+              // Save settings via onUpdate callback (will use configManager in App.tsx)
+              if (config?.onUpdate) {
+                config.onUpdate(localConfig);
+              }
+              
               // Apply the local config settings
               setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
               setIsSettingsOpen(false);
+              
               // Trigger a weather refresh with new settings
               setLoading(true);
               fetchWeather();

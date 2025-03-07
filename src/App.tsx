@@ -11,6 +11,7 @@ import {
 } from '@/types'
 import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary'
 import WidgetSelector from '@/components/widgets/common/WidgetSelector'
+import { configManager } from '@/lib/configManager'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -59,7 +60,25 @@ function App() {
   const [widgets, setWidgets] = useState<Widget[]>(() => {
     if (typeof window !== 'undefined') {
       const savedWidgets = localStorage.getItem('boxento-widgets')
-      return savedWidgets ? JSON.parse(savedWidgets) : []
+      const widgetsFromStorage = savedWidgets ? JSON.parse(savedWidgets) : []
+      
+      // Load each widget's configuration from configManager
+      return widgetsFromStorage.map((widget: Widget) => {
+        if (widget.id) {
+          const savedConfig = configManager.getWidgetConfig(widget.id);
+          if (savedConfig) {
+            // Merge the saved configuration with the widget's config
+            return {
+              ...widget,
+              config: {
+                ...widget.config,
+                ...savedConfig
+              }
+            };
+          }
+        }
+        return widget;
+      });
     }
     return []
   })
@@ -87,6 +106,15 @@ function App() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('boxento-widgets', JSON.stringify(widgets))
       localStorage.setItem('boxento-layout', JSON.stringify(layout))
+      
+      // Save each widget's configuration separately using configManager
+      widgets.forEach(widget => {
+        if (widget.config && widget.id) {
+          // Don't save event handlers like onDelete
+          const { onDelete, onUpdate, ...configToSave } = widget.config;
+          configManager.saveWidgetConfig(widget.id, configToSave);
+        }
+      });
     }
   }, [widgets, layout])
   
@@ -202,6 +230,24 @@ function App() {
     setLayout(validatedLayout);
   };
   
+  /**
+   * Update a widget's configuration
+   * @param widgetId The ID of the widget to update
+   * @param newConfig New configuration object
+   */
+  const updateWidgetConfig = (widgetId: string, newConfig: any): void => {
+    // Update widget in state
+    setWidgets(widgets.map(widget => 
+      widget.id === widgetId 
+        ? { ...widget, config: { ...widget.config, ...newConfig } }
+        : widget
+    ));
+    
+    // Save to configManager - excluding function properties
+    const { onDelete, onUpdate, ...configToSave } = newConfig;
+    configManager.saveWidgetConfig(widgetId, configToSave);
+  };
+
   const renderWidget = (widget: Widget): React.ReactNode => {
     const WidgetComponent = getWidgetComponent(widget.type);
     
@@ -223,7 +269,8 @@ function App() {
           height={layoutItem?.h || 2}
           config={{
             ...widget.config,
-            onDelete: () => deleteWidget(widget.id)
+            onDelete: () => deleteWidget(widget.id),
+            onUpdate: (newConfig: any) => updateWidgetConfig(widget.id, newConfig)
           }}
         />
       } />
