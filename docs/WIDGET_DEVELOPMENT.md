@@ -193,13 +193,13 @@ const MyWidget: React.FC<MyWidgetProps> = ({ width, height, config }) => {
   };
 
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div ref={widgetRef} className="widget-container h-full flex flex-col">
       <WidgetHeader 
         title="My Widget" 
         onSettingsClick={() => setShowSettings(!showSettings)}
       />
       
-      <div className="flex-1 overflow-hidden p-2">
+      <div className="flex-grow p-4 overflow-hidden">
         {renderContent()}
       </div>
       
@@ -281,7 +281,45 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
 
 ## Widget Requirements
 
-### 1. Responsive Design
+### 1. Styling and Structure
+
+All widgets MUST use a consistent structure and styling:
+
+#### Standard Widget Structure
+
+```tsx
+<div ref={widgetRef} className="widget-container h-full flex flex-col">
+  <WidgetHeader 
+    title="Widget Title" 
+    onSettingsClick={() => setShowSettings(true)}
+  />
+  
+  <div className="flex-grow p-4 overflow-hidden">
+    {/* Widget content goes here */}
+  </div>
+  
+  {/* Settings dialog */}
+</div>
+```
+
+#### Required Classes
+
+- **`widget-container`**: This base class MUST be used on the root div of every widget. It provides standard styling for borders, shadows, backgrounds, and overflow handling.
+- **`h-full`** and **`flex flex-col`**: Required for proper sizing and layout.
+- Content container must use **`flex-grow`** and **`overflow-hidden`** for proper scrolling behavior.
+
+#### Padding and Spacing
+
+- Use **`p-4`** (or similar consistent padding) for the content container.
+- For lists or grids, use **`space-y-2`** or **`gap-3`** for consistent item spacing.
+- List items typically use **`p-2`** for internal padding.
+
+#### Border Radius
+
+- Use **`rounded-lg`** for card-like elements inside the widget.
+- Buttons typically use **`rounded-md`** or **`rounded-lg`** depending on size.
+
+### 2. Responsive Design
 
 Widgets must be responsive to different sizes, with a minimum size of 2x2:
 
@@ -292,14 +330,15 @@ Widgets must be responsive to different sizes, with a minimum size of 2x2:
 
 Note: Widgets cannot be smaller than 2x2 as this is enforced by the application.
 
-### 2. Theme Support
+### 3. Theme Support
 
 Widgets must support both light and dark themes:
 
 - Use Tailwind's `dark:` prefix for dark mode styles
 - Test in both light and dark modes
+- The `widget-container` class handles basic light/dark theming for the container
 
-### 3. Settings
+### 4. Settings
 
 If your widget has configurable options:
 
@@ -344,17 +383,31 @@ The delete button should:
 - Include proper accessibility attributes
 - Be positioned in the DialogFooter alongside other actions
 
-### 4. Performance
+### 5. Performance
 
 - Avoid unnecessary re-renders
 - Use `useEffect` for side effects and cleanup
 - Optimize expensive calculations
 
-### 5. Accessibility
+### 6. Accessibility
 
 - Use semantic HTML
 - Add ARIA attributes where appropriate
 - Ensure keyboard navigation works for interactive elements
+
+## Common CSS Classes
+
+Here are the common CSS classes used across widgets:
+
+| Class Name | Purpose | Usage |
+|------------|---------|-------|
+| `widget-container` | Main container for all widgets | Required on the root element |
+| `h-full flex flex-col` | Layout structure | Required on the root element |
+| `flex-grow overflow-hidden` | Content container | Required on the content wrapper |
+| `p-4` | Standard content padding | Used on content wrapper |
+| `rounded-lg` | Standard border radius | Used for cards and containers |
+| `space-y-2` | Vertical spacing | Used for lists and stacked elements |
+| `gap-3` | Grid/flex item spacing | Used for flex layouts and grids |
 
 ## Testing Your Widget
 
@@ -382,3 +435,15 @@ For examples, look at the existing widgets in the respective directories:
 - `NotesWidget/`
 
 These widgets demonstrate best practices for Boxento widget development. 
+
+## Widget Structure Checklist
+
+Before submitting your widget, verify it meets these requirements:
+
+- [ ] Uses `widget-container` class on the root element
+- [ ] Uses `WidgetHeader` component with proper title and settings button
+- [ ] Content area uses appropriate padding and overflow handling
+- [ ] Implements responsive layouts based on width/height
+- [ ] Supports both light and dark themes
+- [ ] Implements settings dialog with delete button (if applicable)
+- [ ] Uses consistent spacing, padding, and border radius

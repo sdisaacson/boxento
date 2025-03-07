@@ -7,6 +7,9 @@ import WeatherWidget from './WeatherWidget/index';
 import WorldClocksWidget from './WorldClocksWidget/index';
 import QuickLinksWidget from './QuickLinksWidget/index';
 import NotesWidget from './NotesWidget/index';
+import TodoWidget from './TodoWidget/index';
+// Import TemplateWidget (commented as it's not for production use)
+// import TemplateWidget from './TemplateWidget/index';
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -14,6 +17,9 @@ export * from './WeatherWidget/types';
 export * from './WorldClocksWidget/types';
 export * from './QuickLinksWidget/types';
 export * from './NotesWidget/types';
+export * from './TodoWidget/types';
+// Export TemplateWidget types (commented as it's not for production use)
+// export * from './TemplateWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -77,6 +83,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Take and save quick notes'
+  },
+  {
+    type: 'todo',
+    name: 'Todo List',
+    icon: 'CheckSquare',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Manage your tasks and to-dos'
   }
 ];
 
@@ -103,6 +120,11 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return QuickLinksWidget;
     case 'notes':
       return NotesWidget;
+    case 'todo':
+      return TodoWidget;
+    // Template widget registration (commented as it's not for production use)
+    // case 'template':
+    //   return TemplateWidget;
     default:
       return null;
   }
