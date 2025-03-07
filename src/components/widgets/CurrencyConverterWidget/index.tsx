@@ -566,57 +566,65 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           </div>
         ) : (
           <>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <div className="flex items-center">
-                <label htmlFor="amount-input-large" className="block text-sm font-medium mr-2">
-                  {localConfig.baseCurrency}
-                </label>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex-1 relative">
                 <input
                   id="amount-input-large"
                   type="text"
                   value={amount}
                   onChange={handleAmountChange}
-                  className="w-40 px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                  className="w-full pl-3 pr-12 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   aria-label={`Amount in ${localConfig.baseCurrency}`}
+                  placeholder="Amount"
                 />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                  {localConfig.baseCurrency}
+                </div>
               </div>
               
               <button
                 onClick={refetch}
-                className="flex items-center px-2 py-1 text-sm text-blue-500 hover:text-blue-600"
+                className="ml-2 p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors"
                 aria-label="Refresh rates"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Refresh
               </button>
-              
-              {lastUpdated && (
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Last updated: {lastUpdated.toLocaleString()}
-                </div>
-              )}
             </div>
             
-            <div className="grid grid-cols-3 gap-3 overflow-y-auto">
-              {conversions.map((conversion: ConversionResult) => (
-                <div key={conversion.code} className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium">{conversion.name}</span>
-                    <span className="text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">
+            <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1">
+              {conversions.slice(0, 4).map((conversion: ConversionResult) => (
+                <div 
+                  key={conversion.code} 
+                  className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-850 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow transition-all"
+                >
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="flex items-center">
+                      <span className="w-6 h-6 flex items-center justify-center bg-blue-50 dark:bg-gray-700 rounded-full mr-1.5">
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">{conversion.code.slice(0, 1)}</span>
+                      </span>
+                      <span className="text-sm font-medium truncate">{conversion.name}</span>
+                    </span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-medium">
                       {conversion.code}
                     </span>
                   </div>
-                  <div className="text-xl font-bold mb-1">
+                  <div className="text-xl font-bold">
                     {conversion.symbol}{conversion.value}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     1 {localConfig.baseCurrency} = {conversion.rate.toFixed(4)} {conversion.code}
                   </div>
                 </div>
               ))}
             </div>
+            
+            {lastUpdated && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-right">
+                Updated: {lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </div>
+            )}
           </>
         )}
       </div>
