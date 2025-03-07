@@ -2,6 +2,8 @@
 
 This guide explains how to create new widgets for Boxento. Widgets are modular, resizable components that display information or provide functionality on the Boxento dashboard.
 
+> **Quick Start**: For a ready-to-use template that follows all the patterns described in this guide, see the [Template Widget](../src/components/widgets/TemplateWidget/README.md).
+
 ## Widget Architecture
 
 Widgets in Boxento follow a consistent architecture:
@@ -386,64 +388,17 @@ The delete button should:
 ### 5. Performance
 
 - Avoid unnecessary re-renders
-- Use `useEffect` for side effects and cleanup
-- Optimize expensive calculations
-
-### 6. Accessibility
-
-- Use semantic HTML
-- Add ARIA attributes where appropriate
-- Ensure keyboard navigation works for interactive elements
-
-## Common CSS Classes
-
-Here are the common CSS classes used across widgets:
-
-| Class Name | Purpose | Usage |
-|------------|---------|-------|
-| `widget-container` | Main container for all widgets | Required on the root element |
-| `h-full flex flex-col` | Layout structure | Required on the root element |
-| `flex-grow overflow-hidden` | Content container | Required on the content wrapper |
-| `p-4` | Standard content padding | Used on content wrapper |
-| `rounded-lg` | Standard border radius | Used for cards and containers |
-| `space-y-2` | Vertical spacing | Used for lists and stacked elements |
-| `gap-3` | Grid/flex item spacing | Used for flex layouts and grids |
-
-## Testing Your Widget
-
-1. Start the development server: `bun run dev`
-2. Add your widget to the dashboard
-3. Test different sizes by resizing the widget (minimum 2x2, maximum 6x6)
-4. Test in both light and dark modes
-5. Test settings functionality
-
-## Submitting Your Widget
-
-1. Commit your changes: `git add src/components/widgets/MyWidget src/components/widgets/index.ts`
-2. Create a commit message: `git commit -m "Add MyWidget: Description of what it does"`
-3. Push to your fork: `git push origin main`
-4. Create a pull request on GitHub
+```
 
 ## Examples
 
 For examples, look at the existing widgets in the respective directories:
 
+- **`TemplateWidget/`** - The reference implementation that follows all best practices (recommended starting point)
 - `CalendarWidget/`
 - `WeatherWidget/`
 - `WorldClocksWidget/`
 - `QuickLinksWidget/`
 - `NotesWidget/`
 
-These widgets demonstrate best practices for Boxento widget development. 
-
-## Widget Structure Checklist
-
-Before submitting your widget, verify it meets these requirements:
-
-- [ ] Uses `widget-container` class on the root element
-- [ ] Uses `WidgetHeader` component with proper title and settings button
-- [ ] Content area uses appropriate padding and overflow handling
-- [ ] Implements responsive layouts based on width/height
-- [ ] Supports both light and dark themes
-- [ ] Implements settings dialog with delete button (if applicable)
-- [ ] Uses consistent spacing, padding, and border radius
+These widgets demonstrate best practices for Boxento widget development.
