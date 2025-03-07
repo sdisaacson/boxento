@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Plus, Trash, X } from 'lucide-react'
 import WidgetHeader from '../../ui/WidgetHeader'
-import Modal from '../../ui/Modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog'
 import { WorldClocksWidgetProps, TimezoneItem, NewTimezoneItem } from './types'
 
 /**
@@ -36,24 +42,6 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     
     return () => clearInterval(timer)
   }, [])
-
-  // Handle escape key to close settings modal
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showSettings) {
-        setShowSettings(false);
-        setShowAddForm(false);
-      }
-    };
-
-    if (showSettings) {
-      document.addEventListener('keydown', handleEscapeKey);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [showSettings]);
 
   /**
    * Formats a date for a specific timezone
@@ -649,17 +637,27 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
       </div>
       
       {showSettings && (
-        <Modal
-          isOpen={showSettings}
-          onClose={() => {
-            setShowSettings(false);
-            setShowAddForm(false);
+        <Dialog
+          open={showSettings}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              setShowSettings(false);
+              setShowAddForm(false);
+            }
           }}
-          title="World Clocks Settings"
-          size="md"
-          footer={renderSettingsFooter()}
-          children={renderSettingsContent()}
-        />
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>World Clocks Settings</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              {renderSettingsContent()}
+            </div>
+            <DialogFooter>
+              {renderSettingsFooter()}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

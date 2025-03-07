@@ -1,7 +1,13 @@
 import React, { useState, useRef } from 'react'
 import { ExternalLink, Plus, X, Trash, Edit } from 'lucide-react'
 import WidgetHeader from '../../ui/WidgetHeader'
-import Modal from '../../ui/Modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog'
 import { QuickLinksWidgetProps, LinkItem } from './types'
 
 /**
@@ -37,23 +43,12 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     }
   };
 
-  // Handle escape key to close settings modal
+  // Check if there are any links in the configuration
   React.useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showSettings) {
-        setShowSettings(false);
-        setEditingLink(null);
-      }
-    };
-
-    if (showSettings) {
-      document.addEventListener('keydown', handleEscapeKey);
+    if (config?.links) {
+      setLinks(config.links);
     }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [showSettings]);
+  }, [config]);
   
   /**
    * Adds or updates a link in the links collection
@@ -446,17 +441,25 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       </div>
       
       {showSettings && (
-        <Modal
-          isOpen={showSettings}
-          onClose={() => {
-            setShowSettings(false);
-            setEditingLink(null);
+        <Dialog
+          open={showSettings}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              setShowSettings(false);
+              setEditingLink(null);
+            }
           }}
-          title={editingLink ? 'Edit Link' : 'Quick Links Settings'}
-          size="md"
-          footer={renderSettingsFooter()}
-          children={renderSettingsContent()}
-        />
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingLink ? 'Edit Link' : 'Quick Links Settings'}</DialogTitle>
+            </DialogHeader>
+            {renderSettingsContent()}
+            <DialogFooter>
+              {renderSettingsFooter()}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

@@ -12,6 +12,7 @@
     "clean": "rm -rf node_modules/.vite"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.6",
     "@tailwindcss/postcss": "^4.0.10",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

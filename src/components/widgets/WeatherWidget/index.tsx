@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim } from 'lucide-react';
-import Modal from '../../ui/Modal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog';
 import WidgetHeader from '../../ui/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 
@@ -623,14 +629,17 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
       </div>
       
       {isSettingsOpen && (
-        <Modal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          title="Weather Settings"
-          size="md"
-          footer={renderSettingsFooter()}
-          children={renderSettingsContent()}
-        />
+        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => setIsSettingsOpen(open)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Weather Settings</DialogTitle>
+            </DialogHeader>
+            {renderSettingsContent()}
+            <DialogFooter>
+              {renderSettingsFooter()}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

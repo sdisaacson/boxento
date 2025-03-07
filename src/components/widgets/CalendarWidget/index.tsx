@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
-import Modal from '../../ui/Modal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog'
 import WidgetHeader from '../../ui/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 
@@ -1405,14 +1411,26 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       </div>
       
       {isSettingsOpen && (
-        <Modal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          title="Calendar Settings"
-          size="md"
-          footer={renderSettingsFooter()}
-          children={renderSettingsContent()}
-        />
+        <Dialog
+          open={isSettingsOpen}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              setIsSettingsOpen(false);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Calendar Settings</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              {renderSettingsContent()}
+            </div>
+            <DialogFooter>
+              {renderSettingsFooter()}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
