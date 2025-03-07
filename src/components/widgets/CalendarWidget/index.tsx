@@ -538,7 +538,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         </div>
         
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-bold text-blue-500">{dayOfMonth}</span>
+          <span className="text-6xl font-bold text-rose-500">{dayOfMonth}</span>
           <span className="text-sm">{month}</span>
         </div>
         
