@@ -4,7 +4,7 @@ import { WidgetProps } from '@/types';
  * Represents a calendar event
  * 
  * @interface CalendarEvent
- * @property {number} [id] - Optional unique identifier for the event
+ * @property {number | string} [id] - Optional unique identifier for the event
  * @property {string} title - Title of the event
  * @property {Date | string} [start] - Start date/time of the event
  * @property {Date | string} [end] - End date/time of the event
@@ -15,7 +15,7 @@ import { WidgetProps } from '@/types';
  * @property {string} [time] - Time of the event as a string
  */
 export interface CalendarEvent {
-  id?: number;
+  id?: number | string;
   title: string;
   start?: Date | string;
   end?: Date | string;
@@ -27,6 +27,22 @@ export interface CalendarEvent {
 }
 
 /**
+ * Represents a calendar connected to the widget
+ * 
+ * @interface CalendarSource
+ * @property {string} id - Unique identifier for the calendar
+ * @property {string} name - Display name of the calendar
+ * @property {string} color - Color associated with the calendar
+ * @property {boolean} selected - Whether the calendar is selected for display
+ */
+export interface CalendarSource {
+  id: string;
+  name: string;
+  color: string;
+  selected: boolean;
+}
+
+/**
  * Configuration options for the Calendar widget
  * 
  * @interface CalendarWidgetConfig
@@ -35,6 +51,8 @@ export interface CalendarEvent {
  * @property {'day' | 'week' | 'month'} [defaultView] - Default view mode
  * @property {'sunday' | 'monday'} [startDay] - First day of the week
  * @property {boolean} [showWeekNumbers] - Whether to show week numbers
+ * @property {boolean} [googleCalendarConnected] - Whether Google Calendar is connected
+ * @property {CalendarSource[]} [calendars] - Connected calendar sources
  */
 export interface CalendarWidgetConfig {
   id?: string;
@@ -42,6 +60,9 @@ export interface CalendarWidgetConfig {
   defaultView?: 'day' | 'week' | 'month';
   startDay?: 'sunday' | 'monday';
   showWeekNumbers?: boolean;
+  googleCalendarConnected?: boolean;
+  calendars?: CalendarSource[];
+  onUpdate?: (config: CalendarWidgetConfig) => void;
 }
 
 /**
