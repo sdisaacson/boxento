@@ -32,7 +32,22 @@ import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSourc
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, config }) => {
   const [date, setDate] = useState<Date>(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(config || { id: '' })
+  
+  // Update the initialization to load from localStorage first
+  const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(() => {
+    // Try to load saved config from localStorage
+    const savedConfig = localStorage.getItem(`calendar-widget-config-${config?.id || 'default'}`);
+    if (savedConfig) {
+      try {
+        return JSON.parse(savedConfig);
+      } catch (e) {
+        console.error('Failed to parse saved calendar config', e);
+      }
+    }
+    // Fall back to props or default
+    return config || { id: '' };
+  });
+  
   const widgetRef = useRef<HTMLDivElement | null>(null)
   
   // Simplified settings state
@@ -59,6 +74,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     return Math.random().toString(36).substring(2, 15) + 
            Math.random().toString(36).substring(2, 15);
   };
+  
+  // Add an effect to save localConfig when it changes
+  useEffect(() => {
+    if (localConfig && localConfig.id) {
+      localStorage.setItem(`calendar-widget-config-${localConfig.id}`, JSON.stringify(localConfig));
+    }
+  }, [localConfig]);
   
   /**
    * Disconnects from Google Calendar
@@ -90,6 +112,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       calendars: []
     });
     setEvents([]);
+    
+    // Clear the saved widget config for this connection
+    localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
   }, [localConfig])
   
   /**
@@ -394,11 +419,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       
       console.log('Setting calendars with selection state:', calendars);
       
-      setLocalConfig({
+      const updatedConfig = {
         ...localConfig,
         googleCalendarConnected: true,
         calendars: calendars,
-      });
+      };
+      
+      setLocalConfig(updatedConfig);
+      
+      // Make sure to save the updated config right away
+      localStorage.setItem(`calendar-widget-config-${localConfig.id || 'default'}`, JSON.stringify(updatedConfig));
       
       // Fetch initial events
       fetchEvents();
@@ -432,13 +462,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
   }, [handleOAuthCallback]);
   
-  // Initialize Google Calendar connection if configured
+  // Update the initialization code to check both localStorage and configuration
   useEffect(() => {
     const checkTokens = async () => {
       console.log('Checking Google Calendar tokens...');
       const accessToken = localStorage.getItem('googleAccessToken');
       const refreshToken = localStorage.getItem('googleRefreshToken');
       console.log('Tokens exist:', !!accessToken && !!refreshToken);
+      
+      // Check stored config for Google Calendar connection status
+      const isConnectedInConfig = localConfig.googleCalendarConnected === true;
       
       if (accessToken && refreshToken) {
         try {
@@ -447,19 +480,56 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           await getValidAccessToken();
           console.log('Token validated, setting Google as connected');
           setIsGoogleConnected(true);
+          
+          // If we have tokens but the config doesn't reflect it, make sure to update the config
+          if (!isConnectedInConfig && localConfig.calendars?.length === 0) {
+            // We need to fetch calendars since we have valid tokens but no calendars in config
+            const validToken = await getValidAccessToken();
+            if (validToken) {
+              try {
+                const calendars = await fetchCalendars(validToken);
+                setLocalConfig(prevConfig => {
+                  const updatedConfig = {
+                    ...prevConfig,
+                    googleCalendarConnected: true,
+                    calendars: calendars
+                  };
+                  
+                  // Save the updated config
+                  localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
+                  
+                  return updatedConfig;
+                });
+              } catch (e) {
+                console.error('Failed to fetch calendars during initialization', e);
+              }
+            }
+          }
+          
           fetchEvents();
         } catch (err) {
           console.error('Failed to validate tokens', err);
           disconnectGoogleCalendar();
         }
-      } else if (localConfig.googleCalendarConnected) {
+      } else if (isConnectedInConfig) {
         // Config says connected but no tokens found
         setIsGoogleConnected(false);
+        setLocalConfig(prevConfig => {
+          const updatedConfig = {
+            ...prevConfig,
+            googleCalendarConnected: false
+          };
+          
+          // Save the updated config
+          localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
+          
+          return updatedConfig;
+        });
       }
     };
     
     checkTokens();
-  }, [localConfig.googleCalendarConnected, fetchEvents, disconnectGoogleCalendar, getValidAccessToken])
+  }, [localConfig.googleCalendarConnected, fetchEvents, disconnectGoogleCalendar, getValidAccessToken]);
   
   // Update date every minute
   useEffect(() => {
@@ -1345,6 +1415,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               if (config.onDelete) {
                 config.onDelete();
               }
+              // Clear the saved configuration
+              localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
             }}
             aria-label="Delete this widget"
           >
@@ -1366,6 +1438,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               if (config && config.onUpdate) {
                 config.onUpdate(localConfig)
               }
+              
+              // Make sure we save to localStorage as well
+              localStorage.setItem(`calendar-widget-config-${localConfig.id || 'default'}`, JSON.stringify(localConfig));
+              
               setIsSettingsOpen(false)
             }}
           >
