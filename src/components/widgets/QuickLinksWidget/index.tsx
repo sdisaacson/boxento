@@ -8,7 +8,7 @@ import { QuickLinksWidgetProps, LinkItem } from './types'
  * QuickLinks Widget Component
  * 
  * A widget that displays a collection of customizable links for quick access.
- * Supports different layouts based on widget dimensions and provides a settings
+ * Supports different layouts based on widget dimensions (minimum size 2x2) and provides a settings
  * interface for adding, editing, and removing links.
  * 
  * @component
@@ -125,9 +125,9 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   }
 
   /**
-   * Renders the default view for small widget sizes
+   * Renders the default view for standard widget size (2x2)
    * 
-   * @returns {JSX.Element} Default compact view
+   * @returns {JSX.Element} Default view
    */
   const renderDefaultView = () => {
     return (

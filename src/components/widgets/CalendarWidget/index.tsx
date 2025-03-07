@@ -8,10 +8,8 @@ import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent } from './type
  * Calendar Widget Component
  * 
  * Displays a calendar with different views based on the widget size:
- * - 1x1: Shows just the current date
- * - 1x2: Shows date in a vertical layout
- * - 2x1: Shows date in a horizontal layout
- * - 2x2 and larger: Shows a full month calendar
+ * - 2x2 (minimum): Shows a full month calendar
+ * - Larger sizes: Shows more detailed calendar views
  * 
  * The widget supports configuration through a settings modal:
  * - First day of week (Sunday/Monday)

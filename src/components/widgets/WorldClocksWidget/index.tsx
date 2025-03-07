@@ -9,6 +9,7 @@ import { WorldClocksWidgetProps, TimezoneItem, NewTimezoneItem } from './types'
  * 
  * Displays the current time in multiple timezones.
  * Allows adding, editing, and removing timezones.
+ * Supports different layouts based on widget dimensions (minimum size 2x2).
  * 
  * @component
  * @param {WorldClocksWidgetProps} props - Component props
@@ -293,7 +294,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   }
 
   /**
-   * Renders a compact view for small widget sizes
+   * Renders a compact view for the standard widget size (2x2)
    * 
    * @returns {JSX.Element} Compact view
    */
@@ -313,7 +314,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the default view for small widget sizes
+   * Renders the default view for standard widget size (2x2)
    * 
    * @returns {JSX.Element} Default view
    */

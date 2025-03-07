@@ -9,6 +9,7 @@ import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
  * 
  * Displays current weather conditions and forecast.
  * Fetches data from OpenWeatherMap API or uses mock data.
+ * Supports different layouts based on widget dimensions (minimum size 2x2).
  * 
  * @component
  * @param {WeatherWidgetProps} props - Component props
@@ -230,9 +231,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   };
 
   /**
-   * Renders the default view for small widget sizes
+   * Renders the default view for standard widget size (2x2)
    * 
-   * @returns {JSX.Element} Default compact view
+   * @returns {JSX.Element} Default view
    */
   const renderDefaultView = () => {
     if (loading) {
