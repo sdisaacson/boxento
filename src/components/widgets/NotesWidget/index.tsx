@@ -159,7 +159,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
           value={localConfig.content || ''}
           onChange={handleContentChange}
           className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 bg-transparent 
-                    text-gray-800 dark:text-gray-200 py-1 px-4 leading-relaxed"
+                    text-gray-800 dark:text-gray-200 py-1 leading-relaxed"
           style={{
             fontFamily: localConfig.fontFamily || defaultConfig.fontFamily,
             fontSize: `${localConfig.fontSize || defaultConfig.fontSize}px`,
