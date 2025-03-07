@@ -167,9 +167,22 @@ const MyWidget: React.FC<MyWidgetProps> = ({ width, height, config }) => {
           </div>
           
           <DialogFooter>
+            {config?.onDelete && (
+              <button
+                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                onClick={() => {
+                  if (config.onDelete) {
+                    config.onDelete();
+                  }
+                }}
+                aria-label="Delete this widget"
+              >
+                Delete Widget
+              </button>
+            )}
             <button 
               onClick={saveSettings}
-              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
             >
               Save
             </button>
@@ -295,6 +308,41 @@ If your widget has configurable options:
 - Follow the pattern shown in the example above
 - Store settings in the widget's config object
 - Provide sensible defaults
+- **Always implement a delete button in the DialogFooter when config.onDelete is available**
+
+#### Delete Functionality
+
+All widgets must include a delete button in their settings modal:
+
+```tsx
+<DialogFooter>
+  {config?.onDelete && (
+    <button
+      className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+      onClick={() => {
+        if (config.onDelete) {
+          config.onDelete();
+        }
+      }}
+      aria-label="Delete this widget"
+    >
+      Delete Widget
+    </button>
+  )}
+  <button
+    onClick={saveSettings}
+    className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+  >
+    Save
+  </button>
+</DialogFooter>
+```
+
+The delete button should:
+- Only appear when `config.onDelete` is available
+- Have consistent styling (red text with hover effects)
+- Include proper accessibility attributes
+- Be positioned in the DialogFooter alongside other actions
 
 ### 4. Performance
 
