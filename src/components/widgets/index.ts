@@ -15,6 +15,7 @@ import UFWidget from './UFWidget/index';
 import YouTubeWidget from './YouTubeWidget/index';
 import RSSWidget from './RSSWidget/index';
 import GitHubStreakWidget from './GitHubStreakWidget/index';
+import FlightTrackerWidget from './FlightTrackerWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -32,6 +33,7 @@ export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
 export * from './RSSWidget/types';
 export * from './GitHubStreakWidget/types';
+export * from './FlightTrackerWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -185,6 +187,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Track your GitHub contribution streak and activity'
+  },
+  {
+    type: 'flight-tracker',
+    name: 'Flight Tracker',
+    icon: 'Plane',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Travel',
+    description: 'Track real-time flight status using Amadeus API'
   }
 ];
 
@@ -229,6 +242,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return RSSWidget;
     case 'github-streak':
       return GitHubStreakWidget;
+    case 'flight-tracker':
+      return FlightTrackerWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
