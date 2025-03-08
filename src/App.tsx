@@ -122,8 +122,10 @@ function App() {
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark')
+      document.body.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
+      document.body.classList.remove('dark')
     }
   }, [theme])
   
@@ -166,13 +168,6 @@ function App() {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    
-    // Apply theme to document
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   };
   
   const addWidget = (type: string): void => {
@@ -344,7 +339,7 @@ function App() {
   }, [widgetSelectorOpen]);
 
   return (
-    <div className={`app ${theme}`}>
+    <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
         <header className="app-header">
           <div className="header-container">

@@ -426,6 +426,12 @@ body.drag-complete .react-grid-item {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-200;
+  }
+  
+  /* Explicitly set dark mode colors on body and html for better compatibility */
+  html.dark,
+  body.dark {
+    @apply bg-slate-900 text-white;
   }
 }
