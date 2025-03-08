@@ -1,0 +1,745 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '../../ui/dialog';
+import WidgetHeader from '../common/WidgetHeader';
+import { RefreshCw, Book, Quote } from 'lucide-react';
+import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
+
+// Widget size categories, same as template widget
+enum WidgetSizeCategory {
+  SMALL = 'small',         // 2x2
+  WIDE_SMALL = 'wideSmall', // 3x2 
+  TALL_SMALL = 'tallSmall', // 2x3
+  MEDIUM = 'medium',       // 3x3
+  WIDE_MEDIUM = 'wideMedium', // 4x3
+  TALL_MEDIUM = 'tallMedium', // 3x4
+  LARGE = 'large'          // 4x4
+}
+
+/**
+ * Readwise Widget Component
+ * 
+ * Displays random highlights from your Readwise account
+ * 
+ * @param {ReadwiseWidgetProps} props - Component props
+ * @returns {JSX.Element} Widget component
+ */
+const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }) => {
+  // Default configuration
+  const defaultConfig: ReadwiseWidgetConfig = {
+    title: 'Readwise Highlights',
+    apiToken: '',
+    refreshInterval: 30, // 30 minutes
+    showBookInfo: true,
+    showTags: true
+  };
+
+  // Component state
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [localConfig, setLocalConfig] = useState<ReadwiseWidgetConfig>({
+    ...defaultConfig,
+    ...config
+  });
+  
+  const [highlight, setHighlight] = useState<ReadwiseHighlight | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Ref for the widget container
+  const widgetRef = useRef<HTMLDivElement | null>(null);
+  
+  // Get a random highlight when component mounts or when refreshed
+  useEffect(() => {
+    if (localConfig.apiToken) {
+      fetchRandomHighlight();
+    }
+    
+    // Set up refresh interval if configured
+    if (localConfig.refreshInterval && localConfig.refreshInterval > 0) {
+      const intervalId = setInterval(() => {
+        fetchRandomHighlight();
+      }, localConfig.refreshInterval * 60 * 1000); // Convert minutes to milliseconds
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [localConfig.apiToken, localConfig.refreshInterval]);
+  
+  // Update local config when props config changes
+  useEffect(() => {
+    setLocalConfig(prevConfig => ({
+      ...prevConfig,
+      ...config
+    }));
+  }, [config]);
+  
+  /**
+   * Fetches a random highlight from Readwise API
+   */
+  const fetchRandomHighlight = async () => {
+    if (!localConfig.apiToken) {
+      setError('API token is required');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get a random page number (1-10) to increase variety
+      const randomPage = Math.floor(Math.random() * 10) + 1;
+      
+      const response = await fetch(`https://readwise.io/api/v2/highlights/?page=${randomPage}&page_size=100`, {
+        headers: {
+          'Authorization': `Token ${localConfig.apiToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        // Select a random highlight from the results
+        const randomIndex = Math.floor(Math.random() * data.results.length);
+        const randomHighlight = data.results[randomIndex];
+        
+        // Get book info if available and showBookInfo is enabled
+        if (localConfig.showBookInfo && randomHighlight.book_id) {
+          try {
+            const bookResponse = await fetch(`https://readwise.io/api/v2/books/${randomHighlight.book_id}/`, {
+              headers: {
+                'Authorization': `Token ${localConfig.apiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (bookResponse.ok) {
+              const bookData = await bookResponse.json();
+              randomHighlight.book_title = bookData.title;
+              randomHighlight.book_author = bookData.author;
+            }
+          } catch (bookError) {
+            console.error('Error fetching book info:', bookError);
+          }
+        }
+        
+        setHighlight(randomHighlight);
+      } else {
+        setError('No highlights found');
+      }
+    } catch (error) {
+      console.error('Error fetching highlight:', error);
+      setError('Failed to fetch highlight');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  /**
+   * Determines the appropriate size category based on width and height
+   * 
+   * @param width - Widget width in grid units
+   * @param height - Widget height in grid units
+   * @returns The corresponding WidgetSizeCategory
+   */
+  const getWidgetSizeCategory = (width: number, height: number): WidgetSizeCategory => {
+    if (width >= 4 && height >= 4) {
+      return WidgetSizeCategory.LARGE;
+    } else if (width >= 4 && height >= 3) {
+      return WidgetSizeCategory.WIDE_MEDIUM;
+    } else if (width >= 3 && height >= 4) {
+      return WidgetSizeCategory.TALL_MEDIUM;
+    } else if (width >= 3 && height >= 3) {
+      return WidgetSizeCategory.MEDIUM;
+    } else if (width >= 3 && height >= 2) {
+      return WidgetSizeCategory.WIDE_SMALL;
+    } else if (width >= 2 && height >= 3) {
+      return WidgetSizeCategory.TALL_SMALL;
+    } else {
+      return WidgetSizeCategory.SMALL;
+    }
+  };
+  
+  // Render content based on widget size
+  const renderContent = () => {
+    const sizeCategory = getWidgetSizeCategory(width, height);
+    
+    if (isLoading) {
+      return renderLoadingState();
+    }
+    
+    if (error) {
+      return renderErrorState();
+    }
+    
+    if (!localConfig.apiToken) {
+      return renderNoApiTokenState();
+    }
+    
+    if (!highlight) {
+      return renderEmptyState();
+    }
+    
+    switch (sizeCategory) {
+      case WidgetSizeCategory.LARGE:
+        return renderLargeView();
+      case WidgetSizeCategory.WIDE_MEDIUM:
+        return renderWideMediumView();
+      case WidgetSizeCategory.TALL_MEDIUM:
+        return renderTallMediumView();
+      case WidgetSizeCategory.MEDIUM:
+        return renderMediumView();
+      case WidgetSizeCategory.WIDE_SMALL:
+        return renderWideSmallView();
+      case WidgetSizeCategory.TALL_SMALL:
+        return renderTallSmallView();
+      case WidgetSizeCategory.SMALL:
+      default:
+        return renderSmallView();
+    }
+  };
+  
+  /**
+   * Loading state
+   */
+  const renderLoadingState = () => {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin mr-3 text-gray-400">
+          <RefreshCw size={24} />
+        </div>
+        <span className="text-lg font-serif text-gray-500">Loading...</span>
+      </div>
+    );
+  };
+  
+  /**
+   * Error state
+   */
+  const renderErrorState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-red-500 mb-3 text-center font-serif">Error: {error}</div>
+        <button 
+          onClick={fetchRandomHighlight}
+          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  };
+  
+  /**
+   * No API token state
+   */
+  const renderNoApiTokenState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-center mb-3 font-serif text-lg">Please set your Readwise API token in settings</div>
+        <button 
+          onClick={() => setShowSettings(true)}
+          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm"
+        >
+          Settings
+        </button>
+      </div>
+    );
+  };
+  
+  /**
+   * Empty state
+   */
+  const renderEmptyState = () => {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-center mb-3 font-serif text-lg">No highlights found</div>
+        <button 
+          onClick={fetchRandomHighlight}
+          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm"
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  };
+  
+  /**
+   * Small View (2x2) - Just the highlight text
+   * 
+   * @returns {JSX.Element} Small view content
+   */
+  const renderSmallView = () => {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center overflow-hidden w-full px-1">
+          <div className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-6">
+            "{highlight?.text}"
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  /**
+   * Wide Small View (3x2) - Highlight with minimal book info
+   * 
+   * @returns {JSX.Element} Wide small view content
+   */
+  const renderWideSmallView = () => {
+    return (
+      <div className="flex flex-col justify-between h-full">
+        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-4">
+          "{highlight?.text}"
+        </div>
+        
+        {localConfig.showBookInfo && highlight?.book_title && (
+          <div className="text-xs text-gray-500 mt-2 flex items-center">
+            <Book size={12} className="mr-1" />
+            <span className="truncate">{highlight.book_title}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  /**
+   * Tall Small View (2x3) - Highlight with book title and author
+   * 
+   * @returns {JSX.Element} Tall small view content
+   */
+  const renderTallSmallView = () => {
+    return (
+      <div className="flex flex-col justify-between h-full">
+        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-7">
+          "{highlight?.text}"
+        </div>
+        
+        {localConfig.showBookInfo && (
+          <div className="mt-2">
+            {highlight?.book_title && (
+              <div className="text-xs text-gray-500 flex items-center">
+                <Book size={12} className="mr-1" />
+                <span className="truncate">{highlight.book_title}</span>
+              </div>
+            )}
+            {highlight?.book_author && (
+              <div className="text-xs text-gray-500">
+                by {highlight.book_author}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  /**
+   * Medium View (3x3) - Full highlight with book info and tags
+   * 
+   * @returns {JSX.Element} Medium view content
+   */
+  const renderMediumView = () => {
+    return (
+      <div className="flex flex-col justify-between h-full">
+        <div>
+          <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-6">
+            "{highlight?.text}"
+          </div>
+          
+          {highlight?.note && (
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+              Note: {highlight.note}
+            </div>
+          )}
+        </div>
+        
+        <div>
+          {localConfig.showBookInfo && (
+            <div className="mb-2">
+              {highlight?.book_title && (
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Book size={12} className="mr-1" />
+                  <span className="truncate font-medium">{highlight.book_title}</span>
+                </div>
+              )}
+              {highlight?.book_author && (
+                <div className="text-xs text-gray-500">
+                  by {highlight.book_author}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
+            <div className="flex flex-wrap">
+              {highlight.tags.map(tag => (
+                <span key={tag.id} className="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded mr-1 mb-1">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  /**
+   * Wide Medium View (4x3) - Everything from medium plus refresh button
+   * 
+   * @returns {JSX.Element} Wide medium view content
+   */
+  const renderWideMediumView = () => {
+    return (
+      <div className="grid grid-cols-4 h-full">
+        <div className="col-span-3 flex flex-col justify-between pr-3">
+          <div>
+            <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-5">
+              "{highlight?.text}"
+            </div>
+            
+            {highlight?.note && (
+              <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+                Note: {highlight.note}
+              </div>
+            )}
+          </div>
+          
+          <div>
+            {localConfig.showBookInfo && (
+              <div className="mb-2">
+                {highlight?.book_title && (
+                  <div className="text-sm text-gray-500 flex items-center">
+                    <Book size={12} className="mr-1" />
+                    <span className="truncate font-medium">{highlight.book_title}</span>
+                  </div>
+                )}
+                {highlight?.book_author && (
+                  <div className="text-xs text-gray-500">
+                    by {highlight.book_author}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
+              <div className="flex flex-wrap">
+                {highlight.tags.map(tag => (
+                  <span key={tag.id} className="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded mr-1 mb-1">
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="col-span-1 flex flex-col items-center justify-center border-l border-gray-200 dark:border-gray-700 pl-3">
+          <button 
+            onClick={fetchRandomHighlight}
+            className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full mb-2"
+            aria-label="Refresh highlight"
+          >
+            <RefreshCw size={16} />
+          </button>
+          <span className="text-xs text-gray-500 text-center">New Highlight</span>
+          
+          <div className="flex items-center justify-center mt-6">
+            <Quote size={40} className="text-gray-300 dark:text-gray-600" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  /**
+   * Tall Medium View (3x4) - Similar to medium view but with larger quote display
+   * 
+   * @returns {JSX.Element} Tall medium view content
+   */
+  const renderTallMediumView = () => {
+    return (
+      <div className="flex flex-col justify-between h-full">
+        <div>
+          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-8">
+            "{highlight?.text}"
+          </div>
+          
+          {highlight?.note && (
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Note: {highlight.note}
+            </div>
+          )}
+        </div>
+        
+        <div>
+          {localConfig.showBookInfo && (
+            <div className="mb-2">
+              {highlight?.book_title && (
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Book size={14} className="mr-1" />
+                  <span className="truncate font-medium">{highlight.book_title}</span>
+                </div>
+              )}
+              {highlight?.book_author && (
+                <div className="text-xs text-gray-500">
+                  by {highlight.book_author}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
+            <div className="flex flex-wrap mb-2">
+              {highlight.tags.map(tag => (
+                <span key={tag.id} className="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded mr-1 mb-1">
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+          
+          <div className="flex justify-end">
+            <button 
+              onClick={fetchRandomHighlight}
+              className="flex items-center justify-center px-3 py-1 bg-blue-500 text-white rounded text-sm"
+            >
+              <RefreshCw size={14} className="mr-1" />
+              New Highlight
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  /**
+   * Large View (4x4) - Full featured view with all highlight details
+   * 
+   * @returns {JSX.Element} Large view content
+   */
+  const renderLargeView = () => {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mb-4 flex-grow overflow-auto">
+          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4">
+            "{highlight?.text}"
+          </div>
+          
+          {highlight?.note && (
+            <div className="text-sm text-gray-700 dark:text-gray-300 mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="font-medium mb-1">Note:</div>
+              {highlight.note}
+            </div>
+          )}
+        </div>
+        
+        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+          {localConfig.showBookInfo && (
+            <div className="mb-3">
+              {highlight?.book_title && (
+                <div className="text-base flex items-center">
+                  <Book size={16} className="mr-2 text-blue-500" />
+                  <span className="font-medium">{highlight.book_title}</span>
+                </div>
+              )}
+              {highlight?.book_author && (
+                <div className="text-sm text-gray-500 ml-6 mt-1">
+                  by {highlight.book_author}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center">
+            <div>
+              {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
+                <div className="flex flex-wrap">
+                  {highlight.tags.map(tag => (
+                    <span key={tag.id} className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded mr-1 mb-1">
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={fetchRandomHighlight}
+              className="flex items-center justify-center px-3 py-1 bg-blue-500 text-white rounded text-sm ml-2"
+            >
+              <RefreshCw size={14} className="mr-1" />
+              New Highlight
+            </button>
+          </div>
+          
+          {highlight?.highlighted_at && (
+            <div className="text-xs text-gray-500 mt-2">
+              Highlighted: {new Date(highlight.highlighted_at).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  // Save settings
+  const saveSettings = () => {
+    if (config?.onUpdate) {
+      config.onUpdate(localConfig);
+    }
+    setShowSettings(false);
+    
+    // Fetch a new highlight if token changed
+    fetchRandomHighlight();
+  };
+  
+  // Settings dialog
+  const renderSettings = () => {
+    return (
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Readwise Widget Settings</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {/* Title setting */}
+            <div>
+              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Widget Title
+              </label>
+              <input
+                id="title-input"
+                type="text"
+                value={localConfig.title || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setLocalConfig({...localConfig, title: e.target.value})
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            {/* API Token */}
+            <div>
+              <label htmlFor="api-token-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Readwise API Token
+              </label>
+              <input
+                id="api-token-input"
+                type="password"
+                value={localConfig.apiToken || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setLocalConfig({...localConfig, apiToken: e.target.value})
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Get your token at <a href="https://readwise.io/access_token" target="_blank" rel="noopener noreferrer" className="text-blue-500">readwise.io/access_token</a>
+              </p>
+            </div>
+            
+            {/* Refresh interval */}
+            <div>
+              <label htmlFor="refresh-interval-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Refresh Interval (minutes)
+              </label>
+              <input
+                id="refresh-interval-input"
+                type="number"
+                min="0"
+                value={localConfig.refreshInterval || 0}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 0})
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Set to 0 to disable automatic refresh
+              </p>
+            </div>
+            
+            {/* Show book info toggle */}
+            <div className="flex items-center">
+              <input
+                id="show-book-info-toggle"
+                type="checkbox"
+                checked={localConfig.showBookInfo || false}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setLocalConfig({...localConfig, showBookInfo: e.target.checked})
+                }
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="show-book-info-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Show Book Information
+              </label>
+            </div>
+            
+            {/* Show tags toggle */}
+            <div className="flex items-center">
+              <input
+                id="show-tags-toggle"
+                type="checkbox"
+                checked={localConfig.showTags || false}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setLocalConfig({...localConfig, showTags: e.target.checked})
+                }
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="show-tags-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Show Tags
+              </label>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            {config?.onDelete && (
+              <button
+                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                onClick={() => {
+                  if (config.onDelete) {
+                    config.onDelete();
+                  }
+                }}
+                aria-label="Delete this widget"
+              >
+                Delete Widget
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={saveSettings}
+              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+            >
+              Save
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+  
+  return (
+    <div ref={widgetRef} className="widget-container w-full h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
+      <WidgetHeader
+        title={localConfig.title || 'Readwise Highlights'}
+        onSettingsClick={() => setShowSettings(true)}
+      />
+      <div className="flex-grow px-4 pb-4 pt-2 overflow-hidden">
+        {renderContent()}
+      </div>
+      {renderSettings()}
+    </div>
+  );
+};
+
+export default ReadwiseWidget; 
