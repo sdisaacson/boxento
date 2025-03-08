@@ -12,6 +12,7 @@ import PomodoroWidget from './PomodoroWidget/index';
 import CurrencyConverterWidget from './CurrencyConverterWidget/index';
 import ReadwiseWidget from './ReadwiseWidget/index';
 import UFWidget from './UFWidget/index';
+import YouTubeWidget from './YouTubeWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -26,6 +27,7 @@ export * from './PomodoroWidget/types';
 export * from './CurrencyConverterWidget/types';
 export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
+export * from './YouTubeWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -146,6 +148,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Finance',
     description: 'Display the value of UF in Chilean Pesos'
+  },
+  {
+    type: 'youtube',
+    name: 'YouTube Video',
+    icon: 'Video',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Entertainment',
+    description: 'Watch YouTube videos directly on your dashboard'
   }
 ];
 
@@ -155,7 +168,8 @@ export const WIDGET_CATEGORIES = [
   { id: 'information', name: 'Information' },
   { id: 'social', name: 'Social' },
   { id: 'utilities', name: 'Utilities' },
-  { id: 'finance', name: 'Finance' }
+  { id: 'finance', name: 'Finance' },
+  { id: 'entertainment', name: 'Entertainment' }
 ];
 
 /**
@@ -183,6 +197,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return ReadwiseWidget;
     case 'uf-chile':
       return UFWidget;
+    case 'youtube':
+      return YouTubeWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
