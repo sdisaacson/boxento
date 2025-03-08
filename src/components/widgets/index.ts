@@ -14,6 +14,7 @@ import ReadwiseWidget from './ReadwiseWidget/index';
 import UFWidget from './UFWidget/index';
 import YouTubeWidget from './YouTubeWidget/index';
 import RSSWidget from './RSSWidget/index';
+import GitHubStreakWidget from './GitHubStreakWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -30,6 +31,7 @@ export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
 export * from './RSSWidget/types';
+export * from './GitHubStreakWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -172,6 +174,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Information',
     description: 'Display RSS feeds from your favorite websites'
+  },
+  {
+    type: 'github-streak',
+    name: 'GitHub Streak',
+    icon: 'Github',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Track your GitHub contribution streak and activity'
   }
 ];
 
@@ -214,6 +227,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return YouTubeWidget;
     case 'rss':
       return RSSWidget;
+    case 'github-streak':
+      return GitHubStreakWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
