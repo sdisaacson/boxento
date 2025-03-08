@@ -13,6 +13,7 @@ import CurrencyConverterWidget from './CurrencyConverterWidget/index';
 import ReadwiseWidget from './ReadwiseWidget/index';
 import UFWidget from './UFWidget/index';
 import YouTubeWidget from './YouTubeWidget/index';
+import RSSWidget from './RSSWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -28,6 +29,7 @@ export * from './CurrencyConverterWidget/types';
 export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
+export * from './RSSWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -159,6 +161,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Entertainment',
     description: 'Watch YouTube videos directly on your dashboard'
+  },
+  {
+    type: 'rss',
+    name: 'RSS Feed',
+    icon: 'Rss',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Information',
+    description: 'Display RSS feeds from your favorite websites'
   }
 ];
 
@@ -199,6 +212,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return UFWidget;
     case 'youtube':
       return YouTubeWidget;
+    case 'rss':
+      return RSSWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
