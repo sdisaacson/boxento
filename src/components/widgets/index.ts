@@ -16,6 +16,7 @@ import YouTubeWidget from './YouTubeWidget/index';
 import RSSWidget from './RSSWidget/index';
 import GitHubStreakWidget from './GitHubStreakWidget/index';
 import FlightTrackerWidget from './FlightTrackerWidget/index';
+import GeographyQuizWidget from './GeographyQuizWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -34,6 +35,7 @@ export * from './YouTubeWidget/types';
 export * from './RSSWidget/types';
 export * from './GitHubStreakWidget/types';
 export * from './FlightTrackerWidget/types';
+export * from './GeographyQuizWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -198,6 +200,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Travel',
     description: 'Track real-time flight status using Amadeus API'
+  },
+  {
+    type: 'geography-quiz',
+    name: 'Geography Quiz',
+    icon: 'Globe',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Education',
+    description: 'Test your geography knowledge with an interactive quiz'
   }
 ];
 
@@ -244,6 +257,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return GitHubStreakWidget;
     case 'flight-tracker':
       return FlightTrackerWidget;
+    case 'geography-quiz':
+      return GeographyQuizWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
