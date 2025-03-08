@@ -11,6 +11,7 @@ import TodoWidget from './TodoWidget/index';
 import PomodoroWidget from './PomodoroWidget/index';
 import CurrencyConverterWidget from './CurrencyConverterWidget/index';
 import ReadwiseWidget from './ReadwiseWidget/index';
+import UFWidget from './UFWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -24,6 +25,7 @@ export * from './TodoWidget/types';
 export * from './PomodoroWidget/types';
 export * from './CurrencyConverterWidget/types';
 export * from './ReadwiseWidget/types';
+export * from './UFWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -133,6 +135,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Information',
     description: 'Display highlights from your Readwise account'
+  },
+  {
+    type: 'uf-chile',
+    name: 'UF (Chile)',
+    icon: 'DollarSign',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Finance',
+    description: 'Display the value of UF in Chilean Pesos'
   }
 ];
 
@@ -168,6 +181,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return CurrencyConverterWidget;
     case 'readwise':
       return ReadwiseWidget;
+    case 'uf-chile':
+      return UFWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
