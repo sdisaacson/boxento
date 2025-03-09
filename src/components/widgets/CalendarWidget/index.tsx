@@ -7,6 +7,13 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select"
 import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 
@@ -908,9 +915,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     
-    // Calculate week numbers if enabled
-    const showWeekNumbers = localConfig.showWeekNumbers || false
-    
     return (
       <div className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-4">
@@ -949,14 +953,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           </button>
         </div>
         
-        <div className={`grid ${showWeekNumbers ? 'grid-cols-8' : 'grid-cols-7'} gap-1`}>
-          {/* Week number header if enabled */}
-          {showWeekNumbers && (
-            <div className="text-sm text-center text-gray-500 dark:text-gray-400 font-medium py-2">
-              Wk
-            </div>
-          )}
-          
+        <div className="grid grid-cols-7 gap-1">
           {/* Day name headers */}
           {dayNames.map((day) => (
             <div 
@@ -964,16 +961,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               className="text-sm text-center text-gray-500 dark:text-gray-400 font-medium py-2"
             >
               {day.substring(0, 3)}
-            </div>
-          ))}
-          
-          {/* Week numbers if enabled */}
-          {showWeekNumbers && Array.from({ length: Math.ceil((daysInMonth + adjustedFirstDay) / 7) }).map((_, weekIndex) => (
-            <div 
-              key={`week-${weekIndex}`} 
-              className="text-sm text-center text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center"
-            >
-              {Math.ceil((adjustedFirstDay + 1) / 7) + weekIndex}
             </div>
           ))}
           
@@ -986,8 +973,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           {Array.from({ length: daysInMonth }).map((_, index) => {
             const day = index + 1
             const isToday = day === currentDay && new Date().getMonth() === month && new Date().getFullYear() === year
-            
-            // No need to create a date object here
             
             // Check if this day is the selected day
             const isSelected = selectedDate.getDate() === day && 
@@ -1019,47 +1004,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             )
           })}
         </div>
-        
-        {/* Selected day events - only shown if there's enough space */}
-        {height > 3 && (
-          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-col min-h-0">
-            <h4 className="text-sm font-medium mb-2">
-              {selectedDate.toDateString() === new Date().toDateString() 
-                ? "Today's Events" 
-                : `Events for ${selectedDate.toLocaleDateString('default', { month: 'short', day: 'numeric' })}`}
-            </h4>
-            <div className="space-y-2 overflow-y-auto flex-1 max-h-full">
-              {(() => {
-                // Filter events for selected date
-                const selectedDateEvents = events.filter(event => {
-                  if (!event.start) return false;
-                  const eventDate = new Date(event.start);
-                  return eventDate.getDate() === selectedDate.getDate() &&
-                         eventDate.getMonth() === selectedDate.getMonth() &&
-                         eventDate.getFullYear() === selectedDate.getFullYear();
-                });
-                
-                return selectedDateEvents.length > 0 ? selectedDateEvents.map((event, index) => (
-                <div 
-                  key={index}
-                  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 flex items-center"
-                >
-                  <div className="mr-3 text-blue-500 font-medium text-sm">
-                    {event.time}
-                  </div>
-                  <div className="flex-1 text-sm font-medium truncate">
-                    {event.title}
-                  </div>
-                </div>
-              )) : (
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                  No events for {selectedDate.toDateString() === new Date().toDateString() ? "today" : "this date"}
-                </div>
-              );
-              })()}
-            </div>
-          </div>
-        )}
       </div>
     )
   }
@@ -1085,9 +1029,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     const dayNames = startDay === 1 
       ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    
-    // Calculate week numbers if enabled
-    const showWeekNumbers = localConfig.showWeekNumbers || false
     
     // For larger layouts, show more event details
     const today = new Date()
@@ -1141,14 +1082,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         <div className="grid grid-cols-2 gap-4 h-full flex-1">
           {/* Left side - Month calendar */}
           <div className="flex flex-col">
-            <div className={`grid ${showWeekNumbers ? 'grid-cols-8' : 'grid-cols-7'} gap-1.5`}>
-              {/* Week number header if enabled */}
-              {showWeekNumbers && (
-                <div className="text-xs text-center text-gray-500 dark:text-gray-400 font-medium py-1.5">
-                  Wk
-                </div>
-              )}
-              
+            <div className="grid grid-cols-7 gap-1.5">
               {/* Day name headers */}
               {dayNames.map((day) => (
                 <div 
@@ -1156,16 +1090,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                   className="text-xs text-center text-gray-500 dark:text-gray-400 font-medium py-1.5"
                 >
                   {day}
-                </div>
-              ))}
-              
-              {/* Week numbers if enabled */}
-              {showWeekNumbers && Array.from({ length: Math.ceil((daysInMonth + adjustedFirstDay) / 7) }).map((_, weekIndex) => (
-                <div 
-                  key={`week-${weekIndex}`} 
-                  className="text-xs text-center text-gray-500 dark:text-gray-400 font-medium aspect-square flex items-center justify-center"
-                >
-                  {Math.ceil((adjustedFirstDay + 1) / 7) + weekIndex}
                 </div>
               ))}
               
@@ -1357,34 +1281,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           <label className="block text-sm font-medium mb-1">
             First Day of Week
           </label>
-          <select
-            className="w-full p-2 bg-gray-100 dark:bg-slate-700 rounded-lg border border-gray-300 dark:border-slate-600 text-gray-800 dark:text-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent outline-none"
+          <Select
             value={localConfig.startDay || 'sunday'}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLocalConfig({...localConfig, startDay: e.target.value as 'sunday' | 'monday'})}
+            onValueChange={(value) => setLocalConfig({...localConfig, startDay: value as 'sunday' | 'monday'})}
           >
-            <option value="sunday">Sunday</option>
-            <option value="monday">Monday</option>
-          </select>
-        </div>
-        
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium">
-              Show Week Numbers
-            </label>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={localConfig.showWeekNumbers || false}
-                onChange={() => setLocalConfig({
-                  ...localConfig,
-                  showWeekNumbers: !localConfig.showWeekNumbers
-                })}
-              />
-              <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:peer-focus:ring-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select first day of week" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sunday">Sunday</SelectItem>
+              <SelectItem value="monday">Monday</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
