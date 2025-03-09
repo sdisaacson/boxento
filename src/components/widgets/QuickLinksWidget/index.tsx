@@ -367,7 +367,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     >
       <WidgetHeader 
         title="Quick Links" 
-        onSettingsClick={() => setShowSettings(true)}
       />
       <div className="flex-1 overflow-hidden p-3">
         {renderContent()}
