@@ -671,23 +671,6 @@ body.react-grid-layout--resizing .react-grid-item {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Ensure mobile widgets display properly with optimized spacing */
-.mobile-widget-item .widget-container {
-  height: 100% !important;
-  padding: 8px !important; /* Reduced from 12px to 8px to save space */
-  border-radius: var(--border-radius-standard) !important;
-  box-shadow: none !important;
-}
-
-/* Add specific style for widget headers on mobile to reduce excessive space */
-.mobile-widget-item .widget-header {
-  padding: 0 0 6px 0 !important;
-  margin: 0 0 8px 0 !important;
-  min-height: 0 !important;
-  font-size: 0.95rem !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
-}
-
 /* Dark mode border */
 .dark .mobile-widget-item .widget-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
