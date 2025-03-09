@@ -388,27 +388,29 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <DialogHeader>
               <DialogTitle>Widget Settings</DialogTitle>
             </DialogHeader>
-            <DialogFooter className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex-1">
-                {config?.onDelete && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      if (config.onDelete) {
-                        config.onDelete();
-                      }
-                    }}
-                  >
-                    Delete Widget
-                  </Button>
-                )}
+            <DialogFooter>
+              <div className="flex justify-between w-full pt-6 border-t border-gray-100 dark:border-gray-800">
+                <div>
+                  {config?.onDelete && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (config.onDelete) {
+                          config.onDelete();
+                        }
+                      }}
+                    >
+                      Delete Widget
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Close
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowSettings(false)}
-              >
-                Close
-              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
