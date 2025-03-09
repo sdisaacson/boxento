@@ -857,7 +857,7 @@ function App() {
                 aria-label="Add Widget"
               >
                 <Plus size={16} className="transition-transform group-hover:rotate-90" />
-                <span>Add Widget</span>
+                <span className="hidden sm:inline">Add Widget</span>
               </button>
               
               <button 
@@ -887,7 +887,7 @@ function App() {
           
           {widgets.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[80vh] px-4 text-center">
-              <div className="w-64 h-64 mb-8 opacity-80">
+              <div className="w-48 h-48 sm:w-64 sm:h-64 mb-6 sm:mb-8 opacity-80">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                   <path d="M21 7.5V6.75C21 5.50736 19.9926 4.5 18.75 4.5H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M16.5 19.5H18.75C19.9926 19.5 21 18.4926 21 17.25V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -898,15 +898,16 @@ function App() {
                   <path d="M13.5 15H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <p className="text-2xl font-medium text-gray-600 dark:text-gray-300 mb-8">Your dashboard is ready to be customized</p>
+              <p className="text-xl sm:text-2xl font-medium text-gray-600 dark:text-gray-300 mb-6 sm:mb-8">Your dashboard is ready to be customized</p>
               <button 
                 onClick={toggleWidgetSelector}
-                className="group flex items-center gap-2 py-3.5 px-6 bg-blue-500 text-white font-medium rounded-xl
-                         shadow-md hover:shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 text-base
+                className="group flex items-center gap-2 py-3 sm:py-3.5 px-5 sm:px-6 bg-blue-500 text-white font-medium rounded-xl
+                         shadow-md hover:shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 text-sm sm:text-base
                          transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
                 aria-label="Add your first widget"
               >
-                <Plus size={22} className="transition-transform group-hover:rotate-90" /> Add Your First Widget
+                <Plus size={20} className="transition-transform group-hover:rotate-90" /> 
+                <span className="sm:inline">Add Your First Widget</span>
               </button>
             </div>
           ) : (
