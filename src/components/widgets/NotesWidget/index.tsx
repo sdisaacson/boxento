@@ -125,7 +125,8 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   // Generate the linear gradient for the lined paper effect
   const getLinedPaperBackground = () => {
     const lineHeight = localConfig.lineHeight || defaultConfig.lineHeight || 26;
-    const lineColor = localConfig.lineColor || defaultConfig.lineColor || '#E6E6E6';
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const lineColor = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : (localConfig.lineColor || defaultConfig.lineColor || '#E6E6E6');
     
     return `repeating-linear-gradient(
       to bottom,
