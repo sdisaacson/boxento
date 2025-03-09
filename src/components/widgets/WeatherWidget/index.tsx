@@ -7,6 +7,8 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
+import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
+import { Label } from '../../ui/label';
 import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
@@ -671,32 +673,20 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <label className="block text-sm font-medium mb-1">
             Units
           </label>
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="metric"
-                name="units"
-                value="metric"
-                checked={localConfig.units === 'metric'}
-                onChange={() => setLocalConfig({...localConfig, units: 'metric'})}
-                className="mr-2 h-4 w-4"
-              />
-              <label htmlFor="metric" className="text-sm">Celsius</label>
+          <RadioGroup
+            value={localConfig.units || 'metric'}
+            onValueChange={(value: string) => setLocalConfig({...localConfig, units: value as 'metric' | 'imperial'})}
+            className="space-y-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="metric" id="metric" />
+              <Label htmlFor="metric">Celsius</Label>
             </div>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="imperial"
-                name="units"
-                value="imperial"
-                checked={localConfig.units === 'imperial'}
-                onChange={() => setLocalConfig({...localConfig, units: 'imperial'})}
-                className="mr-2 h-4 w-4"
-              />
-              <label htmlFor="imperial" className="text-sm">Fahrenheit</label>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="imperial" id="imperial" />
+              <Label htmlFor="imperial">Fahrenheit</Label>
             </div>
-          </div>
+          </RadioGroup>
         </div>
       </div>
     );
