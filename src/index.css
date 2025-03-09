@@ -503,49 +503,7 @@ body.drag-complete .react-grid-item {
   .widget-container {
     height: 250px !important;
     overflow: auto !important;
-    padding: 12px !important;
     min-height: 0 !important;
-  }
-  
-  /* Make content scrollable if needed */
-  .widget-container > div:not(.widget-header) {
-    overflow: auto !important;
-  }
-  
-  /* Widget headers should take less space */
-  .widget-header {
-    margin: 0 0 8px 0 !important;
-    padding: 0 0 6px 0 !important;
-    min-height: 0 !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
-  }
-  
-  .dark .widget-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-  
-  /* Remove any extra padding in widget containers on mobile */
-  .widget-container {
-    padding: 6px !important;
-  }
-  
-  /* Adjust padding within content area */
-  .widget-container > div:not(.widget-header):not(.widget-drag-handle) {
-    padding: 4px 0 !important;
-  }
-  
-  /* Ensure first child in content has no top margin */
-  .widget-container > div:not(.widget-header):not(.widget-drag-handle) > *:first-child {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-  
-  /* Fine-tune some common widget content elements */
-  .widget-container input,
-  .widget-container textarea,
-  .widget-container button:not(.settings-button) {
-    margin: 2px 0 !important;
-    padding: 4px !important;
   }
   
   /* Override absolute positioning for mobile */
@@ -639,11 +597,6 @@ body.react-grid-layout--resizing .react-grid-item {
     flex-direction: column !important;
   }
   
-  /* Ensure content area takes remaining space */
-  .widget-container > div:not(.widget-header) {
-    flex: 1 !important;
-    min-height: 150px !important;
-  }
 }
 
 /* Mobile widget list - simple grid display */
@@ -657,13 +610,9 @@ body.react-grid-layout--resizing .react-grid-item {
 
 /* Mobile widget items - consistent sizing */
 .mobile-widget-item {
-  aspect-ratio: 1/1;
   border-radius: var(--border-radius-standard) !important;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
   position: relative;
-  min-height: 200px;
 }
 
 .dark .mobile-widget-item {
@@ -693,11 +642,6 @@ body.react-grid-layout--resizing .react-grid-item {
     gap: 16px;
   }
   
-  .mobile-widget-item {
-    min-height: 200px;
-    aspect-ratio: auto;
-    margin-bottom: 0;
-  }
 }
 
 /* Extra specific rule for very narrow screens like iPhone (375px) */
@@ -707,9 +651,6 @@ body.react-grid-layout--resizing .react-grid-item {
     gap: 12px;
   }
   
-  .mobile-widget-item {
-    min-height: 180px;
-  }
 }
 
 /* Mobile view specific styles */
