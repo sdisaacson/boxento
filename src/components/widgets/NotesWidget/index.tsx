@@ -6,6 +6,16 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import WidgetHeader from '../common/WidgetHeader';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
 import './styles.css';
@@ -97,20 +107,18 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   };
 
   // Handle font size change
-  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFontSize = parseInt(e.target.value, 10);
+  const handleFontSizeChange = (value: number) => {
     setLocalConfig(prev => ({
       ...prev,
-      fontSize: newFontSize
+      fontSize: value
     }));
   };
 
   // Handle line height change
-  const handleLineHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLineHeight = parseInt(e.target.value, 10);
+  const handleLineHeightChange = (value: number) => {
     setLocalConfig(prev => ({
       ...prev,
-      lineHeight: newLineHeight
+      lineHeight: value
     }));
   };
 
@@ -147,69 +155,67 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
           </DialogHeader>
           
           <div className="space-y-4 py-2">
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Title</Label>
+              <Input
                 id="title-input"
-                type="text"
                 value={localConfig.title || ''}
                 onChange={handleTitleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
-            <div>
-              <label htmlFor="font-family-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Font Family
-              </label>
-              <select
-                id="font-family-select"
+            <div className="space-y-2">
+              <Label htmlFor="font-family-select">Font Family</Label>
+              <Select
                 value={localConfig.fontFamily || 'system-ui, -apple-system, sans-serif'}
-                onChange={handleFontFamilyChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onValueChange={(value) => handleFontFamilyChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
               >
-                <option value="system-ui, -apple-system, sans-serif">System UI</option>
-                <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="'Courier New', monospace">Monospace</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a font family" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system-ui, -apple-system, sans-serif">System UI</SelectItem>
+                  <SelectItem value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</SelectItem>
+                  <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                  <SelectItem value="'Courier New', monospace">Monospace</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
-            <div>
-              <label htmlFor="font-size-range" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Font Size: {localConfig.fontSize}px
-              </label>
-              <input
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="font-size-range">Font Size</Label>
+                <span className="text-sm text-muted-foreground">{localConfig.fontSize || 14}px</span>
+              </div>
+              <Slider
                 id="font-size-range"
-                type="range"
-                min="12"
-                max="24"
-                value={localConfig.fontSize || 14}
-                onChange={handleFontSizeChange}
+                min={12}
+                max={24}
+                step={1}
+                value={[localConfig.fontSize || 14]}
+                onValueChange={(value: number[]) => handleFontSizeChange(value[0])}
                 className="w-full"
               />
             </div>
 
-            <div>
-              <label htmlFor="line-height-range" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Line Height: {localConfig.lineHeight}px
-              </label>
-              <input
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label htmlFor="line-height-range">Line Height</Label>
+                <span className="text-sm text-muted-foreground">{localConfig.lineHeight || 26}px</span>
+              </div>
+              <Slider
                 id="line-height-range"
-                type="range"
-                min="20"
-                max="40"
-                step="2"
-                value={localConfig.lineHeight || 26}
-                onChange={handleLineHeightChange}
+                min={20}
+                max={40}
+                step={2}
+                value={[localConfig.lineHeight || 26]}
+                onValueChange={(value: number[]) => handleLineHeightChange(value[0])}
                 className="w-full"
               />
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between">
             {config?.onDelete && (
               <button
                 className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
