@@ -83,11 +83,35 @@ function App() {
       }
     }
     
-    // Default: empty layouts for all breakpoints
-    return Object.keys(breakpoints).reduce((acc, bp) => ({
-      ...acc, 
-      [bp]: []
-    }), {});
+    // Default layout for all breakpoints with default widgets
+    const defaultLayout = {
+      lg: [
+        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+        { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 }
+      ],
+      md: [
+        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+        { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 }
+      ],
+      sm: [
+        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+        { i: 'default-weather', x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 }
+      ],
+      xs: [
+        { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 }
+      ],
+      xxs: [
+        { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 }
+      ]
+    };
+    return defaultLayout;
   });
   
   const [widgets, setWidgets] = useState<Widget[]>(() => {
@@ -95,12 +119,32 @@ function App() {
       const savedWidgets = localStorage.getItem('boxento-widgets')
       const widgetsFromStorage = savedWidgets ? JSON.parse(savedWidgets) : []
       
+      if (widgetsFromStorage.length === 0) {
+        // Add default widgets if no widgets exist
+        return [
+          {
+            id: 'default-todo',
+            type: 'todo',
+            config: getWidgetConfigByType('todo') || {}
+          },
+          {
+            id: 'default-weather',
+            type: 'weather',
+            config: getWidgetConfigByType('weather') || {}
+          },
+          {
+            id: 'default-quick-links',
+            type: 'quick-links',
+            config: getWidgetConfigByType('quick-links') || {}
+          }
+        ];
+      }
+      
       // Load each widget's configuration from configManager
       return widgetsFromStorage.map((widget: Widget) => {
         if (widget.id) {
           const savedConfig = configManager.getWidgetConfig(widget.id);
           if (savedConfig) {
-            // Merge the saved configuration with the widget's config
             return {
               ...widget,
               config: {
@@ -707,24 +751,16 @@ function App() {
 
   // Inside the App function component, add a special mobile view renderer
   const renderMobileLayout = () => {
-    // On mobile, we ignore the complex grid layout and just display all widgets as 2x2
-    // This is purely a display change, not modifying the actual layout data
     return (
       <div className="mobile-widget-list">
-        {widgets.length === 0 ? (
-          <div className="no-widgets-message">
-            <p>No widgets added yet. Click "Add Widget" to get started.</p>
+        {widgets.map(widget => (
+          <div 
+            key={widget.id} 
+            className="mobile-widget-item"
+          >
+            {renderWidget(widget, true)}
           </div>
-        ) : (
-          widgets.map(widget => (
-            <div 
-              key={widget.id} 
-              className="mobile-widget-item"
-            >
-              {renderWidget(widget, true)}
-            </div>
-          ))
-        )}
+        ))}
       </div>
     );
   };
@@ -776,78 +812,51 @@ function App() {
             widgetCategories={widgetCategories}
           />
           
-          {widgets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[80vh] px-4 text-center">
-              <div className="w-48 h-48 sm:w-64 sm:h-64 mb-6 sm:mb-8 opacity-80">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                  <path d="M21 7.5V6.75C21 5.50736 19.9926 4.5 18.75 4.5H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16.5 19.5H18.75C19.9926 19.5 21 18.4926 21 17.25V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 16.5V17.25C3 18.4926 4.00736 19.5 5.25 19.5H7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M7.5 4.5H5.25C4.00736 4.5 3 5.50736 3 6.75V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M10.5 9H13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 7.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M13.5 15H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+          <div className="px-6 max-w-[1600px] mx-auto">
+            <div className="mobile-view-container">
+              <div className="mobile-view">
+                {renderMobileLayout()}
               </div>
-              <p className="text-xl sm:text-2xl font-medium text-gray-600 dark:text-gray-300 mb-6 sm:mb-8">Your dashboard is ready to be customized</p>
-              <button 
-                onClick={toggleWidgetSelector}
-                className="group flex items-center gap-2 py-3 sm:py-3.5 px-5 sm:px-6 bg-blue-500 text-white font-medium rounded-xl
-                         shadow-md hover:shadow-lg hover:bg-blue-600 hover:-translate-y-0.5 text-sm sm:text-base
-                         transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
-                aria-label="Add your first widget"
+            </div>
+            
+            <div className="desktop-view-container">
+              <ResponsiveReactGridLayout
+                className="layout"
+                layouts={layouts}
+                breakpoints={breakpoints}
+                cols={cols}
+                rowHeight={rowHeight}
+                onLayoutChange={handleLayoutChange}
+                onBreakpointChange={(newBreakpoint: string, newCols: number) => {
+                  if (newBreakpoint !== currentBreakpoint) {
+                    console.log('Breakpoint changed:', newBreakpoint, newCols);
+                    setCurrentBreakpoint(newBreakpoint);
+                  }
+                }}
+                onDragStart={handleDragStart}
+                onDragStop={handleDragStop}
+                onResizeStart={handleResizeStart}
+                onResizeStop={handleResizeStop}
+                margin={[10, 10]}
+                containerPadding={[10, 10]}
+                draggableHandle=".widget-drag-handle"
+                draggableCancel=".settings-button"
+                useCSSTransforms={true}
+                measureBeforeMount={false}
+                compactType="vertical"
+                verticalCompact={true}
+                preventCollision={false}
+                isResizable={true}
+                isDraggable={true}
+                isBounded={false}
+                autoSize={true}
+                transformScale={1}
+                style={{ width: '100%', minHeight: '100%' }}
               >
-                <Plus size={20} className="transition-transform group-hover:rotate-90" /> 
-                <span className="sm:inline">Add Your First Widget</span>
-              </button>
+                {renderWidgetItems()}
+              </ResponsiveReactGridLayout>
             </div>
-          ) : (
-            <div className="px-6 max-w-[1600px] mx-auto">
-              <div className="mobile-view-container">
-                <div className="mobile-view">
-                  {renderMobileLayout()}
-                </div>
-              </div>
-              
-              <div className="desktop-view-container">
-                <ResponsiveReactGridLayout
-                  className="layout"
-                  layouts={layouts}
-                  breakpoints={breakpoints}
-                  cols={cols}
-                  rowHeight={rowHeight}
-                  onLayoutChange={handleLayoutChange}
-                  onBreakpointChange={(newBreakpoint: string, newCols: number) => {
-                    if (newBreakpoint !== currentBreakpoint) {
-                      console.log('Breakpoint changed:', newBreakpoint, newCols);
-                      setCurrentBreakpoint(newBreakpoint);
-                    }
-                  }}
-                  onDragStart={handleDragStart}
-                  onDragStop={handleDragStop}
-                  onResizeStart={handleResizeStart}
-                  onResizeStop={handleResizeStop}
-                  margin={[10, 10]}
-                  containerPadding={[10, 10]}
-                  draggableHandle=".widget-drag-handle"
-                  draggableCancel=".settings-button"
-                  useCSSTransforms={true}
-                  measureBeforeMount={false}
-                  compactType="vertical"
-                  verticalCompact={true}
-                  preventCollision={false}
-                  isResizable={true}
-                  isDraggable={true}
-                  isBounded={false}
-                  autoSize={true}
-                  transformScale={1}
-                  style={{ width: '100%', minHeight: '100%' }}
-                >
-                  {renderWidgetItems()}
-                </ResponsiveReactGridLayout>
-              </div>
-            </div>
-          )}
+          </div>
         </main>
       </div>
     </div>
