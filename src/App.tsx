@@ -78,35 +78,6 @@ function App() {
           
           return validatedLayouts;
         }
-        
-        // If no layouts saved, try to create from legacy layout
-        const savedLayout = localStorage.getItem('boxento-layout');
-        if (savedLayout) {
-          try {
-            const parsedLayout = JSON.parse(savedLayout);
-            if (Array.isArray(parsedLayout) && parsedLayout.length > 0) {
-              // Create new layouts for all breakpoints using our smart positioning function
-              const migratedLayouts: { [key: string]: LayoutItem[] } = {};
-              
-              // Extract widget IDs from the old layout
-              const widgetIds = parsedLayout.map(item => item.i);
-              
-              // For each breakpoint, create a new layout
-              Object.keys(breakpoints).forEach(breakpoint => {
-                const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
-                
-                // Create layout items for each widget ID
-                migratedLayouts[breakpoint] = widgetIds.map((widgetId, index) => 
-                  createDefaultLayoutItem(widgetId, index, colsForBreakpoint, breakpoint)
-                );
-              });
-              
-              return migratedLayouts;
-            }
-          } catch (e) {
-            console.error('Error parsing saved layout:', e);
-          }
-        }
       } catch (error) {
         console.error('Error initializing layouts:', error);
       }
@@ -117,26 +88,6 @@ function App() {
       ...acc, 
       [bp]: []
     }), {});
-  });
-  
-  // Keep a legacy layout state for backward compatibility during migration
-  const [layout, setLayout] = useState<LayoutItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedLayout = localStorage.getItem('boxento-layout')
-      if (savedLayout) {
-        // Enforce 2x2 minimum size on any existing layout items
-        const parsedLayout = JSON.parse(savedLayout);
-        return parsedLayout.map((item: LayoutItem) => ({
-          ...item,
-          w: Math.max(item.w, 2),
-          h: Math.max(item.h, 2),
-          minW: 2,
-          minH: 2
-        }));
-      }
-      return []
-    }
-    return []
   });
   
   const [widgets, setWidgets] = useState<Widget[]>(() => {
@@ -188,7 +139,6 @@ function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('boxento-widgets', JSON.stringify(widgets))
-      localStorage.setItem('boxento-layout', JSON.stringify(layout))
       
       // Save each widget's configuration separately using configManager
       widgets.forEach(widget => {
@@ -199,7 +149,7 @@ function App() {
         }
       });
     }
-  }, [widgets, layout])
+  }, [widgets])
   
   // Apply theme to document
   useEffect(() => {
@@ -344,22 +294,6 @@ function App() {
     // Update layout state
     setLayouts(updatedLayouts);
     
-    // Also update the legacy layout for backward compatibility
-    setLayout(prevLayout => {
-      const colCount = cols[currentBreakpoint as keyof typeof cols];
-      const newLayoutItem = createDefaultLayoutItem(
-        widgetId, 
-        prevLayout.length, 
-        colCount,
-        currentBreakpoint
-      );
-      return [...prevLayout, newLayoutItem];
-    });
-    
-    // Save to localStorage
-    localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
-    localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
-    
     // Close the widget selector if it's open
     if (widgetSelectorOpen) {
       setWidgetSelectorOpen(false);
@@ -406,14 +340,8 @@ function App() {
     });
     setLayouts(newLayouts);
     
-    // Update legacy layout for backward compatibility
-    const updatedLayout = layout.filter(item => item.i !== widgetId);
-    setLayout(updatedLayout);
-    
     // Save to localStorage
     localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
-    localStorage.setItem('boxento-layouts', JSON.stringify(newLayouts));
-    localStorage.setItem('boxento-layout', JSON.stringify(updatedLayout));
   };
   
   // Store the last layout update timestamp to throttle updates
@@ -424,16 +352,12 @@ function App() {
   
   // Update handleLayoutChange function to handle all responsive layouts
   const handleLayoutChange = (currentLayout: LayoutItem[], allLayouts?: { [key: string]: LayoutItem[] }): void => {
-    // Enforce minimum size constraints on current layout
     const validatedLayout = currentLayout.map(item => ({
       ...item,
       w: Math.max(item.w, 2), // Minimum width of 2
       h: Math.max(item.h, 2)  // Minimum height of 2
     }));
-    
-    // Update the legacy layout state for backward compatibility
-    setLayout(validatedLayout);
-    
+
     // If we have all layouts from the responsive grid
     if (allLayouts) {
       // Use a timeout to debounce the layout update to prevent excessive state updates
@@ -450,7 +374,6 @@ function App() {
           
           // Enforce minimum sizes on all layouts
           validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(item => {
-            // For all breakpoints, just enforce minimum sizes
             return {
               ...item,
               w: Math.max(item.w, 2),
@@ -470,9 +393,6 @@ function App() {
       setLayouts(updatedLayouts);
       localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
     }
-    
-    // Save current layout for backward compatibility
-    localStorage.setItem('boxento-layout', JSON.stringify(validatedLayout));
   };
   
   /**
@@ -504,9 +424,8 @@ function App() {
       );
     }
     
-    // Find layout item for this widget - if we're on mobile view, we'll ignore dimensions and use CSS
-    const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id) || 
-                      (layout.find(item => item.i === widget.id));
+    // Find layout item for this widget
+    const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
     
     if (!layoutItem) {
       console.warn(`Layout item not found for widget ${widget.id}`);
@@ -601,34 +520,6 @@ function App() {
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [widgetSelectorOpen]);
-
-  // Add a useEffect to migrate from old layout to new layouts format if needed
-  useEffect(() => {
-    // Check if we have layouts but not layout (on first load)
-    if (layouts && Object.keys(layouts).length === 0 && layout && layout.length > 0) {
-      console.log('Migrating from old layout format to responsive layouts');
-      
-      // Create layouts for all breakpoints from the single layout
-      const newLayouts: { [key: string]: LayoutItem[] } = {};
-      
-      // For each breakpoint, adapt the layout items
-      Object.keys(breakpoints).forEach(breakpoint => {
-        const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
-        
-        // Adapt layout items for this breakpoint's column count
-        newLayouts[breakpoint] = layout.map((item: LayoutItem) => ({
-          ...item,
-          w: Math.min(item.w, colsForBreakpoint), // Constrain width to column count
-          minW: Math.min(item.minW || 1, colsForBreakpoint)
-        }));
-      });
-      
-      // Update layouts state
-      setLayouts(newLayouts);
-      localStorage.setItem('boxento-layouts', JSON.stringify(newLayouts));
-      console.log('Migration complete');
-    }
-  }, [layout, layouts, breakpoints, cols]);
 
   // Add this function to create a default layout for a widget
   const createDefaultLayoutItem = (
