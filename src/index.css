@@ -20,7 +20,9 @@ body.dragging-active {
 
 /* Widget container - contains styling ONLY for widgets themselves */
 .widget-container {
-  border-radius: var(--border-radius-standard);
+  border-radius: var(--border-radius-standard) !important;
+  -webkit-border-radius: var(--border-radius-standard) !important;
+  -moz-border-radius: var(--border-radius-standard) !important;
   @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
   /* Prevent text selection during any interaction */
   -webkit-touch-callout: none; /* iOS Safari */
@@ -436,3 +438,382 @@ body.drag-complete .react-grid-item {
     @apply bg-slate-900 text-white;
   }
 }
+
+/* Complete overhaul for mobile layout */
+.mobile-layout {
+  display: block !important;
+  height: auto !important;
+  position: relative !important;
+}
+
+/* Make each grid item a standard block element on mobile */
+.mobile-layout .react-grid-item {
+  position: relative !important;
+  transform: none !important;
+  left: 0 !important;
+  top: auto !important;
+  width: 100% !important;
+  display: block !important;
+  margin-bottom: 16px !important;
+  float: none !important;
+  height: auto !important;
+  min-height: 200px !important;
+  z-index: 1 !important;
+}
+
+/* Ensure widgets are displayed properly */
+.mobile-layout .widget-container {
+  height: auto !important;
+  min-height: 180px !important;
+  border-radius: calc(var(--border-radius-standard) * 0.8);
+  padding: 12px !important;
+  margin: 0 !important;
+  position: relative !important;
+}
+
+/* Force widget content visibility */
+.mobile-layout .widget-container > div:not(.widget-header),
+.mobile-widget .widget-container > div:not(.widget-header) {
+  display: block !important;
+  height: auto !important;
+  min-height: 120px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Specific mobile layout container style */
+@media (max-width: 768px) {
+  .react-grid-layout {
+    position: static !important;
+    height: auto !important;
+    display: block !important;
+  }
+  
+  .react-grid-item {
+    position: relative !important;
+    width: 100% !important;
+    margin-bottom: 16px !important;
+    height: auto !important;
+    min-height: 250px !important;
+  }
+  
+  /* Adjust widget container for 2x2 grid */
+  .widget-container {
+    height: 250px !important;
+    overflow: auto !important;
+    padding: 12px !important;
+    min-height: 0 !important;
+  }
+  
+  /* Make content scrollable if needed */
+  .widget-container > div:not(.widget-header) {
+    overflow: auto !important;
+  }
+  
+  /* Widget headers should take less space */
+  .widget-header {
+    margin: 0 0 8px 0 !important;
+    padding: 0 0 6px 0 !important;
+    min-height: 0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .dark .widget-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  /* Remove any extra padding in widget containers on mobile */
+  .widget-container {
+    padding: 6px !important;
+  }
+  
+  /* Adjust padding within content area */
+  .widget-container > div:not(.widget-header):not(.widget-drag-handle) {
+    padding: 4px 0 !important;
+  }
+  
+  /* Ensure first child in content has no top margin */
+  .widget-container > div:not(.widget-header):not(.widget-drag-handle) > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  
+  /* Fine-tune some common widget content elements */
+  .widget-container input,
+  .widget-container textarea,
+  .widget-container button:not(.settings-button) {
+    margin: 2px 0 !important;
+    padding: 4px !important;
+  }
+  
+  /* Override absolute positioning for mobile */
+  .mobile-layout .react-grid-item {
+    position: relative !important;
+    display: block !important;
+  }
+
+  /* Make sure headers are visible and distinct */
+  .widget-container .widget-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    margin: 0 0 8px 0 !important;
+    padding: 0 0 6px 0 !important;
+  }
+  
+  /* Important for Safari and iOS */
+  .mobile-layout {
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+
+/* Tablet size adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Adjust grid item sizes for tablets */
+  .widget-container {
+    @apply p-3;
+  }
+}
+
+/* Desktop size refinements */
+@media (min-width: 1025px) {
+  /* Ensure desktop widgets have proper padding */
+  .widget-container {
+    @apply p-4;
+  }
+}
+
+/* Ensure proper display during breakpoint transitions */
+body.react-grid-layout--dragging .react-grid-item,
+body.react-grid-layout--resizing .react-grid-item {
+  @apply opacity-75 transition-none;
+}
+
+/* Widget wrapper responsive styling */
+.widget-wrapper {
+  @apply h-full w-full;
+}
+
+/* Tablet widget styling */
+.tablet-widget .widget-container {
+  min-height: 150px;
+}
+
+/* Desktop widget styling */
+.desktop-widget .widget-container {
+  min-height: 100px;
+}
+
+/* Specific widget header styles for mobile */
+.mobile-layout .widget-header,
+.mobile-widget .widget-header {
+  padding: 4px 0 !important;
+  margin-bottom: 12px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force content visibility for mobile widgets */
+.mobile-widget .widget-container > div:not(.widget-header),
+.mobile-layout .widget-container > div:not(.widget-header) {
+  display: block !important;
+  height: auto !important;
+  min-height: 100px !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+}
+
+/* Fix height issues for mobile layouts */
+@media (max-width: 768px) {
+  .react-grid-item {
+    height: auto !important;
+    min-height: 200px !important;
+  }
+  
+  .widget-container {
+    height: auto !important;
+    min-height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Ensure content area takes remaining space */
+  .widget-container > div:not(.widget-header) {
+    flex: 1 !important;
+    min-height: 150px !important;
+  }
+}
+
+/* Mobile widget list - simple grid display */
+.mobile-widget-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+}
+
+/* Mobile widget items - consistent sizing */
+.mobile-widget-item {
+  aspect-ratio: 1/1;
+  border-radius: var(--border-radius-standard) !important;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  position: relative;
+  min-height: 200px;
+}
+
+.dark .mobile-widget-item {
+  background: #1e293b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Ensure mobile widgets display properly with optimized spacing */
+.mobile-widget-item .widget-container {
+  height: 100% !important;
+  padding: 8px !important; /* Reduced from 12px to 8px to save space */
+  border-radius: var(--border-radius-standard) !important;
+  box-shadow: none !important;
+}
+
+/* Add specific style for widget headers on mobile to reduce excessive space */
+.mobile-widget-item .widget-header {
+  padding: 0 0 6px 0 !important;
+  margin: 0 0 8px 0 !important;
+  min-height: 0 !important;
+  font-size: 0.95rem !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dark mode border */
+.dark .mobile-widget-item .widget-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* For tablet-sized screens */
+@media (max-width: 768px) and (min-width: 481px) {
+  .mobile-widget-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+/* For mobile screens 480px and below, single column layout */
+@media (max-width: 480px) {
+  .mobile-widget-list {
+    grid-template-columns: 1fr !important;
+    padding: 12px;
+    gap: 16px;
+  }
+  
+  .mobile-widget-item {
+    min-height: 200px;
+    aspect-ratio: auto;
+    margin-bottom: 0;
+  }
+}
+
+/* Extra specific rule for very narrow screens like iPhone (375px) */
+@media (max-width: 375px) {
+  .mobile-widget-list {
+    padding: 8px;
+    gap: 12px;
+  }
+  
+  .mobile-widget-item {
+    min-height: 180px;
+  }
+}
+
+/* Mobile view specific styles */
+.mobile-view {
+  padding: 0 0 20px 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-view h2 {
+  text-align: center;
+  margin: 10px 0 16px;
+  font-size: 1.1rem;
+}
+
+/* Container visibility for different screen sizes */
+.mobile-view-container {
+  display: none !important;
+  width: 100%;
+}
+
+.desktop-view-container {
+  display: block !important;
+  width: 100%;
+}
+
+/* On small screens, show mobile view and hide desktop view */
+@media (max-width: 768px) {
+  .mobile-view-container {
+    display: block !important;
+  }
+  
+  .desktop-view-container {
+    display: none !important;
+  }
+}
+
+/* Prevent layout jumps during breakpoint changes */
+.react-grid-layout {
+  transition: none !important;
+}
+
+/* Adjust desktop container for smooth transitions */
+.desktop-view-container {
+  transition: opacity 0.3s ease;
+}
+
+/* Add specific rule to ensure the content inside widget containers has proper radius */
+.mobile-widget-item .widget-container > div {
+  border-radius: calc(var(--border-radius-standard) - 6px) !important;
+  overflow: hidden;
+}
+
+/* Ensure all mobile elements use the standard border radius */
+@media (max-width: 768px) {
+  /* Apply standard border radius to all widget-related elements */
+  .widget-container, 
+  .mobile-widget-item,
+  .mobile-widget-item .widget-container,
+  .react-grid-item {
+    border-radius: var(--border-radius-standard) !important;
+    -webkit-border-radius: var(--border-radius-standard) !important;
+    -moz-border-radius: var(--border-radius-standard) !important;
+  }
+  
+  /* Force children of widget-container to inherit border radius */
+  .widget-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--border-radius-standard);
+    -webkit-border-radius: var(--border-radius-standard);
+    -moz-border-radius: var(--border-radius-standard);
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/* Fix widget-drag-handle padding on mobile */
+@media (max-width: 768px) {
+  .widget-drag-handle,
+  div[class*="flex justify-between items-center p-2 cursor-move"] {
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}
+

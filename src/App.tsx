@@ -28,25 +28,6 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
 // This is important for performance as it prevents recreation on each render
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
-// Helper function to ensure all breakpoints have valid layouts
-const ensureBreakpointLayouts = (
-  breakpoints: { [key: string]: number },
-  existingLayouts: { [key: string]: LayoutItem[] } = {}, 
-  defaultLayout: LayoutItem[] = []
-): { [key: string]: LayoutItem[] } => {
-  const result: { [key: string]: LayoutItem[] } = { ...existingLayouts };
-  
-  // Ensure every breakpoint has a layout
-  Object.keys(breakpoints).forEach(breakpoint => {
-    if (!result[breakpoint] || !Array.isArray(result[breakpoint])) {
-      // If this breakpoint layout is missing or invalid, use the default layout
-      result[breakpoint] = [...defaultLayout];
-    }
-  });
-  
-  return result;
-};
-
 function App() {
   // Add a class to the body for dark mode background
   useEffect(() => {
@@ -314,59 +295,75 @@ function App() {
   
   // Update addWidget function to work with ResponsiveReactGridLayout
   const addWidget = (type: string): void => {
-    // Create a unique ID for the widget
-    const widgetId = `widget-${Date.now()}`;
+    // Generate unique ID for this widget instance
+    const widgetId = `${type}-${Date.now()}`;
     
-    // Get widget configuration by type
-    const widgetConfig = getWidgetConfigByType(type);
-    if (!widgetConfig) return;
-    
-    // Create new widget
+    // Create new widget instance
     const newWidget: Widget = {
       id: widgetId,
       type,
-      config: {}
+      config: getWidgetConfigByType(type) || {}
     };
     
-    // Add widget to state
-    setWidgets([...widgets, newWidget]);
+    // Add new widget to state
+    const updatedWidgets = [...widgets, newWidget];
+    setWidgets(updatedWidgets);
     
-    // Create layout item for all breakpoints
-    const newLayouts = { ...layouts };
+    // For each breakpoint, create a layout item
+    const updatedLayouts = { ...layouts };
     
-    // Get the current widgets count for positioning
-    const widgetIndex = widgets.length;
-    
-    // For each breakpoint, create layout items with appropriate positioning
-    Object.keys(breakpoints).forEach(breakpoint => {
-      const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
+    // For each breakpoint, add a layout item
+    Object.keys(breakpoints).forEach((breakpoint) => {
+      if (!updatedLayouts[breakpoint]) {
+        updatedLayouts[breakpoint] = [];
+      }
       
-      // Create a layout item for this widget at this breakpoint using our positioning function
-      const layoutItem = createDefaultLayoutItem(
+      // Calculate column count for this breakpoint
+      const colCount = cols[breakpoint as keyof typeof cols];
+      
+      // Create default layout item based on the breakpoint
+      const isMobile = breakpoint === 'xs' || breakpoint === 'xxs';
+      const defaultItem = createDefaultLayoutItem(
         widgetId, 
-        widgetIndex, 
-        colsForBreakpoint, 
+        updatedLayouts[breakpoint].length, 
+        colCount,
         breakpoint
       );
       
-      // Add to layouts for this breakpoint
-      newLayouts[breakpoint] = [...(newLayouts[breakpoint] || []), layoutItem];
+      // If on mobile, force 2x2 grid size
+      if (isMobile) {
+        defaultItem.w = 2;
+        defaultItem.h = 2;
+        defaultItem.maxW = 2;
+        defaultItem.maxH = 2;
+      }
+      
+      updatedLayouts[breakpoint].push(defaultItem);
     });
     
-    // Update layouts state
-    setLayouts(newLayouts);
+    // Update layout state
+    setLayouts(updatedLayouts);
     
     // Also update the legacy layout for backward compatibility
-    const lgLayout = newLayouts.lg || [];
-    setLayout(lgLayout);
+    setLayout(prevLayout => {
+      const colCount = cols[currentBreakpoint as keyof typeof cols];
+      const newLayoutItem = createDefaultLayoutItem(
+        widgetId, 
+        prevLayout.length, 
+        colCount,
+        currentBreakpoint
+      );
+      return [...prevLayout, newLayoutItem];
+    });
     
     // Save to localStorage
-    localStorage.setItem('boxento-widgets', JSON.stringify([...widgets, newWidget]));
-    localStorage.setItem('boxento-layouts', JSON.stringify(newLayouts));
-    localStorage.setItem('boxento-layout', JSON.stringify(lgLayout));
+    localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
+    localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
     
-    // Close widget selector
-    setWidgetSelectorOpen(false);
+    // Close the widget selector if it's open
+    if (widgetSelectorOpen) {
+      setWidgetSelectorOpen(false);
+    }
   };
   
   // Helper function to find the best position for a new widget
@@ -452,11 +449,14 @@ function App() {
           }
           
           // Enforce minimum sizes on all layouts
-          validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(item => ({
-            ...item,
-            w: Math.max(item.w, 2),
-            h: Math.max(item.h, 2)
-          }));
+          validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(item => {
+            // For all breakpoints, just enforce minimum sizes
+            return {
+              ...item,
+              w: Math.max(item.w, 2),
+              h: Math.max(item.h, 2)
+            };
+          });
         });
         
         // Update layout state
@@ -493,7 +493,7 @@ function App() {
     configManager.saveWidgetConfig(widgetId, configToSave);
   };
 
-  const renderWidget = (widget: Widget): React.ReactNode => {
+  const renderWidget = (widget: Widget, isMobileView = false): React.ReactNode => {
     const WidgetComponent = getWidgetComponent(widget.type);
     
     if (!WidgetComponent) {
@@ -504,7 +504,7 @@ function App() {
       );
     }
     
-    // Find layout item for this widget in the current breakpoint's layout
+    // Find layout item for this widget - if we're on mobile view, we'll ignore dimensions and use CSS
     const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id) || 
                       (layout.find(item => item.i === widget.id));
     
@@ -530,8 +530,8 @@ function App() {
     return (
       <WidgetErrorBoundary children={
         <WidgetComponent
-          width={layoutItem.w}
-          height={layoutItem.h}
+          width={isMobileView ? 2 : layoutItem.w} // On mobile, always 2
+          height={isMobileView ? 2 : layoutItem.h} // On mobile, always 2
           config={{
             ...widget.config,
             onDelete: () => deleteWidget(widget.id),
@@ -546,13 +546,16 @@ function App() {
   const handleDragStart = (): void => {
     // Add a class to the body to indicate we're dragging
     document.body.classList.add('dragging');
+    document.body.classList.add('react-grid-layout--dragging');
     
     // Log for debugging
     console.log('Drag started');
   };
   
   const handleDragStop = (): void => {
+    // Remove classes
     document.body.classList.remove('dragging');
+    document.body.classList.remove('react-grid-layout--dragging');
     
     // Force save the current layout state to ensure it's preserved
     const currentLayoutSnapshot = { ...layouts };
@@ -563,23 +566,15 @@ function App() {
   };
   
   const handleResizeStart = (): void => {
-    document.body.classList.add('widget-resizing');
+    document.body.classList.add('react-grid-layout--resizing');
   };
   
   const handleResizeStop = (): void => {
-    // Use setTimeout to prevent flickering when resizing stops
-    setTimeout(() => {
-      // Add a class to indicate resize is complete (for animations)
-      document.body.classList.add('resize-complete');
-      
-      // Remove the resizing class
-      document.body.classList.remove('widget-resizing');
-      
-      // Remove the complete class after animation
-      setTimeout(() => {
-        document.body.classList.remove('resize-complete');
-      }, 300);
-    }, 50);
+    document.body.classList.remove('react-grid-layout--resizing');
+    
+    // Force save after resize
+    const currentLayoutSnapshot = { ...layouts };
+    localStorage.setItem('boxento-layouts', JSON.stringify(currentLayoutSnapshot));
   };
   
   const toggleWidgetSelector = (): void => {
@@ -677,16 +672,18 @@ function App() {
         minH: 2
       };
     }
-    // For mobile layouts (xs, xxs), stack vertically
+    // For mobile layouts (xs, xxs), force 2x2 grid size and stack vertically
     else {
       return {
         i: widgetId,
         x: 0,         // Stack in a single column
-        y: index * 3, // Stack widgets with spacing
-        w: colCount,  // Full width
-        h: 3,         // Default height
+        y: index * 2, // Position vertically based on index with a gap
+        w: 2,         // Enforce 2x2 grid size for all widgets on mobile
+        h: 2,         // Enforce 2x2 grid size for all widgets on mobile
         minW: 2,
-        minH: 2
+        minH: 2,
+        maxW: 2,      // Add maximum width constraint for mobile
+        maxH: 2       // Add maximum height constraint for mobile
       };
     }
   };
@@ -727,24 +724,33 @@ function App() {
       // Find the layout data for this widget to pass as data-grid
       const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
       
-      // Always provide explicit positioning values - this is critical
-      // to prevent the "x must be a number" error
+      // Always provide explicit positioning values
+      const isMobile = currentBreakpoint === 'xs' || currentBreakpoint === 'xxs';
+      
+      // For mobile, ensure widgets have appropriate height
       const dataGrid = {
         i: widget.id,
-        x: layoutItem?.x ?? 0,  // Default to 0 if undefined
-        y: layoutItem?.y ?? 0,  // Default to 0 if undefined
-        w: layoutItem?.w ?? 2,  // Default to 2 if undefined
-        h: layoutItem?.h ?? 2,  // Default to 2 if undefined
+        x: layoutItem?.x ?? 0,
+        y: layoutItem?.y ?? 0,
+        w: layoutItem?.w ?? 2,
+        h: isMobile ? 5 : (layoutItem?.h ?? 2), // Taller for mobile
         minW: layoutItem?.minW ?? 2,
-        minH: layoutItem?.minH ?? 2
+        minH: isMobile ? 3 : (layoutItem?.minH ?? 2) // Minimum height higher for mobile
       };
       
-      // Log the grid position for debugging
-      // console.log(`Widget ${widget.id} position:`, dataGrid);
+      // Add different classes based on screen size
+      const isTablet = currentBreakpoint === 'sm';
+      const sizeClass = isMobile ? 'mobile-widget' : isTablet ? 'tablet-widget' : 'desktop-widget';
       
       return (
-        <div key={widget.id} className="widget-wrapper" data-grid={dataGrid}>
-          {renderWidget(widget)}
+        <div 
+          key={widget.id} 
+          className={`widget-wrapper ${sizeClass}`} 
+          data-grid={dataGrid}
+          data-breakpoint={currentBreakpoint}
+          style={isMobile ? { marginBottom: '16px', height: 'auto' } : undefined}
+        >
+          {renderWidget(widget, isMobile)}
         </div>
       );
     });
@@ -807,6 +813,30 @@ function App() {
       }
     }
   }, [widgets, layouts]);
+
+  // Inside the App function component, add a special mobile view renderer
+  const renderMobileLayout = () => {
+    // On mobile, we ignore the complex grid layout and just display all widgets as 2x2
+    // This is purely a display change, not modifying the actual layout data
+    return (
+      <div className="mobile-widget-list">
+        {widgets.length === 0 ? (
+          <div className="no-widgets-message">
+            <p>No widgets added yet. Click "Add Widget" to get started.</p>
+          </div>
+        ) : (
+          widgets.map(widget => (
+            <div 
+              key={widget.id} 
+              className="mobile-widget-item"
+            >
+              {renderWidget(widget, true)}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
@@ -881,72 +911,49 @@ function App() {
             </div>
           ) : (
             <div className="px-6 max-w-[1600px] mx-auto">
-              <ResponsiveReactGridLayout
-                className="layout"
-                layouts={layouts}
-                breakpoints={breakpoints}
-                cols={cols}
-                rowHeight={rowHeight}
-                width={windowWidth}
-                onLayoutChange={(layout: LayoutItem[], allLayouts: { [key: string]: LayoutItem[] }) => {
-                  // Skip updates during breakpoint transitions
-                  if (isBreakpointChanging) {
-                    return;
-                  }
-                  
-                  // Make sure layout is valid
-                  if (!layout || !Array.isArray(layout)) {
-                    console.warn('Invalid layout received', layout);
-                    return;
-                  }
-
-                  // Throttle updates to prevent excessive re-renders (max once per 300ms)
-                  const now = Date.now();
-                  if (now - lastLayoutUpdate < 300) {
-                    return; // Skip this update if it's too soon
-                  }
-                  
-                  // Only update when layouts actually change to prevent re-render loops
-                  const layoutsChanged = JSON.stringify(allLayouts) !== JSON.stringify(layouts);
-                  if (layoutsChanged) {
-                    setLastLayoutUpdate(now);
-                    handleLayoutChange(layout, allLayouts);
-                  }
-                }}
-                onBreakpointChange={(newBreakpoint: string, newCols: number) => {
-                  if (newBreakpoint !== currentBreakpoint) {
-                    setIsBreakpointChanging(true);
-                    setCurrentBreakpoint(newBreakpoint);
-                    console.log('Breakpoint changed:', newBreakpoint, newCols);
-                    
-                    // Reset the flag after a short delay to allow the layout to settle
-                    setTimeout(() => {
-                      setIsBreakpointChanging(false);
-                    }, 400);
-                  }
-                }}
-                // Event handlers
-                onDragStart={handleDragStart}
-                onDragStop={handleDragStop}
-                onResizeStart={handleResizeStart}
-                onResizeStop={handleResizeStop}
-                // Layout settings
-                margin={[10, 10]}
-                containerPadding={[10, 10]}
-                draggableHandle=".widget-drag-handle"
-                draggableCancel=".settings-button"
-                // Additional configuration
-                useCSSTransforms={true}
-                measureBeforeMount={false}
-                compactType="vertical" // Set back to vertical for proper dragging
-                preventCollision={false}
-                isResizable={true}
-                isDraggable={true}
-                isBounded={false} // Remove boundary restriction
-                autoSize={true}
-              >
-                {renderWidgetItems()}
-              </ResponsiveReactGridLayout>
+              <div className="mobile-view-container">
+                <div className="mobile-view">
+                  {renderMobileLayout()}
+                </div>
+              </div>
+              
+              <div className="desktop-view-container">
+                <ResponsiveReactGridLayout
+                  className="layout"
+                  layouts={layouts}
+                  breakpoints={breakpoints}
+                  cols={cols}
+                  rowHeight={rowHeight}
+                  onLayoutChange={handleLayoutChange}
+                  onBreakpointChange={(newBreakpoint: string, newCols: number) => {
+                    if (newBreakpoint !== currentBreakpoint) {
+                      console.log('Breakpoint changed:', newBreakpoint, newCols);
+                      setCurrentBreakpoint(newBreakpoint);
+                    }
+                  }}
+                  onDragStart={handleDragStart}
+                  onDragStop={handleDragStop}
+                  onResizeStart={handleResizeStart}
+                  onResizeStop={handleResizeStop}
+                  margin={[10, 10]}
+                  containerPadding={[10, 10]}
+                  draggableHandle=".widget-drag-handle"
+                  draggableCancel=".settings-button"
+                  useCSSTransforms={true}
+                  measureBeforeMount={false}
+                  compactType="vertical"
+                  verticalCompact={true}
+                  preventCollision={false}
+                  isResizable={true}
+                  isDraggable={true}
+                  isBounded={false}
+                  autoSize={true}
+                  transformScale={1}
+                  style={{ width: '100%', minHeight: '100%' }}
+                >
+                  {renderWidgetItems()}
+                </ResponsiveReactGridLayout>
+              </div>
             </div>
           )}
         </main>
