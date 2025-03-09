@@ -8,6 +8,7 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
+import './styles.css';
 
 /**
  * Notes Widget Component
@@ -25,8 +26,8 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
     fontSize: 14,
     lineHeight: 26,
     lineColor: '#E6E6E6', // Very subtle light gray
-    paperColor: '#FFFFFF', // Paper background color
-    darkPaperColor: '#1A1A1A' // Dark mode paper color
+    paperColor: '#FFFBE6', // Cream/beige background color
+    darkPaperColor: '#1E293B' // Dark mode paper color - matching other widgets
   };
 
   const [showSettings, setShowSettings] = useState(false);
@@ -234,12 +235,9 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   };
 
   return (
-    <div 
+    <div
       ref={widgetRef} 
       className="widget-container notes-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
-      style={{
-        backgroundColor: 'rgb(254 243 199)' // Tailwind amber-50
-      }}
     >
       <WidgetHeader 
         title={localConfig.title || 'Notes'} 
@@ -259,12 +257,12 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
             value={localConfig.content || ''}
             onChange={handleContentChange}
             className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 bg-transparent 
-                      text-gray-800 dark:text-gray-200 py-1 leading-relaxed"
+                      text-gray-800 dark:text-gray-200 py-1 leading-relaxed placeholder-gray-500 dark:placeholder-gray-400"
             style={{
               fontFamily: localConfig.fontFamily || defaultConfig.fontFamily,
               fontSize: `${localConfig.fontSize || defaultConfig.fontSize}px`,
               lineHeight: `${localConfig.lineHeight || defaultConfig.lineHeight}px`,
-              caretColor: '#000000',
+              caretColor: 'currentColor',
             }}
             placeholder="Write your notes here..."
             aria-label="Notes content"

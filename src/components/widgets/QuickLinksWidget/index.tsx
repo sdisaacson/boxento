@@ -450,19 +450,21 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <DialogHeader>
               <DialogTitle>Widget Settings</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="py-4 space-y-6">
               <div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Page color
                 </span>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-3">
                   {(Object.keys(themeColors) as Array<keyof typeof themeColors>).map((theme) => (
                     <button
                       key={theme}
                       onClick={() => handleThemeChange(theme as NonNullable<QuickLinksWidgetConfig['theme']>)}
                       className={`
-                        w-8 h-8 rounded-full transition-all
-                        ${config?.theme === theme ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-slate-900' : ''}
+                        w-9 h-9 rounded-full transition-all border
+                        ${config?.theme === theme 
+                          ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 border-gray-300 dark:border-gray-600' 
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}
                       `}
                       style={{
                         backgroundColor: themeColors[theme as keyof ThemeColors].light,
@@ -473,7 +475,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                 </div>
               </div>
             </div>
-            <DialogFooter className="flex justify-between items-center">
+            <DialogFooter className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-800">
               <div className="flex-1">
                 {config?.onDelete && (
                   <button
