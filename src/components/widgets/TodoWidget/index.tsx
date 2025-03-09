@@ -11,6 +11,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoWidgetProps, TodoWidgetConfig, TodoItem } from './types';
 
@@ -251,24 +252,24 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               e.preventDefault();
               addTodo();
             }}
-            className="flex items-center"
+            className="flex items-center gap-2"
           >
-            <input
+            <Input
               ref={newTodoInputRef}
               type="text"
               value={newTodoText}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
               placeholder="Add a task..."
-              className="flex-grow bg-transparent border-none focus:ring-0 text-gray-700 dark:text-gray-200 text-sm p-0"
+              className="flex-grow"
               aria-label="New task"
             />
             <button
               type="submit"
               disabled={!newTodoText.trim()}
-              className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50"
+              className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
               aria-label="Add task"
             >
-              <Plus size={16} />
+              <Plus size={20} />
             </button>
           </form>
         </div>
@@ -417,24 +418,24 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 e.preventDefault();
                 addTodo();
               }}
-              className="flex items-center"
+              className="flex items-center gap-2"
             >
-              <input
+              <Input
                 ref={newTodoInputRef}
                 type="text"
                 value={newTodoText}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
                 placeholder="Add a task..."
-                className="flex-grow bg-transparent border-none focus:ring-0 text-gray-700 dark:text-gray-200 text-sm p-0"
+                className="flex-grow"
                 aria-label="New task"
               />
               <button
                 type="submit"
                 disabled={!newTodoText.trim()}
-                className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50"
+                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
                 aria-label="Add task"
               >
-                <Plus size={16} />
+                <Plus size={20} />
               </button>
             </form>
           </div>
