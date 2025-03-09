@@ -14,6 +14,7 @@ import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { Switch } from '../../ui/switch';
 
 /**
  * Weather Widget Component
@@ -615,14 +616,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <Label>API Key Settings</Label>
           
           <div className="mb-2">
-            <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-              <input
-                type="checkbox"
-                id="useSharedCredential"
-                checked={localConfig.useSharedCredential}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, useSharedCredential: e.target.checked})}
-                className="mr-2 h-4 w-4"
-              />
+            <div className="flex items-center justify-between mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
               <div>
                 <Label htmlFor="useSharedCredential" className="text-sm font-medium">
                   Use shared API key
@@ -631,6 +625,11 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
                   {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"} • Reuse across all weather widgets
                 </p>
               </div>
+              <Switch
+                id="useSharedCredential"
+                checked={localConfig.useSharedCredential}
+                onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, useSharedCredential: checked})}
+              />
             </div>
             
             {localConfig.useSharedCredential ? (

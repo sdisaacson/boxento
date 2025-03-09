@@ -8,6 +8,10 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { GeographyQuizWidgetProps, GeographyQuizWidgetConfig, QuizDifficulty, QuestionType, QuizQuestion } from './types';
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
 /**
  * Size categories for widget content rendering
@@ -573,67 +577,63 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
           
           <div className="space-y-4 py-2">
             {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Widget Title</Label>
+              <Input
                 id="title-input"
-                type="text"
                 value={localConfig.title || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, title: e.target.value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Difficulty setting */}
-            <div>
-              <label htmlFor="difficulty-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Difficulty
-              </label>
-              <select
-                id="difficulty-select"
+            <div className="space-y-2">
+              <Label htmlFor="difficulty-select">Difficulty</Label>
+              <Select
                 value={localConfig.difficulty}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
-                  setLocalConfig({...localConfig, difficulty: e.target.value as QuizDifficulty})
+                onValueChange={(value: QuizDifficulty) => 
+                  setLocalConfig({...localConfig, difficulty: value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={QuizDifficulty.EASY}>Easy</option>
-                <option value={QuizDifficulty.MEDIUM}>Medium</option>
-                <option value={QuizDifficulty.HARD}>Hard</option>
-              </select>
+                <SelectTrigger id="difficulty-select">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={QuizDifficulty.EASY}>Easy</SelectItem>
+                  <SelectItem value={QuizDifficulty.MEDIUM}>Medium</SelectItem>
+                  <SelectItem value={QuizDifficulty.HARD}>Hard</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             {/* Question type setting */}
-            <div>
-              <label htmlFor="question-type-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Question Type
-              </label>
-              <select
-                id="question-type-select"
+            <div className="space-y-2">
+              <Label htmlFor="question-type-select">Question Type</Label>
+              <Select
                 value={localConfig.questionType}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
-                  setLocalConfig({...localConfig, questionType: e.target.value as QuestionType})
+                onValueChange={(value: QuestionType) => 
+                  setLocalConfig({...localConfig, questionType: value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={QuestionType.MIXED}>Mixed</option>
-                <option value={QuestionType.CAPITALS}>Capitals</option>
-                <option value={QuestionType.FLAGS}>Flags</option>
-                <option value={QuestionType.BORDERS}>Borders</option>
-                <option value={QuestionType.LANDMARKS}>Landmarks</option>
-              </select>
+                <SelectTrigger id="question-type-select">
+                  <SelectValue placeholder="Select question type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={QuestionType.MIXED}>Mixed</SelectItem>
+                  <SelectItem value={QuestionType.CAPITALS}>Capitals</SelectItem>
+                  <SelectItem value={QuestionType.FLAGS}>Flags</SelectItem>
+                  <SelectItem value={QuestionType.BORDERS}>Borders</SelectItem>
+                  <SelectItem value={QuestionType.LANDMARKS}>Landmarks</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             {/* Questions per round setting */}
-            <div>
-              <label htmlFor="questions-per-round-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Questions per Round
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="questions-per-round-input">Questions per Round</Label>
+              <Input
                 id="questions-per-round-input"
                 type="number"
                 min="1"
@@ -642,15 +642,14 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, questionsPerRound: parseInt(e.target.value, 10)})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
           
           <DialogFooter>
             {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+              <Button
+                variant="destructive"
                 onClick={() => {
                   if (config.onDelete) {
                     config.onDelete();
@@ -659,15 +658,14 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                 aria-label="Delete this widget"
               >
                 Delete Widget
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
+            <Button
+              type="submit"
               onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Save
-            </button>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

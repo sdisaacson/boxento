@@ -14,6 +14,16 @@ import {
 import { Input } from '@/components/ui/input';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoWidgetProps, TodoWidgetConfig, TodoItem } from './types';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
 
 /**
  * Todo Widget Component
@@ -287,70 +297,65 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </DialogHeader>
           
           <div className="space-y-4 py-2">
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Title</Label>
+              <Input
                 id="title-input"
                 type="text"
                 value={localConfig.title || ''}
                 onChange={handleTitleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
-            <div>
-              <label htmlFor="sort-order-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Sort Order
-              </label>
-              <select
-                id="sort-order-select"
+            <div className="space-y-2">
+              <Label htmlFor="sort-order-select">Sort Order</Label>
+              <Select
                 value={localConfig.sortOrder || 'created'}
-                onChange={handleSortOrderChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onValueChange={(value) => handleSortOrderChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
               >
-                <option value="created">By Creation Date</option>
-                <option value="alphabetical">Alphabetically</option>
-                <option value="completed">By Completion Status</option>
-              </select>
+                <SelectTrigger id="sort-order-select">
+                  <SelectValue placeholder="Select sort order" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created">By Creation Date</SelectItem>
+                  <SelectItem value="alphabetical">Alphabetically</SelectItem>
+                  <SelectItem value="completed">By Completion Status</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
-            <div className="flex items-center">
-              <input
-                id="show-completed-checkbox"
-                type="checkbox"
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-completed-toggle">Show completed items</Label>
+              <Switch
+                id="show-completed-toggle"
                 checked={localConfig.showCompletedItems ?? true}
-                onChange={handleShowCompletedChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                onCheckedChange={(checked: boolean) => handleShowCompletedChange({ target: { checked } } as React.ChangeEvent<HTMLInputElement>)}
               />
-              <label htmlFor="show-completed-checkbox" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show completed items
-              </label>
             </div>
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                >
+                  Delete Widget
+                </Button>
+              )}
+              
+              <Button
+                variant="default"
+                onClick={saveSettings}
               >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Save
-            </button>
+                Save Changes
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

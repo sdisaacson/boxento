@@ -9,6 +9,19 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { CurrencyConverterWidgetProps, CurrencyConverterWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Switch } from "../../ui/switch";
+import { Checkbox } from "../../ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 
 // Comprehensive currency database
 // This includes all currencies supported by Open Exchange Rates
@@ -914,143 +927,100 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             <DialogTitle>Currency Converter Settings</DialogTitle>
           </DialogHeader>
           
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 border-b mb-4">
-            <button 
-              onClick={() => setActiveTab('general')}
-              className={`px-3 py-2 text-sm font-medium ${activeTab === 'general' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
-            >
-              General
-            </button>
-            <button 
-              onClick={() => setActiveTab('currencies')}
-              className={`px-3 py-2 text-sm font-medium ${activeTab === 'currencies' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
-            >
-              Currencies
-            </button>
-            <button 
-              onClick={() => setActiveTab('advanced')}
-              className={`px-3 py-2 text-sm font-medium ${activeTab === 'advanced' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
-            >
-              Advanced
-            </button>
-          </div>
-          
-          {/* General Tab */}
-          {activeTab === 'general' && (
-            <div className="space-y-4">
-              {/* Title setting */}
-              <div>
-                <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Widget Title
-                </label>
-                <input
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="currencies">Currencies</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="general" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title-input">Widget Title</Label>
+                <Input
                   id="title-input"
-                  type="text"
                   value={localConfig.title || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                     setLocalConfig({...localConfig, title: e.target.value})
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               
-              {/* Base Currency setting - more compact */}
-              <div>
-                <label htmlFor="base-currency-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Base Currency
-                </label>
-                <select
-                  id="base-currency-select"
+              <div className="space-y-2">
+                <Label htmlFor="base-currency-select">Base Currency</Label>
+                <Select
                   value={localConfig.baseCurrency || 'USD'}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
-                    setLocalConfig({...localConfig, baseCurrency: e.target.value})
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onValueChange={(value) => setLocalConfig({...localConfig, baseCurrency: value})}
                 >
-                  {/* Show popular currencies first */}
-                  <optgroup label="Popular Currencies">
+                  <SelectTrigger id="base-currency-select">
+                    <SelectValue placeholder="Select base currency" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {POPULAR_CURRENCIES.map(code => (
-                      <option key={code} value={code}>
+                      <SelectItem key={code} value={code}>
                         {code} - {CURRENCIES[code as keyof typeof CURRENCIES]?.name}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </optgroup>
-                </select>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          )}
-          
-          {/* Currencies Tab */}
-          {activeTab === 'currencies' && (
-            <div className="space-y-4">
-              {/* Target Currencies setting - horizontal chip layout */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Target Currencies
-                  </label>
-                  <span className="text-xs text-gray-500">
+            </TabsContent>
+            
+            <TabsContent value="currencies" className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Target Currencies</Label>
+                  <span className="text-xs text-muted-foreground">
                     Selected: {localConfig.targetCurrencies?.length || 0}
                   </span>
                 </div>
                 
-                {/* Search box */}
-                <div className="mb-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                    placeholder="Search currencies..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  placeholder="Search currencies..."
+                  className="mb-2"
+                />
                 
-                {/* Selected currencies as chips */}
                 {(localConfig.targetCurrencies?.length || 0) > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {localConfig.targetCurrencies?.map(code => (
-                      <div key={`selected-${code}`} className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full px-2 py-1 text-xs">
+                      <div key={`selected-${code}`} className="flex items-center bg-secondary text-secondary-foreground rounded-full px-2 py-1 text-xs">
                         <span>{code}</span>
-                        <button 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 ml-1 hover:bg-secondary/80"
                           onClick={() => {
                             setLocalConfig({
                               ...localConfig, 
                               targetCurrencies: (localConfig.targetCurrencies || []).filter(c => c !== code)
                             });
                           }}
-                          className="ml-1 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200"
                         >
                           ×
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
                 
-                {/* Currency selection list with fixed height */}
-                <div className="h-36 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
+                <div className="h-36 overflow-y-auto border rounded-md">
                   {filteredCurrencies.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                    <p className="text-sm text-muted-foreground text-center py-2">
                       No currencies match your search
                     </p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-2 gap-1 p-2">
                       {filteredCurrencies.map(code => (
-                        <div key={code} className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
+                        <div key={code} className="flex items-center space-x-2">
+                          <Checkbox
                             id={`currency-${code}`}
                             checked={localConfig.targetCurrencies?.includes(code) || false}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            onCheckedChange={(checked: boolean) => {
                               const currentTargets = localConfig.targetCurrencies || [];
-                              if (e.target.checked) {
+                              if (checked) {
                                 setLocalConfig({
                                   ...localConfig, 
                                   targetCurrencies: [...currentTargets, code]
@@ -1062,100 +1032,71 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                                 });
                               }
                             }}
-                            className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
-                          <label htmlFor={`currency-${code}`} className="ml-1 truncate">
+                          <Label htmlFor={`currency-${code}`} className="text-sm">
                             {code}
-                          </label>
+                          </Label>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
-            </div>
-          )}
-          
-          {/* Advanced Tab */}
-          {activeTab === 'advanced' && (
-            <div className="space-y-4">
-              {/* API Key setting */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  API Key Settings
-                </label>
+            </TabsContent>
+            
+            <TabsContent value="advanced" className="space-y-4">
+              <div className="space-y-2">
+                <Label>API Key Settings</Label>
                 
                 <div className="mb-2">
-                  <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-center space-x-2 mb-2 p-2 bg-secondary rounded-lg">
+                    <Switch
                       id="useSharedCredential"
                       checked={localConfig.useSharedCredential}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, useSharedCredential: e.target.checked})}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2"
+                      onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, useSharedCredential: checked})}
                     />
                     <div>
-                      <label htmlFor="useSharedCredential" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Use shared API key
-                      </label>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <Label htmlFor="useSharedCredential">Use shared API key</Label>
+                      <p className="text-xs text-muted-foreground">
                         {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"}
                       </p>
                     </div>
                   </div>
                   
-                  {localConfig.useSharedCredential ? (
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Open Exchange Rates shared API Key"
-                      value={sharedApiKey || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  <Input
+                    type="text"
+                    placeholder={localConfig.useSharedCredential ? "Open Exchange Rates shared API Key" : "Widget-specific API Key"}
+                    value={localConfig.useSharedCredential ? (sharedApiKey || '') : (localConfig.apiKey || '')}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (localConfig.useSharedCredential) {
                         console.log('[CurrencyConverter] Updating shared API key:', e.target.value);
                         updateSharedApiKey(e.target.value);
-                      }}
-                    />
-                  ) : (
-                    <input
-                      id="api-key-input"
-                      type="text"
-                      value={localConfig.apiKey || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                        setLocalConfig({...localConfig, apiKey: e.target.value})
+                      } else {
+                        setLocalConfig({...localConfig, apiKey: e.target.value});
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Widget-specific API Key"
-                    />
-                  )}
+                    }}
+                  />
                   
-                  <p className="text-xs text-gray-500 mt-1">
-                    <a href="https://openexchangerates.org/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <a href="https://openexchangerates.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Get API key</a>
                   </p>
                 </div>
               </div>
               
-              {/* Auto Refresh setting in a row */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <input
+              <div className="flex justify-between items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
                     id="auto-refresh-checkbox"
-                    type="checkbox"
                     checked={localConfig.autoRefresh || false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                      setLocalConfig({...localConfig, autoRefresh: e.target.checked})
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, autoRefresh: checked})}
                   />
-                  <label htmlFor="auto-refresh-checkbox" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    Auto Refresh
-                  </label>
+                  <Label htmlFor="auto-refresh-checkbox">Auto Refresh</Label>
                 </div>
                 
                 {localConfig.autoRefresh && (
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">Every</span>
-                    <input
-                      id="refresh-interval-input"
+                  <div className="flex items-center space-x-2">
+                    <Label>Every</Label>
+                    <Input
                       type="number"
                       min="1"
                       max="1440"
@@ -1163,19 +1104,19 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                         setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 60})
                       }
-                      className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                      className="w-20"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 ml-2">min</span>
+                    <span className="text-sm">min</span>
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
           
-          <DialogFooter className="mt-4">
+          <DialogFooter className="flex justify-between">
             {config?.onDelete && (
-              <button
-                className="px-3 py-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+              <Button
+                variant="destructive"
                 onClick={() => {
                   if (config.onDelete) {
                     config.onDelete();
@@ -1183,16 +1124,15 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 }}
                 aria-label="Delete this widget"
               >
-                Delete
-              </button>
+                Delete Widget
+              </Button>
             )}
-            <button
-              type="button"
+            <Button
+              type="submit"
               onClick={saveSettings}
-              className="ml-2 py-1 px-3 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Save
-            </button>
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

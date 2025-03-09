@@ -11,6 +11,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { QuickLinksWidgetProps, LinkItem, QuickLinksWidgetConfig } from './types'
 import './styles.css'
+import { Button } from '../../ui/button'
+import { Label } from '../../ui/label'
 
 /**
  * Fetches metadata from a URL including title and favicon
@@ -372,6 +374,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
         {renderContent()}
       </div>
       
+      {/* Settings Dialog */}
       {showSettings && (
         <Dialog
           open={showSettings}
@@ -388,30 +391,30 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <DialogFooter className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-800">
               <div className="flex-1">
                 {config?.onDelete && (
-                  <button
-                    className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                  <Button
+                    variant="destructive"
                     onClick={() => {
                       if (config.onDelete) {
                         config.onDelete();
                       }
                     }}
-                    aria-label="Delete this widget"
                   >
                     Delete Widget
-                  </button>
+                  </Button>
                 )}
               </div>
-              <button
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+              <Button
+                variant="outline"
                 onClick={() => setShowSettings(false)}
               >
                 Close
-              </button>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
+      {/* Edit Link Dialog */}
       {editingLink && (
         <Dialog
           open={true}
@@ -438,11 +441,10 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                 </span>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  URL
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="url-input">URL</Label>
                 <Input 
+                  id="url-input"
                   type="url" 
                   value={editingLink.url} 
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,11 +472,10 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Display Title
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="title-input">Display Title</Label>
                 <Input 
+                  id="title-input"
                   type="text" 
                   value={editingLink.title} 
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
@@ -484,27 +485,27 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             </div>
             <DialogFooter>
               <div className="flex space-x-2">
-                <button
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setEditingLink(null);
                   }}
                 >
                   Cancel
-                </button>
+                </Button>
                 
-                <button 
+                <Button
+                  variant="default"
                   onClick={() => {
                     if (editingLink.url) {
                       addLink();
                       setEditingLink(null);
                     }
                   }}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!editingLink.url}
                 >
                   {editingLink.id ? 'Update' : 'Add'}
-                </button>
+                </Button>
               </div>
             </DialogFooter>
           </DialogContent>

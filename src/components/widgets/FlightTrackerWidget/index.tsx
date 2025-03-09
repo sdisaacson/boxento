@@ -8,9 +8,16 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
 // Adjust paths for UI components based on the project structure
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import WidgetHeader from '../common/WidgetHeader';
 import { 
   FlightTrackerWidgetProps, 
@@ -976,7 +983,6 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   
   // Settings modal
   const renderSettings = () => {
-    // Helper function to format today's date as YYYY-MM-DD
     const todayFormatted = () => {
       const today = new Date();
       return today.toISOString().split('T')[0];
@@ -986,57 +992,57 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Flight Tracker Settings</DialogTitle>
+            <DialogTitle>Flight Tracker Settings</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-3">
             {/* Widget Title */}
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium">Widget Title</Label>
+              <Label htmlFor="title">Widget Title</Label>
               <Input
                 id="title"
                 value={localConfig.title || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, title: e.target.value })}
                 placeholder="Flight Tracker"
-                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             {/* Demo Flights - Making this more prominent */}
-            <div className="pt-3 pb-2 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center mb-2">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Quick Select Demo Flights</h3>
-                <div className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-300">Recommended</div>
-              </div>
-              <p className="text-xs text-gray-500 mb-2">These flights work without an API key and demonstrate the widget's functionality:</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { code: 'ASH6040', name: 'Air Shuttle', route: 'JFK → ORD' },
-                  { code: 'UAL123', name: 'United', route: 'SFO → DEN' },
-                  { code: 'AAL456', name: 'American', route: 'DFW → MIA' },
-                  { code: 'DAL789', name: 'Delta', route: 'ATL → LAX' }
-                ].map((flight) => (
-                  <button
-                    key={flight.code}
-                    onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
-                    className={`flex flex-col items-start p-2 rounded-lg transition-colors ${
-                      localConfig.flightNumber === flight.code 
-                        ? 'bg-blue-100 dark:bg-blue-900/70 text-blue-700 dark:text-blue-300 ring-1 ring-blue-300 dark:ring-blue-700' 
-                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30'
-                    }`}
-                  >
-                    <span className="font-medium">{flight.code}</span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{flight.name}</span>
-                    <span className="text-xs text-gray-500">{flight.route}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center">
+                  <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
+                  <div className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-300">Recommended</div>
+                </div>
+                <p className="text-xs text-gray-500">These flights work without an API key and demonstrate the widget's functionality:</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { code: 'ASH6040', name: 'Air Shuttle', route: 'JFK → ORD' },
+                    { code: 'UAL123', name: 'United', route: 'SFO → DEN' },
+                    { code: 'AAL456', name: 'American', route: 'DFW → MIA' },
+                    { code: 'DAL789', name: 'Delta', route: 'ATL → LAX' }
+                  ].map((flight) => (
+                    <Button
+                      key={flight.code}
+                      variant={localConfig.flightNumber === flight.code ? "default" : "outline"}
+                      onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
+                      className="h-auto flex-col items-start p-2"
+                    >
+                      <span className="font-medium">{flight.code}</span>
+                      <span className="text-xs opacity-70">{flight.name}</span>
+                      <span className="text-xs opacity-60">{flight.route}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Flight Number */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2">
               <div className="flex items-center">
-                <Label htmlFor="flightNumber" className="text-sm font-medium">Flight Number</Label>
+                <Label htmlFor="flightNumber">Flight Number</Label>
                 <span className="text-red-500 ml-1">*</span>
               </div>
               <Input
@@ -1044,7 +1050,6 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                 value={localConfig.flightNumber || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightNumber: e.target.value.toUpperCase() })}
                 placeholder="e.g. AA123 or AXB744"
-                className="focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500">
                 Enter airline code + flight number (e.g., AA123 for IATA or AXB744 for ICAO)
@@ -1057,75 +1062,76 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             </div>
 
             {/* Advanced Settings collapsible section */}
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-              <details className="group">
-                <summary className="flex items-center cursor-pointer list-none text-sm font-medium text-gray-700 dark:text-gray-300 py-1">
-                  <span className="mr-2">Advanced Settings</span>
-                  <svg className="h-4 w-4 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </summary>
-                <div className="pt-2 pl-4 space-y-4">
-                  {/* Flight Date */}
-                  <div className="space-y-1">
-                    <Label htmlFor="flightDate" className="text-sm font-medium">Flight Date</Label>
-                    <div className="relative">
-                      <Input
-                        id="flightDate"
-                        type="date"
-                        value={localConfig.flightDate || todayFormatted()}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightDate: e.target.value })}
-                        className="focus:ring-2 focus:ring-blue-500 w-full"
-                        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-                      />
-                      <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+            <Card>
+              <CardHeader>
+                <details className="group">
+                  <summary className="flex items-center cursor-pointer list-none">
+                    <CardTitle className="text-sm">Advanced Settings</CardTitle>
+                    <svg className="h-4 w-4 ml-2 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <CardContent className="pt-4 space-y-4">
+                    {/* Flight Date */}
+                    <div className="space-y-2">
+                      <Label htmlFor="flightDate">Flight Date</Label>
+                      <div className="relative">
+                        <Input
+                          id="flightDate"
+                          type="date"
+                          value={localConfig.flightDate || todayFormatted()}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightDate: e.target.value })}
+                          style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                        />
+                        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Defaults to today if left empty
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Defaults to today if left empty
-                    </p>
-                  </div>
 
-                  {/* API Key */}
-                  <div className="space-y-1">
-                    <Label htmlFor="accessKey" className="text-sm font-medium">AviationStack API Key</Label>
-                    <Input
-                      id="accessKey"
-                      value={localConfig.accessKey || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, accessKey: e.target.value })}
-                      placeholder="Only needed for non-demo flights"
-                      type="password"
-                      className="focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Only required for tracking real flights. <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
-                    </p>
-                  </div>
-                </div>
-              </details>
-            </div>
+                    {/* API Key */}
+                    <div className="space-y-2">
+                      <Label htmlFor="accessKey">AviationStack API Key</Label>
+                      <Input
+                        id="accessKey"
+                        value={localConfig.accessKey || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, accessKey: e.target.value })}
+                        placeholder="Only needed for non-demo flights"
+                        type="password"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Only required for tracking real flights. <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
+                      </p>
+                    </div>
+                  </CardContent>
+                </details>
+              </CardHeader>
+            </Card>
           </div>
           
-          <DialogFooter className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+          <DialogFooter>
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                >
+                  Delete Widget
+                </Button>
+              )}
+              
+              <Button
+                variant="default"
+                onClick={saveSettings}
               >
-                Delete Widget
-              </button>
-            )}
-            <div className="flex-grow"></div>
-            <button 
-              onClick={saveSettings}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-            >
-              Save
-            </button>
+                Save Changes
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

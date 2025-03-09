@@ -9,6 +9,10 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { RefreshCw, Book, Quote } from 'lucide-react';
 import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
 
 // Widget size categories, same as template widget
 enum WidgetSizeCategory {
@@ -614,46 +618,38 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
           
           <div className="space-y-4 py-2">
             {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Widget Title</Label>
+              <Input
                 id="title-input"
                 type="text"
                 value={localConfig.title || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, title: e.target.value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* API Token */}
-            <div>
-              <label htmlFor="api-token-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Readwise API Token
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="api-token-input">Readwise API Token</Label>
+              <Input
                 id="api-token-input"
                 type="password"
                 value={localConfig.apiToken || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, apiToken: e.target.value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500">
                 Get your token at <a href="https://readwise.io/access_token" target="_blank" rel="noopener noreferrer" className="text-blue-500">readwise.io/access_token</a>
               </p>
             </div>
             
             {/* Refresh interval */}
-            <div>
-              <label htmlFor="refresh-interval-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Refresh Interval (minutes)
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="refresh-interval-input">Refresh Interval (minutes)</Label>
+              <Input
                 id="refresh-interval-input"
                 type="number"
                 min="0"
@@ -661,67 +657,59 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 0})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500">
                 Set to 0 to disable automatic refresh
               </p>
             </div>
             
             {/* Show book info toggle */}
-            <div className="flex items-center">
-              <input
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-book-info-toggle">Show Book Information</Label>
+              <Switch
                 id="show-book-info-toggle"
-                type="checkbox"
                 checked={localConfig.showBookInfo || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, showBookInfo: e.target.checked})
+                onCheckedChange={(checked: boolean) => 
+                  setLocalConfig({...localConfig, showBookInfo: checked})
                 }
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <label htmlFor="show-book-info-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show Book Information
-              </label>
             </div>
             
             {/* Show tags toggle */}
-            <div className="flex items-center">
-              <input
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-tags-toggle">Show Tags</Label>
+              <Switch
                 id="show-tags-toggle"
-                type="checkbox"
                 checked={localConfig.showTags || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, showTags: e.target.checked})
+                onCheckedChange={(checked: boolean) => 
+                  setLocalConfig({...localConfig, showTags: checked})
                 }
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <label htmlFor="show-tags-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show Tags
-              </label>
             </div>
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                >
+                  Delete Widget
+                </Button>
+              )}
+              
+              <Button
+                variant="default"
+                onClick={saveSettings}
               >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
-            >
-              Save
-            </button>
+                Save Changes
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
