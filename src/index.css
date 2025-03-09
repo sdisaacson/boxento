@@ -20,12 +20,15 @@ body.dragging-active {
 
 /* Widget container - contains styling ONLY for widgets themselves */
 .widget-container {
-  border-radius: var(--border-radius-standard) !important;
-  -webkit-border-radius: var(--border-radius-standard) !important;
-  -moz-border-radius: var(--border-radius-standard) !important;
+  border-radius: var(--border-radius-standard);
   @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
   /* Prevent text selection during any interaction */
   -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
 }
 
 /* Notes widget specific styling */
@@ -441,165 +444,148 @@ body.drag-complete .react-grid-item {
 
 /* Complete overhaul for mobile layout */
 .mobile-layout {
-  display: block !important;
-  height: auto !important;
-  position: relative !important;
+  display: block;
+  height: auto;
+  position: relative;
 }
 
-/* Make each grid item a standard block element on mobile */
+/* Standardized grid items for mobile */
 .mobile-layout .react-grid-item {
-  position: relative !important;
-  transform: none !important;
-  left: 0 !important;
-  top: auto !important;
-  width: 100% !important;
-  display: block !important;
-  margin-bottom: 16px !important;
-  float: none !important;
-  height: auto !important;
-  min-height: 200px !important;
-  z-index: 1 !important;
+  position: relative;
+  transform: none;
+  left: 0;
+  top: auto;
+  width: 100%;
+  display: block;
+  margin-bottom: 16px;
+  float: none;
+  height: auto;
+  min-height: 200px;
+  z-index: 1;
 }
 
-/* Ensure widgets are displayed properly */
+/* Mobile widget container */
 .mobile-layout .widget-container {
-  height: auto !important;
-  min-height: 180px !important;
+  height: auto;
+  min-height: 180px;
   border-radius: calc(var(--border-radius-standard) * 0.8);
-  padding: 12px !important;
-  margin: 0 !important;
-  position: relative !important;
+  padding: 12px;
+  margin: 0;
+  position: relative;
 }
 
-/* Force widget content visibility */
+/* Consolidated widget content visibility for mobile */
 .mobile-layout .widget-container > div:not(.widget-header),
 .mobile-widget .widget-container > div:not(.widget-header) {
-  display: block !important;
-  height: auto !important;
-  min-height: 120px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  overflow: visible !important;
-  position: relative !important;
+  display: block;
+  height: auto;
+  min-height: 120px;
+  visibility: visible;
+  opacity: 1;
+  overflow: visible;
+  position: relative;
 }
 
-/* Specific mobile layout container style */
+/* Mobile and tablet layouts - targeting specific breakpoints */
 @media (max-width: 768px) {
+  /* Layout container */
   .react-grid-layout {
-    position: static !important;
-    height: auto !important;
-    display: block !important;
+    position: static;
+    height: auto;
+    display: block;
   }
   
+  /* Grid items */
   .react-grid-item {
-    position: relative !important;
-    width: 100% !important;
-    margin-bottom: 16px !important;
-    height: auto !important;
-    min-height: 250px !important;
+    position: relative;
+    width: 100%;
+    margin-bottom: 16px;
+    height: auto;
+    min-height: 250px;
   }
   
-  /* Adjust widget container for 2x2 grid */
+  /* Widget containers */
   .widget-container {
-    height: 250px !important;
-    overflow: auto !important;
-    min-height: 0 !important;
+    height: 250px;
+    overflow: auto;
+    min-height: 0;
   }
   
-  /* Override absolute positioning for mobile */
-  .mobile-layout .react-grid-item {
-    position: relative !important;
-    display: block !important;
-  }
-
-  /* Make sure headers are visible and distinct */
+  /* Widget headers */
   .widget-container .widget-header {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
-    margin: 0 0 8px 0 !important;
-    padding: 0 0 6px 0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 0 8px 0;
+    padding: 0 0 6px 0;
   }
   
-  /* Important for Safari and iOS */
+  /* Enable smooth scrolling on mobile */
   .mobile-layout {
     -webkit-overflow-scrolling: touch;
-    height: auto !important;
-    max-height: none !important;
+    height: auto;
+    max-height: none;
+  }
+  
+  /* View containers - ONLY show mobile view at this breakpoint */
+  .mobile-view-container {
+    display: block;
+    width: 100%;
+  }
+  
+  .desktop-view-container {
+    display: none;
+    width: 0;
   }
 }
 
-/* Tablet size adjustments */
+/* Tablet-specific adjustments */
 @media (min-width: 769px) and (max-width: 1024px) {
-  /* Adjust grid item sizes for tablets */
   .widget-container {
     @apply p-3;
   }
+  
+  /* Ensure only ONE view is visible on tablet sizes - default to desktop view */
+  .mobile-view-container {
+    display: none;
+    width: 0;
+  }
+  
+  .desktop-view-container {
+    display: block;
+    width: 100%;
+  }
 }
 
-/* Desktop size refinements */
+/* Desktop-specific adjustments */
 @media (min-width: 1025px) {
-  /* Ensure desktop widgets have proper padding */
   .widget-container {
     @apply p-4;
   }
+  
+  /* ONLY show desktop view at large screens */
+  .mobile-view-container {
+    display: none;
+    width: 0;
+  }
+  
+  .desktop-view-container {
+    display: block;
+    width: 100%;
+  }
 }
 
-/* Ensure proper display during breakpoint transitions */
-body.react-grid-layout--dragging .react-grid-item,
-body.react-grid-layout--resizing .react-grid-item {
-  @apply opacity-75 transition-none;
-}
-
-/* Widget wrapper responsive styling */
-.widget-wrapper {
-  @apply h-full w-full;
-}
-
-/* Tablet widget styling */
-.tablet-widget .widget-container {
-  min-height: 150px;
-}
-
-/* Desktop widget styling */
-.desktop-widget .widget-container {
-  min-height: 100px;
-}
-
-/* Specific widget header styles for mobile */
+/* Widget header styles */
 .mobile-layout .widget-header,
 .mobile-widget .widget-header {
-  padding: 4px 0 !important;
-  margin-bottom: 12px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  padding: 4px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Force content visibility for mobile widgets */
-.mobile-widget .widget-container > div:not(.widget-header),
-.mobile-layout .widget-container > div:not(.widget-header) {
-  display: block !important;
-  height: auto !important;
-  min-height: 100px !important;
-  visibility: visible !important;
-  overflow: visible !important;
-  opacity: 1 !important;
+.dark .mobile-widget-item .widget-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Fix height issues for mobile layouts */
-@media (max-width: 768px) {
-  .react-grid-item {
-    height: auto !important;
-    min-height: 200px !important;
-  }
-  
-  .widget-container {
-    height: auto !important;
-    min-height: 200px !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-}
-
-/* Mobile widget list - simple grid display */
+/* Mobile widget list layout */
 .mobile-widget-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -608,9 +594,9 @@ body.react-grid-layout--resizing .react-grid-item {
   width: 100%;
 }
 
-/* Mobile widget items - consistent sizing */
+/* Mobile widget items */
 .mobile-widget-item {
-  border-radius: var(--border-radius-standard) !important;
+  border-radius: var(--border-radius-standard);
   overflow: hidden;
   position: relative;
 }
@@ -620,40 +606,23 @@ body.react-grid-layout--resizing .react-grid-item {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Dark mode border */
-.dark .mobile-widget-item .widget-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-/* For tablet-sized screens */
-@media (max-width: 768px) and (min-width: 481px) {
-  .mobile-widget-list {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding: 16px;
-  }
-}
-
-/* For mobile screens 480px and below, single column layout */
+/* Breakpoint-specific mobile widget list layouts */
 @media (max-width: 480px) {
   .mobile-widget-list {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
     padding: 12px;
     gap: 16px;
   }
-  
 }
 
-/* Extra specific rule for very narrow screens like iPhone (375px) */
 @media (max-width: 375px) {
   .mobile-widget-list {
     padding: 8px;
     gap: 12px;
   }
-  
 }
 
-/* Mobile view specific styles */
+/* Mobile view styles */
 .mobile-view {
   padding: 0 0 20px 0;
   transition: opacity 0.3s ease;
@@ -665,25 +634,22 @@ body.react-grid-layout--resizing .react-grid-item {
   font-size: 1.1rem;
 }
 
-/* Container visibility for different screen sizes */
-.mobile-view-container {
-  display: none !important;
-  width: 100%;
+/* Dragging/resizing styles */
+body.react-grid-layout--dragging .react-grid-item,
+body.react-grid-layout--resizing .react-grid-item {
+  @apply opacity-75 transition-none;
 }
 
-.desktop-view-container {
-  display: block !important;
-  width: 100%;
+/* Widget type-specific styles */
+.widget-wrapper {
+  @apply h-full w-full;
 }
 
-/* On small screens, show mobile view and hide desktop view */
-@media (max-width: 768px) {
-  .mobile-view-container {
-    display: block !important;
-  }
-  
-  .desktop-view-container {
-    display: none !important;
-  }
+.tablet-widget .widget-container {
+  min-height: 150px;
+}
+
+.desktop-widget .widget-container {
+  min-height: 100px;
 }
 
