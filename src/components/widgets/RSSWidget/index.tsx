@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../../ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 
 /**
  * Size categories for widget content rendering
@@ -530,6 +531,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
    */
   const renderSettings = () => {
     const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
+    const [activeTab, setActiveTab] = useState<string>('content');
     
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -538,71 +540,78 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
             <DialogTitle>RSS Feed Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
-            {/* Widget Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title-input">Widget Title</Label>
-              <Input
-                id="title-input"
-                type="text"
-                value={localConfig.title || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, title: e.target.value})}
-                placeholder="RSS Feed"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Leave empty to use the feed's title
-              </p>
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="display">Display</TabsTrigger>
+              <TabsTrigger value="examples">Examples</TabsTrigger>
+            </TabsList>
             
-            {/* Feed URL */}
-            <div className="space-y-2">
-              <Label htmlFor="feed-url-input">RSS Feed URL</Label>
-              <Input
-                id="feed-url-input"
-                type="url"
-                value={localConfig.feedUrl || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const url = e.target.value;
-                  setLocalConfig({...localConfig, feedUrl: url});
-                  setIsValidUrl(validateFeedUrl(url));
-                }}
-                className={!isValidUrl ? 'border-red-500' : ''}
-                placeholder="https://example.com/rss"
-              />
-              {!isValidUrl && (
-                <p className="text-xs text-red-500 dark:text-red-400">
-                  Please enter a valid URL
+            <TabsContent value="content" className="space-y-4 py-2">
+              {/* Widget Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title-input">Widget Title</Label>
+                <Input
+                  id="title-input"
+                  type="text"
+                  value={localConfig.title || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, title: e.target.value})}
+                  placeholder="RSS Feed"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Leave empty to use the feed's title
                 </p>
-              )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Enter the URL of the RSS feed you want to display
-              </p>
-            </div>
+              </div>
+              
+              {/* Feed URL */}
+              <div className="space-y-2">
+                <Label htmlFor="feed-url-input">RSS Feed URL</Label>
+                <Input
+                  id="feed-url-input"
+                  type="url"
+                  value={localConfig.feedUrl || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const url = e.target.value;
+                    setLocalConfig({...localConfig, feedUrl: url});
+                    setIsValidUrl(validateFeedUrl(url));
+                  }}
+                  className={!isValidUrl ? 'border-red-500' : ''}
+                  placeholder="https://example.com/rss"
+                />
+                {!isValidUrl && (
+                  <p className="text-xs text-red-500 dark:text-red-400">
+                    Please enter a valid URL
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter the URL of the RSS feed you want to display
+                </p>
+              </div>
+              
+              {/* Max Items */}
+              <div className="space-y-2">
+                <Label htmlFor="max-items-input">Maximum Items</Label>
+                <Input
+                  id="max-items-input"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={localConfig.maxItems || 5}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, maxItems: parseInt(e.target.value) || 5})}
+                />
+              </div>
+            </TabsContent>
             
-            {/* Max Items */}
-            <div className="space-y-2">
-              <Label htmlFor="max-items-input">Maximum Items</Label>
-              <Input
-                id="max-items-input"
-                type="number"
-                min="1"
-                max="20"
-                value={localConfig.maxItems || 5}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, maxItems: parseInt(e.target.value) || 5})}
-              />
-            </div>
-            
-            {/* Display Mode */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Display Mode</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <TabsContent value="display" className="space-y-4 py-2">
+              {/* Display Mode */}
+              <div className="space-y-2">
+                <Label>Display Mode</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <Button
                     type="button"
                     onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.LIST})}
                     variant={localConfig.displayMode === RSSDisplayMode.LIST ? "default" : "outline"}
+                    size="sm"
                   >
                     List
                   </Button>
@@ -610,6 +619,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                     type="button"
                     onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.CARDS})}
                     variant={localConfig.displayMode === RSSDisplayMode.CARDS ? "default" : "outline"}
+                    size="sm"
                   >
                     Cards
                   </Button>
@@ -617,19 +627,16 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                     type="button"
                     onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.COMPACT})}
                     variant={localConfig.displayMode === RSSDisplayMode.COMPACT ? "default" : "outline"}
+                    size="sm"
                   >
                     Compact
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Display Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Display Options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              
+              <div className="space-y-3">
+                <Label>Display Options</Label>
+                
                 {/* Show Images */}
                 <div className="flex items-center justify-between">
                   <Label htmlFor="show-images-toggle" className="flex-1">Show Images</Label>
@@ -679,50 +686,59 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                     onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, openInNewTab: checked})}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </TabsContent>
             
-            {/* Example RSS Feeds */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Example RSS Feeds</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-xs">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-left font-normal h-auto py-1.5"
-                    onClick={() => {
-                      setLocalConfig({...localConfig, feedUrl: 'https://news.ycombinator.com/rss'});
-                      setIsValidUrl(true);
-                    }}
-                  >
-                    Hacker News: https://news.ycombinator.com/rss
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-left font-normal h-auto py-1.5"
-                    onClick={() => {
-                      setLocalConfig({...localConfig, feedUrl: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'});
-                      setIsValidUrl(true);
-                    }}
-                  >
-                    New York Times: https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-left font-normal h-auto py-1.5"
-                    onClick={() => {
-                      setLocalConfig({...localConfig, feedUrl: 'https://www.wired.com/feed/rss'});
-                      setIsValidUrl(true);
-                    }}
-                  >
-                    Wired: https://www.wired.com/feed/rss
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="examples" className="space-y-4 py-2">
+              <p className="text-sm">Click on any example to use it:</p>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  onClick={() => {
+                    setLocalConfig({...localConfig, feedUrl: 'https://news.ycombinator.com/rss'});
+                    setIsValidUrl(true);
+                    setActiveTab('content');
+                  }}
+                >
+                  <div>
+                    <div className="font-medium">Hacker News</div>
+                    <div className="text-xs text-muted-foreground truncate">https://news.ycombinator.com/rss</div>
+                  </div>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  onClick={() => {
+                    setLocalConfig({...localConfig, feedUrl: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'});
+                    setIsValidUrl(true);
+                    setActiveTab('content');
+                  }}
+                >
+                  <div>
+                    <div className="font-medium">New York Times</div>
+                    <div className="text-xs text-muted-foreground truncate">https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml</div>
+                  </div>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  onClick={() => {
+                    setLocalConfig({...localConfig, feedUrl: 'https://www.wired.com/feed/rss'});
+                    setIsValidUrl(true);
+                    setActiveTab('content');
+                  }}
+                >
+                  <div>
+                    <div className="font-medium">Wired</div>
+                    <div className="text-xs text-muted-foreground truncate">https://www.wired.com/feed/rss</div>
+                  </div>
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
           
           <DialogFooter>
             <div className="flex justify-between w-full">
@@ -739,23 +755,16 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                 </Button>
               )}
               
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSettings(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    saveSettings();
-                    setShowSettings(false);
-                  }}
-                >
-                  Save Changes
-                </Button>
-              </div>
+              <Button
+                variant="default"
+                onClick={() => {
+                  saveSettings();
+                  setShowSettings(false);
+                }}
+                disabled={!isValidUrl}
+              >
+                Save Changes
+              </Button>
             </div>
           </DialogFooter>
         </DialogContent>

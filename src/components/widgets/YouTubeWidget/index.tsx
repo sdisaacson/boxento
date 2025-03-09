@@ -9,6 +9,10 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { YouTubeWidgetProps, YouTubeWidgetConfig } from './types';
 import { Button } from '../../ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
+import { Label } from '../../ui/label';
+import { Input } from '../../ui/input';
+import { Checkbox } from '../../ui/checkbox';
 
 /**
  * Size categories for widget content rendering
@@ -458,7 +462,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
       message: null
     });
     
-    const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState('general');
     
     // Validate video ID or URL input
     const validateYouTubeInput = (input: string) => {
@@ -506,11 +510,6 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
         return () => clearTimeout(timer);
       }
     }, [localConfig.videoId, showSettings]);
-    
-    // Fix the type for onChange event
-    const handleDebugToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setShowDebugInfo(e.target.checked);
-    };
 
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -519,200 +518,148 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
             <DialogTitle>YouTube Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
-            {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
-                id="title-input"
-                type="text"
-                value={localConfig.title || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, title: e.target.value})
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="playback">Playback Options</TabsTrigger>
+            </TabsList>
             
-            {/* YouTube Video URL or ID */}
-            <div>
-              <label htmlFor="video-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                YouTube Video URL or ID
-              </label>
-              <input
-                id="video-input"
-                type="text"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={localConfig.videoId || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  handleYouTubeUrlChange(e);
-                  setVideoIdFeedback({type: 'info', message: 'Checking...'});
-                }}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  videoIdFeedback.type === 'error' 
-                    ? 'border-red-300 focus:border-red-400 focus:ring-red-500 dark:border-red-700 dark:bg-red-900/20' 
-                    : videoIdFeedback.type === 'success'
-                    ? 'border-green-300 focus:border-green-400 focus:ring-green-500 dark:border-green-700 dark:bg-green-900/20'
-                    : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
-                } dark:text-white`}
-                aria-invalid={videoIdFeedback.type === 'error'}
-                aria-describedby="video-feedback"
-              />
-              {videoIdFeedback.message && (
-                <p 
-                  id="video-feedback"
-                  className={`mt-1 text-xs ${
-                    videoIdFeedback.type === 'error' 
-                      ? 'text-red-600 dark:text-red-400' 
-                      : videoIdFeedback.type === 'success'
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-gray-500 dark:text-gray-400'
-                  }`}
-                >
-                  {videoIdFeedback.message}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Examples: https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ
-              </p>
-            </div>
-            
-            {/* Autoplay toggle */}
-            <div className="flex items-center">
-              <input
-                id="autoplay-toggle"
-                type="checkbox"
-                checked={localConfig.autoplay || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const autoplay = e.target.checked;
-                  // If enabling autoplay, suggest enabling mute as well for better compatibility
-                  setLocalConfig({
-                    ...localConfig, 
-                    autoplay,
-                    // Automatically enable mute when autoplay is enabled to help with browser autoplay policies
-                    mute: autoplay ? true : localConfig.mute
-                  });
-                }}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="autoplay-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Autoplay video
-                {localConfig.autoplay && (
-                  <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
-                    (requires mute in most browsers)
-                  </span>
-                )}
-              </label>
-            </div>
-            
-            {/* Mute toggle */}
-            <div className="flex items-center">
-              <input
-                id="mute-toggle"
-                type="checkbox"
-                checked={localConfig.mute || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, mute: e.target.checked})
-                }
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="mute-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Mute video
-                {localConfig.autoplay && !localConfig.mute && (
-                  <span className="ml-1 text-xs text-red-600 dark:text-red-400">
-                    (required for autoplay to work)
-                  </span>
-                )}
-              </label>
-            </div>
-            
-            {/* Show controls toggle */}
-            <div className="flex items-center">
-              <input
-                id="controls-toggle"
-                type="checkbox"
-                checked={localConfig.showControls !== false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, showControls: e.target.checked})
-                }
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="controls-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show video controls
-              </label>
-            </div>
-            
-            {/* Add embed mode toggle */}
-            <div className="flex items-center">
-              <input
-                id="embed-mode-toggle"
-                type="checkbox"
-                checked={embedMode === 'direct-link'}
-                onChange={() => setEmbedMode(prev => prev === 'iframe' ? 'direct-link' : 'iframe')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="embed-mode-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Use direct link to YouTube (instead of embedded player)
-              </label>
-            </div>
-            
-            {/* Debug mode toggle */}
-            <div className="flex items-center">
-              <input
-                id="debug-toggle"
-                type="checkbox"
-                checked={showDebugInfo}
-                onChange={handleDebugToggleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="debug-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show debug information
-              </label>
-            </div>
-            
-            {/* Debug info */}
-            {showDebugInfo && (
-              <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-mono overflow-auto max-h-32">
-                <p>Browser: {navigator.userAgent}</p>
-                <p>Embed Mode: {embedMode}</p>
-                <p>Video ID: {localConfig.videoId}</p>
-                <p>Autoplay: {localConfig.autoplay ? 'true' : 'false'}</p>
-                <p>Mute: {localConfig.mute ? 'true' : 'false'}</p>
-                <p>Controls: {localConfig.showControls ? 'true' : 'false'}</p>
-                <p>Embed URL: {getYouTubeEmbedUrl()}</p>
-                <p>Error: {embedError || 'none'}</p>
-                <p>Debug Log:</p>
-                <pre className="whitespace-pre-wrap">{debugInfo || 'No debug info yet'}</pre>
-                <button 
-                  onClick={() => {
-                    setIsLoading(true);
-                    setEmbedError(null);
-                    setDebugInfo('');
-                    if (iframeRef.current) {
-                      iframeRef.current.src = getYouTubeEmbedUrl();
-                    }
-                  }}
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-                >
-                  Refresh Iframe
-                </button>
+            <TabsContent value="general" className="space-y-4 py-2">
+              {/* Title setting */}
+              <div className="space-y-2">
+                <Label htmlFor="title-input">Widget Title</Label>
+                <Input
+                  id="title-input"
+                  type="text"
+                  value={localConfig.title || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setLocalConfig({...localConfig, title: e.target.value})
+                  }
+                />
               </div>
-            )}
-
-            {/* Troubleshooting tips */}
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 text-xs rounded-md">
-              <p className="font-medium mb-1">Troubleshooting Tips:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>If the embedded player doesn't work, try "Use direct link" option</li>
-                <li>Make sure the video is publicly available (not private)</li>
-                <li>Some videos may have embedding disabled by the creator</li>
-                <li>Try disabling browser extensions that might block content</li>
-                <li>For autoplay to work, the video must be muted in most browsers</li>
-              </ul>
-            </div>
-          </div>
+              
+              {/* YouTube Video URL or ID */}
+              <div className="space-y-2">
+                <Label htmlFor="video-input">YouTube Video URL or ID</Label>
+                <Input
+                  id="video-input"
+                  type="text"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={localConfig.videoId || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleYouTubeUrlChange(e);
+                    setVideoIdFeedback({type: 'info', message: 'Checking...'});
+                  }}
+                  className={
+                    videoIdFeedback.type === 'error' 
+                      ? 'border-red-300 focus:border-red-400 focus:ring-red-500 dark:border-red-700 dark:bg-red-900/20' 
+                      : videoIdFeedback.type === 'success'
+                      ? 'border-green-300 focus:border-green-400 focus:ring-green-500 dark:border-green-700 dark:bg-green-900/20'
+                      : ''
+                  }
+                  aria-invalid={videoIdFeedback.type === 'error'}
+                  aria-describedby="video-feedback"
+                />
+                {videoIdFeedback.message && (
+                  <p 
+                    id="video-feedback"
+                    className={`text-xs ${
+                      videoIdFeedback.type === 'error' 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : videoIdFeedback.type === 'success'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    {videoIdFeedback.message}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Examples: https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="playback" className="space-y-4 py-2">
+              {/* Autoplay toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="autoplay-toggle"
+                  checked={localConfig.autoplay || false}
+                  onCheckedChange={(checked: boolean) => {
+                    // If enabling autoplay, suggest enabling mute as well for better compatibility
+                    setLocalConfig({
+                      ...localConfig, 
+                      autoplay: checked,
+                      // Automatically enable mute when autoplay is enabled to help with browser autoplay policies
+                      mute: checked ? true : localConfig.mute
+                    });
+                  }}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="autoplay-toggle">
+                    Autoplay video
+                    {localConfig.autoplay && (
+                      <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">
+                        (requires mute in most browsers)
+                      </span>
+                    )}
+                  </Label>
+                </div>
+              </div>
+              
+              {/* Mute toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="mute-toggle"
+                  checked={localConfig.mute || false}
+                  onCheckedChange={(checked: boolean) => 
+                    setLocalConfig({...localConfig, mute: checked})
+                  }
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="mute-toggle">
+                    Mute video
+                    {localConfig.autoplay && !localConfig.mute && (
+                      <span className="ml-1 text-xs text-red-600 dark:text-red-400">
+                        (required for autoplay to work)
+                      </span>
+                    )}
+                  </Label>
+                </div>
+              </div>
+              
+              {/* Show controls toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="controls-toggle"
+                  checked={localConfig.showControls !== false}
+                  onCheckedChange={(checked: boolean) => 
+                    setLocalConfig({...localConfig, showControls: checked})
+                  }
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="controls-toggle">
+                    Show video controls
+                  </Label>
+                </div>
+              </div>
+              
+              {/* Add embed mode toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="embed-mode-toggle"
+                  checked={embedMode === 'direct-link'}
+                  onCheckedChange={() => setEmbedMode(prev => prev === 'iframe' ? 'direct-link' : 'iframe')}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="embed-mode-toggle">
+                    Use direct link to YouTube (instead of embedded player)
+                  </Label>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
           
           <DialogFooter>
             <div className="flex justify-between w-full">
@@ -724,17 +671,18 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
                       config.onDelete();
                     }
                   }}
-                  aria-label="Delete this widget"
                 >
                   Delete Widget
                 </Button>
               )}
               <Button
-                type="button"
-                onClick={saveSettings}
-                disabled={videoIdFeedback.type === 'error'}
+                variant="default"
+                onClick={() => {
+                  saveSettings();
+                  setShowSettings(false);
+                }}
               >
-                Save
+                Save Changes
               </Button>
             </div>
           </DialogFooter>

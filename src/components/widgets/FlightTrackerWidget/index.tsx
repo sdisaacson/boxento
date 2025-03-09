@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../../ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 // Adjust paths for UI components based on the project structure
 import WidgetHeader from '../common/WidgetHeader';
 import { 
@@ -988,6 +989,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       return today.toISOString().split('T')[0];
     };
 
+    const [activeTab, setActiveTab] = useState<string>('flight');
+
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
@@ -995,120 +998,116 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             <DialogTitle>Flight Tracker Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-3">
-            {/* Widget Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Widget Title</Label>
-              <Input
-                id="title"
-                value={localConfig.title || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, title: e.target.value })}
-                placeholder="Flight Tracker"
-              />
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="flight">Flight Info</TabsTrigger>
+              <TabsTrigger value="widget">Widget Options</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="flight" className="space-y-4 py-2">
+              {/* Demo Flights - Making this more prominent */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center">
+                    <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
+                    <div className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-300">Recommended</div>
+                  </div>
+                  <p className="text-xs text-gray-500">These flights work without an API key:</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { code: 'ASH6040', name: 'Air Shuttle', route: 'JFK → ORD' },
+                      { code: 'UAL123', name: 'United', route: 'SFO → DEN' },
+                      { code: 'AAL456', name: 'American', route: 'DFW → MIA' },
+                      { code: 'DAL789', name: 'Delta', route: 'ATL → LAX' }
+                    ].map((flight) => (
+                      <Button
+                        key={flight.code}
+                        variant={localConfig.flightNumber === flight.code ? "default" : "outline"}
+                        onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
+                        className="h-auto flex-col items-start p-2"
+                      >
+                        <span className="font-medium">{flight.code}</span>
+                        <span className="text-xs opacity-70">{flight.name}</span>
+                        <span className="text-xs opacity-60">{flight.route}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Demo Flights - Making this more prominent */}
-            <Card>
-              <CardHeader className="pb-2">
+              {/* Flight Number */}
+              <div className="space-y-2">
                 <div className="flex items-center">
-                  <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
-                  <div className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-300">Recommended</div>
+                  <Label htmlFor="flightNumber">Flight Number</Label>
+                  <span className="text-red-500 ml-1">*</span>
                 </div>
-                <p className="text-xs text-gray-500">These flights work without an API key and demonstrate the widget's functionality:</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { code: 'ASH6040', name: 'Air Shuttle', route: 'JFK → ORD' },
-                    { code: 'UAL123', name: 'United', route: 'SFO → DEN' },
-                    { code: 'AAL456', name: 'American', route: 'DFW → MIA' },
-                    { code: 'DAL789', name: 'Delta', route: 'ATL → LAX' }
-                  ].map((flight) => (
-                    <Button
-                      key={flight.code}
-                      variant={localConfig.flightNumber === flight.code ? "default" : "outline"}
-                      onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
-                      className="h-auto flex-col items-start p-2"
-                    >
-                      <span className="font-medium">{flight.code}</span>
-                      <span className="text-xs opacity-70">{flight.name}</span>
-                      <span className="text-xs opacity-60">{flight.route}</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Flight Number */}
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Label htmlFor="flightNumber">Flight Number</Label>
-                <span className="text-red-500 ml-1">*</span>
-              </div>
-              <Input
-                id="flightNumber"
-                value={localConfig.flightNumber || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightNumber: e.target.value.toUpperCase() })}
-                placeholder="e.g. AA123 or AXB744"
-              />
-              <p className="text-xs text-gray-500">
-                Enter airline code + flight number (e.g., AA123 for IATA or AXB744 for ICAO)
-              </p>
-              {localConfig.flightNumber && (!localConfig._airlineCode || !localConfig._flightNumberOnly) && (
-                <p className="text-xs text-red-500">
-                  Invalid format. Please check your flight number.
+                <Input
+                  id="flightNumber"
+                  value={localConfig.flightNumber || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightNumber: e.target.value.toUpperCase() })}
+                  placeholder="e.g. AA123 or AXB744"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter airline code + flight number (e.g., AA123 for IATA or AXB744 for ICAO)
                 </p>
-              )}
-            </div>
+                {localConfig.flightNumber && (!localConfig._airlineCode || !localConfig._flightNumberOnly) && (
+                  <p className="text-xs text-red-500">
+                    Invalid format. Please check your flight number.
+                  </p>
+                )}
+              </div>
 
-            {/* Advanced Settings collapsible section */}
-            <Card>
-              <CardHeader>
-                <details className="group">
-                  <summary className="flex items-center cursor-pointer list-none">
-                    <CardTitle className="text-sm">Advanced Settings</CardTitle>
-                    <svg className="h-4 w-4 ml-2 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </summary>
-                  <CardContent className="pt-4 space-y-4">
-                    {/* Flight Date */}
-                    <div className="space-y-2">
-                      <Label htmlFor="flightDate">Flight Date</Label>
-                      <div className="relative">
-                        <Input
-                          id="flightDate"
-                          type="date"
-                          value={localConfig.flightDate || todayFormatted()}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightDate: e.target.value })}
-                          style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
-                        />
-                        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Defaults to today if left empty
-                      </p>
-                    </div>
+              {/* API Key */}
+              <div className="space-y-2">
+                <Label htmlFor="accessKey">AviationStack API Key</Label>
+                <Input
+                  id="accessKey"
+                  value={localConfig.accessKey || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, accessKey: e.target.value })}
+                  placeholder="Only needed for non-demo flights"
+                  type="password"
+                />
+                <p className="text-xs text-gray-500">
+                  Only required for tracking real flights. <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
+                </p>
+              </div>
 
-                    {/* API Key */}
-                    <div className="space-y-2">
-                      <Label htmlFor="accessKey">AviationStack API Key</Label>
-                      <Input
-                        id="accessKey"
-                        value={localConfig.accessKey || ''}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, accessKey: e.target.value })}
-                        placeholder="Only needed for non-demo flights"
-                        type="password"
-                      />
-                      <p className="text-xs text-gray-500">
-                        Only required for tracking real flights. <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
-                      </p>
-                    </div>
-                  </CardContent>
-                </details>
-              </CardHeader>
-            </Card>
-          </div>
+              {/* Flight Date */}
+              <div className="space-y-2">
+                <Label htmlFor="flightDate">Flight Date</Label>
+                <div className="relative">
+                  <Input
+                    id="flightDate"
+                    type="date"
+                    value={localConfig.flightDate || todayFormatted()}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightDate: e.target.value })}
+                    style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Defaults to today if left empty
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="widget" className="space-y-4 py-2">
+              {/* Widget Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Widget Title</Label>
+                <Input
+                  id="title"
+                  value={localConfig.title || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, title: e.target.value })}
+                  placeholder="Flight Tracker"
+                />
+              </div>
+
+              {/* Additional widget options could be added here */}
+            </TabsContent>
+          </Tabs>
           
           <DialogFooter>
             <div className="flex justify-between w-full">
@@ -1128,6 +1127,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               <Button
                 variant="default"
                 onClick={saveSettings}
+                disabled={!localConfig.flightNumber}
               >
                 Save Changes
               </Button>
