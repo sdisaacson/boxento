@@ -9,6 +9,22 @@ import {
   DialogFooter
 } from '../../ui/dialog'
 import { WorldClocksWidgetProps, TimezoneItem, NewTimezoneItem } from './types'
+import { Button } from '../../ui/button'
+import { Input } from '../../ui/input'
+import { Label } from '../../ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card'
 
 /**
  * World Clocks Widget Component
@@ -865,86 +881,93 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     return (
       <div className="space-y-4">
         {showAddForm ? (
-          <div className="space-y-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h4 className="font-medium text-sm">Add Timezone</h4>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Location Name
-              </label>
-              <input 
-                type="text" 
-                value={newTimezone.name} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                placeholder="San Francisco"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Timezone
-              </label>
-              <select
-                value={newTimezone.timezone}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewTimezone({...newTimezone, timezone: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-              >
-                <option value="">Select a timezone</option>
-                {commonTimezones.map((tz, index) => (
-                  <option key={index} value={tz.timezone}>
-                    {tz.name} ({tz.timezone})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex justify-end space-x-2 pt-2">
-              <button 
-                onClick={() => setShowAddForm(false)}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={addTimezone}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-                disabled={!newTimezone.name || !newTimezone.timezone}
-              >
-                Add
-              </button>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Add Timezone</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="location-name">Location Name</Label>
+                <Input
+                  id="location-name"
+                  value={newTimezone.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
+                  placeholder="San Francisco"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="timezone-select">Timezone</Label>
+                <Select
+                  value={newTimezone.timezone}
+                  onValueChange={(value) => setNewTimezone({...newTimezone, timezone: value})}
+                >
+                  <SelectTrigger id="timezone-select">
+                    <SelectValue placeholder="Select a timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {commonTimezones.map((tz, index) => (
+                      <SelectItem key={index} value={tz.timezone}>
+                        {tz.name} ({tz.timezone})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={addTimezone}
+                  disabled={!newTimezone.name || !newTimezone.timezone}
+                >
+                  Add
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
-          <button
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={() => setShowAddForm(true)}
-            className="w-full py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <Plus size={16} className="mr-1" />
-            <span>Add Timezone</span>
-          </button>
+            Add Timezone
+          </Button>
         )}
         
         {timezones.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm mb-2">Current Timezones</h4>
-            <div className="space-y-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Current Timezones</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               {timezones.map(tz => (
                 <div 
                   key={tz.id} 
-                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                 >
                   <div>
                     <div className="font-medium">{tz.name}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{tz.timezone}</div>
                   </div>
-                  <button 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeTimezone(tz.id)}
-                    className="p-1 text-gray-500 hover:text-red-500"
+                    className="text-gray-500 hover:text-red-500"
                   >
                     <Trash size={16} />
-                  </button>
+                  </Button>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
@@ -957,10 +980,10 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderSettingsFooter = () => {
     return (
-      <>
+      <div className="flex justify-between w-full">
         {config?.onDelete && (
-          <button
-            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+          <Button
+            variant="destructive"
             onClick={() => {
               if (config.onDelete) {
                 config.onDelete();
@@ -969,21 +992,21 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
             aria-label="Delete this widget"
           >
             Delete Widget
-          </button>
+          </Button>
         )}
         
         <div className="flex space-x-2">
-          <button 
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+          <Button
+            variant="outline"
             onClick={() => {
               setShowSettings(false);
               setShowAddForm(false);
             }}
           >
             Cancel
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+          </Button>
+          <Button
+            variant="default"
             onClick={() => {
               // Save the updated timezones
               if (newTimezone.name && newTimezone.timezone) {
@@ -1003,9 +1026,9 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
             }}
           >
             Save
-          </button>
+          </Button>
         </div>
-      </>
+      </div>
     );
   };
 

@@ -12,6 +12,8 @@ import { Label } from '../../ui/label';
 import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 
 /**
  * Weather Widget Component
@@ -598,23 +600,19 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   const renderSettingsContent = () => {
     return (
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Location
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="location-input">Location</Label>
+          <Input
+            id="location-input"
             type="text"
-            className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
             placeholder="Enter city name"
             value={localConfig.location || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, location: e.target.value})}
           />
         </div>
         
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            API Key Settings
-          </label>
+        <div className="space-y-2">
+          <Label>API Key Settings</Label>
           
           <div className="mb-2">
             <div className="flex items-center mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -626,9 +624,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
                 className="mr-2 h-4 w-4"
               />
               <div>
-                <label htmlFor="useSharedCredential" className="text-sm font-medium">
+                <Label htmlFor="useSharedCredential" className="text-sm font-medium">
                   Use shared API key
-                </label>
+                </Label>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"} • Reuse across all weather widgets
                 </p>
@@ -636,28 +634,26 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
             </div>
             
             {localConfig.useSharedCredential ? (
-              <div>
-                <input
+              <div className="space-y-2">
+                <Input
                   type="text"
-                  className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
                   placeholder="OpenWeatherMap shared API Key"
                   value={sharedApiKey || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSharedApiKey(e.target.value)}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   This API key will be used by all weather widgets that opt to use the shared key.
                 </p>
               </div>
             ) : (
-              <div>
-                <input
+              <div className="space-y-2">
+                <Input
                   type="text"
-                  className="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
                   placeholder="OpenWeatherMap widget-specific API Key"
                   value={localConfig.apiKey || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, apiKey: e.target.value})}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   This API key will only be used by this widget instance.
                 </p>
               </div>
@@ -669,10 +665,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           </div>
         </div>
         
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Units
-          </label>
+        <div className="space-y-2">
+          <Label>Units</Label>
           <RadioGroup
             value={localConfig.units || 'metric'}
             onValueChange={(value: string) => setLocalConfig({...localConfig, units: value as 'metric' | 'imperial'})}
@@ -699,10 +693,10 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
    */
   const renderSettingsFooter = () => {
     return (
-      <>
+      <div className="flex justify-between w-full">
         {config?.onDelete && (
-          <button
-            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+          <Button
+            variant="destructive"
             onClick={() => {
               if (config.onDelete) {
                 config.onDelete();
@@ -711,18 +705,18 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
             aria-label="Delete this widget"
           >
             Delete Widget
-          </button>
+          </Button>
         )}
         
         <div className="flex space-x-2">
-          <button
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+          <Button
+            variant="outline"
             onClick={() => setIsSettingsOpen(false)}
           >
             Cancel
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+          </Button>
+          <Button
+            variant="default"
             onClick={() => {
               // Make sure shared API key is saved properly if using shared credentials
               if (localConfig.useSharedCredential && sharedApiKey) {
@@ -751,9 +745,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
             }}
           >
             Save
-          </button>
+          </Button>
         </div>
-      </>
+      </div>
     );
   };
 

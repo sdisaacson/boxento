@@ -16,6 +16,8 @@ import {
 } from "../../ui/select"
 import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
+import { Button } from '../../ui/button'
+import { Label } from '../../ui/label'
 
 /**
  * Calendar Widget Component
@@ -1277,15 +1279,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   const renderSettingsContent = () => {
     return (
       <div className="space-y-5">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            First Day of Week
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="first-day-select">First Day of Week</Label>
           <Select
             value={localConfig.startDay || 'sunday'}
             onValueChange={(value) => setLocalConfig({...localConfig, startDay: value as 'sunday' | 'monday'})}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="first-day-select" className="w-full">
               <SelectValue placeholder="Select first day of week" />
             </SelectTrigger>
             <SelectContent>
@@ -1310,21 +1310,22 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                     <div className="text-xs text-gray-500 dark:text-gray-400">Connected</div>
                   </div>
                 </div>
-                <button
-                  className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium"
+                <Button
+                  variant="ghost"
+                  className="text-red-500 hover:text-red-700 dark:hover:text-red-400"
                   onClick={disconnectGoogleCalendar}
                   disabled={isLoading}
                 >
                   Disconnect
-                </button>
+                </Button>
               </div>
               
               {localConfig.calendars && localConfig.calendars.length > 0 && (
                 <div className="mt-2">
-                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400">
                     Your Calendars
-                  </h4>
-                  <div className="space-y-2">
+                  </Label>
+                  <div className="space-y-2 mt-2">
                     {localConfig.calendars.map((calendar: CalendarSource, index: number) => (
                       <div key={index} className="flex items-center">
                         <input
@@ -1334,13 +1335,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                           onChange={() => toggleCalendar(index)}
                           className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600"
                         />
-                        <label htmlFor={`calendar-${index}`} className="ml-2 text-sm flex items-center">
+                        <Label htmlFor={`calendar-${index}`} className="ml-2 text-sm flex items-center">
                           <span 
                             className="w-3 h-3 rounded-full mr-2" 
                             style={{ backgroundColor: calendar.color }}
                           />
                           {calendar.name}
-                        </label>
+                        </Label>
                       </div>
                     ))}
                   </div>
@@ -1352,8 +1353,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                 Connect to Google Calendar to see your events in this widget.
               </p>
-              <button
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center w-full"
+              <Button
+                variant="default"
+                className="w-full"
                 onClick={connectGoogleCalendar}
                 disabled={isLoading}
               >
@@ -1365,7 +1367,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 ) : (
                   'Connect Google Calendar'
                 )}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -1380,10 +1382,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    */
   const renderSettingsFooter = () => {
     return (
-      <>
+      <div className="flex justify-between w-full">
         {config?.onDelete && (
-          <button
-            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+          <Button
+            variant="destructive"
             onClick={() => {
               if (config.onDelete) {
                 config.onDelete();
@@ -1394,18 +1396,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             aria-label="Delete this widget"
           >
             Delete Widget
-          </button>
+          </Button>
         )}
         
         <div className="flex space-x-2">
-          <button
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+          <Button
+            variant="outline"
             onClick={() => setIsSettingsOpen(false)}
           >
             Cancel
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+          </Button>
+          <Button
+            variant="default"
             onClick={() => {
               // Save the configuration
               if (config && config.onUpdate) {
@@ -1419,9 +1421,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             }}
           >
             Save
-          </button>
+          </Button>
         </div>
-      </>
+      </div>
     )
   }
 

@@ -8,6 +8,16 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { RSSWidgetProps, RSSWidgetConfig, RSSFeedItem, RSSDisplayMode } from './types';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
 
 /**
  * Size categories for widget content rendering
@@ -530,250 +540,223 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
           
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
             {/* Widget Title */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Widget Title</Label>
+              <Input
                 id="title-input"
                 type="text"
                 value={localConfig.title || ''}
-                onChange={(e) => setLocalConfig({...localConfig, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, title: e.target.value})}
                 placeholder="RSS Feed"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Leave empty to use the feed's title
               </p>
             </div>
             
             {/* Feed URL */}
-            <div>
-              <label htmlFor="feed-url-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                RSS Feed URL
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="feed-url-input">RSS Feed URL</Label>
+              <Input
                 id="feed-url-input"
                 type="url"
                 value={localConfig.feedUrl || ''}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const url = e.target.value;
                   setLocalConfig({...localConfig, feedUrl: url});
                   setIsValidUrl(validateFeedUrl(url));
                 }}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isValidUrl 
-                    ? 'border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-blue-500 focus:border-transparent' 
-                    : 'border-red-300 dark:border-red-700 dark:bg-gray-700 focus:ring-red-500 focus:border-transparent'
-                } dark:text-white`}
+                className={!isValidUrl ? 'border-red-500' : ''}
                 placeholder="https://example.com/rss"
               />
               {!isValidUrl && (
-                <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                <p className="text-xs text-red-500 dark:text-red-400">
                   Please enter a valid URL
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Enter the URL of the RSS feed you want to display
               </p>
             </div>
             
             {/* Max Items */}
-            <div>
-              <label htmlFor="max-items-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Maximum Items
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="max-items-input">Maximum Items</Label>
+              <Input
                 id="max-items-input"
                 type="number"
                 min="1"
                 max="20"
                 value={localConfig.maxItems || 5}
-                onChange={(e) => setLocalConfig({...localConfig, maxItems: parseInt(e.target.value) || 5})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, maxItems: parseInt(e.target.value) || 5})}
               />
             </div>
             
             {/* Display Mode */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Display Mode
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.LIST})}
-                  className={`px-4 py-2 text-sm rounded-md ${
-                    localConfig.displayMode === RSSDisplayMode.LIST
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                      : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  List
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.CARDS})}
-                  className={`px-4 py-2 text-sm rounded-md ${
-                    localConfig.displayMode === RSSDisplayMode.CARDS
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                      : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  Cards
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.COMPACT})}
-                  className={`px-4 py-2 text-sm rounded-md ${
-                    localConfig.displayMode === RSSDisplayMode.COMPACT
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                      : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  Compact
-                </button>
-              </div>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Display Mode</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.LIST})}
+                    variant={localConfig.displayMode === RSSDisplayMode.LIST ? "default" : "outline"}
+                  >
+                    List
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.CARDS})}
+                    variant={localConfig.displayMode === RSSDisplayMode.CARDS ? "default" : "outline"}
+                  >
+                    Cards
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setLocalConfig({...localConfig, displayMode: RSSDisplayMode.COMPACT})}
+                    variant={localConfig.displayMode === RSSDisplayMode.COMPACT ? "default" : "outline"}
+                  >
+                    Compact
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
             {/* Display Options */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Display Options</p>
-              
-              {/* Show Images */}
-              <div className="flex items-center">
-                <input
-                  id="show-images-toggle"
-                  type="checkbox"
-                  checked={localConfig.showImages}
-                  onChange={(e) => setLocalConfig({...localConfig, showImages: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="show-images-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Show Images
-                </label>
-              </div>
-              
-              {/* Show Dates */}
-              <div className="flex items-center">
-                <input
-                  id="show-date-toggle"
-                  type="checkbox"
-                  checked={localConfig.showDate}
-                  onChange={(e) => setLocalConfig({...localConfig, showDate: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="show-date-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Show Publication Dates
-                </label>
-              </div>
-              
-              {/* Show Authors */}
-              <div className="flex items-center">
-                <input
-                  id="show-author-toggle"
-                  type="checkbox"
-                  checked={localConfig.showAuthor}
-                  onChange={(e) => setLocalConfig({...localConfig, showAuthor: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="show-author-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Show Authors
-                </label>
-              </div>
-              
-              {/* Show Descriptions */}
-              <div className="flex items-center">
-                <input
-                  id="show-description-toggle"
-                  type="checkbox"
-                  checked={localConfig.showDescription}
-                  onChange={(e) => setLocalConfig({...localConfig, showDescription: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="show-description-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Show Descriptions
-                </label>
-              </div>
-              
-              {/* Open Links in New Tab */}
-              <div className="flex items-center">
-                <input
-                  id="open-new-tab-toggle"
-                  type="checkbox"
-                  checked={localConfig.openInNewTab}
-                  onChange={(e) => setLocalConfig({...localConfig, openInNewTab: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="open-new-tab-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Open Links in New Tab
-                </label>
-              </div>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Display Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Show Images */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="show-images-toggle" className="flex-1">Show Images</Label>
+                  <Switch
+                    id="show-images-toggle"
+                    checked={localConfig.showImages}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, showImages: checked})}
+                  />
+                </div>
+                
+                {/* Show Dates */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="show-date-toggle" className="flex-1">Show Publication Dates</Label>
+                  <Switch
+                    id="show-date-toggle"
+                    checked={localConfig.showDate}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, showDate: checked})}
+                  />
+                </div>
+                
+                {/* Show Authors */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="show-author-toggle" className="flex-1">Show Authors</Label>
+                  <Switch
+                    id="show-author-toggle"
+                    checked={localConfig.showAuthor}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, showAuthor: checked})}
+                  />
+                </div>
+                
+                {/* Show Descriptions */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="show-description-toggle" className="flex-1">Show Descriptions</Label>
+                  <Switch
+                    id="show-description-toggle"
+                    checked={localConfig.showDescription}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, showDescription: checked})}
+                  />
+                </div>
+                
+                {/* Open Links in New Tab */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="open-new-tab-toggle" className="flex-1">Open Links in New Tab</Label>
+                  <Switch
+                    id="open-new-tab-toggle"
+                    checked={localConfig.openInNewTab}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, openInNewTab: checked})}
+                  />
+                </div>
+              </CardContent>
+            </Card>
             
             {/* Example RSS Feeds */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
-              <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Example RSS Feeds:</p>
-              <ul className="space-y-1 text-xs text-blue-700 dark:text-blue-400">
-                <li>
-                  <button 
-                    className="hover:underline"
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Example RSS Feeds</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-xs">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left font-normal h-auto py-1.5"
                     onClick={() => {
                       setLocalConfig({...localConfig, feedUrl: 'https://news.ycombinator.com/rss'});
                       setIsValidUrl(true);
                     }}
                   >
                     Hacker News: https://news.ycombinator.com/rss
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="hover:underline"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left font-normal h-auto py-1.5"
                     onClick={() => {
                       setLocalConfig({...localConfig, feedUrl: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'});
                       setIsValidUrl(true);
                     }}
                   >
                     New York Times: https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    className="hover:underline"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left font-normal h-auto py-1.5"
                     onClick={() => {
                       setLocalConfig({...localConfig, feedUrl: 'https://www.wired.com/feed/rss'});
                       setIsValidUrl(true);
                     }}
                   >
                     Wired: https://www.wired.com/feed/rss
-                  </button>
-                </li>
-              </ul>
-            </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
-              >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              disabled={!isValidUrl}
-            >
-              Save
-            </button>
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                >
+                  Delete Widget
+                </Button>
+              )}
+              
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    saveSettings();
+                    setShowSettings(false);
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
