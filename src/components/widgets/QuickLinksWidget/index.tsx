@@ -98,66 +98,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const [loadingLinkIds, setLoadingLinkIds] = useState<number[]>([]);
 
-  type ThemeColors = {
-    [key in NonNullable<QuickLinksWidgetConfig['theme']>]: {
-      light: string;
-      dark: string;
-    }
-  };
-
-  const themeColors: ThemeColors = {
-    white: { light: '#FFFFFF', dark: '#1E293B' },
-    gray: { light: '#F5F5F5', dark: '#1E293B' },
-    cream: { light: '#FFFBE6', dark: '#1E293B' },
-    peach: { light: '#FFE8D9', dark: '#1E293B' },
-    mint: { light: '#E8FFE9', dark: '#1E293B' },
-    blue: { light: '#E6F4FF', dark: '#1E293B' },
-    pink: { light: '#FFE6EF', dark: '#1E293B' },
-    purple: { light: '#F0E7FF', dark: '#1E293B' },
-    beige: { light: '#FFF3E6', dark: '#1E293B' }
-  } as const;
-
-  const handleThemeChange = (theme: NonNullable<QuickLinksWidgetConfig['theme']>) => {
-    if (config?.onUpdate) {
-      const newConfig = {
-        ...config,
-        theme
-      };
-      config.onUpdate(newConfig);
-
-      // Immediately update the CSS variables
-      if (widgetRef.current) {
-        const colors = themeColors[theme];
-        widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
-        widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
-      }
-    }
-  };
-
-  // Get current theme colors
-  const getCurrentThemeColors = () => {
-    const theme = config?.theme || 'white';
-    return themeColors[theme];
-  };
-
-  // Set initial theme colors
-  React.useEffect(() => {
-    if (widgetRef.current) {
-      const colors = getCurrentThemeColors();
-      widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
-      widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
-    }
-  }, []);
-
-  // Update theme colors when config changes
-  React.useEffect(() => {
-    if (widgetRef.current && config?.theme) {
-      const colors = themeColors[config.theme];
-      widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
-      widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
-    }
-  }, [config?.theme]);
-
   // Check if there are any links in the configuration
   React.useEffect(() => {
     if (config?.links) {
@@ -424,10 +364,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     <div 
       ref={widgetRef} 
       className="widget-container quicklinks-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
-      style={{
-        '--widget-bg-light': getCurrentThemeColors().light,
-        '--widget-bg-dark': getCurrentThemeColors().dark,
-      } as React.CSSProperties}
     >
       <WidgetHeader 
         title="Quick Links" 
@@ -450,31 +386,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <DialogHeader>
               <DialogTitle>Widget Settings</DialogTitle>
             </DialogHeader>
-            <div className="py-4 space-y-6">
-              <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Page color
-                </span>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {(Object.keys(themeColors) as Array<keyof typeof themeColors>).map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => handleThemeChange(theme as NonNullable<QuickLinksWidgetConfig['theme']>)}
-                      className={`
-                        w-9 h-9 rounded-full transition-all border
-                        ${config?.theme === theme 
-                          ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 border-gray-300 dark:border-gray-600' 
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}
-                      `}
-                      style={{
-                        backgroundColor: themeColors[theme as keyof ThemeColors].light,
-                      }}
-                      aria-label={`${theme} theme`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
             <DialogFooter className="flex justify-between items-center pt-6 border-t border-gray-100 dark:border-gray-800">
               <div className="flex-1">
                 {config?.onDelete && (

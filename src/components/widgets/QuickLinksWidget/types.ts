@@ -28,7 +28,6 @@ export interface LinkItem {
 export interface QuickLinksWidgetConfig {
   id?: string;
   links: LinkItem[];
-  theme?: 'white' | 'gray' | 'cream' | 'peach' | 'mint' | 'blue' | 'pink' | 'purple' | 'beige';
   onDelete?: () => void;
   onUpdate?: (config: QuickLinksWidgetConfig) => void;
 }
