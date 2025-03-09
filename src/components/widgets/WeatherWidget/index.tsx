@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Label } from '../../ui/label';
 import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
-import { useSharedCredential } from '@/lib/sharedCredentials';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
@@ -32,9 +31,6 @@ import { Switch } from '../../ui/switch';
  * @returns {JSX.Element} Weather widget component
  */
 const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) => {
-  // Access shared credentials first to ensure it's available before other hooks
-  const { credential: sharedApiKey, updateCredential: updateSharedApiKey, hasCredential: hasSharedApiKey } = useSharedCredential('openweathermap-api');
-  
   // State for weather data and UI
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,7 +38,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   const [unit, setUnit] = useState<'celsius' | 'fahrenheit'>('celsius');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [localConfig, setLocalConfig] = useState<WeatherWidgetConfig>(
-    config || { id: '', location: 'New York', units: 'metric', apiKey: '', useSharedCredential: false }
+    config || { id: '', location: 'New York', units: 'metric' }
   );
   const widgetRef = useRef<HTMLDivElement | null>(null);
 
@@ -99,102 +95,160 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   };
 
   /**
-   * Fetches weather data from the API or uses mock data
+   * Map Open-Meteo's WMO weather codes to weather conditions
+   * 
+   * @param {number} code - WMO weather code
+   * @returns {string} Weather condition
+   */
+  const mapWeatherCodeToCondition = (code: number): string => {
+    if (code === 0) return 'Clear';
+    if (code === 1) return 'Mainly Clear';
+    if (code === 2) return 'Partly Cloudy';
+    if (code === 3) return 'Overcast';
+    if (code === 45 || code === 48) return 'Fog';
+    if (code >= 51 && code <= 55) return 'Drizzle';
+    if (code >= 56 && code <= 57) return 'Freezing Drizzle';
+    if (code >= 61 && code <= 65) return 'Rain';
+    if (code >= 66 && code <= 67) return 'Freezing Rain';
+    if (code >= 71 && code <= 75) return 'Snow';
+    if (code === 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Rain';
+    if (code >= 85 && code <= 86) return 'Snow';
+    if (code === 95) return 'Thunderstorm';
+    if (code >= 96 && code <= 99) return 'Thunderstorm';
+    return 'Unknown';
+  };
+
+  /**
+   * Map Open-Meteo's WMO weather codes to detailed descriptions
+   * 
+   * @param {number} code - WMO weather code
+   * @returns {string} Detailed weather description
+   */
+  const mapWeatherCodeToDescription = (code: number): string => {
+    if (code === 0) return 'Clear sky';
+    if (code === 1) return 'Mainly clear';
+    if (code === 2) return 'Partly cloudy';
+    if (code === 3) return 'Overcast';
+    if (code === 45) return 'Fog';
+    if (code === 48) return 'Depositing rime fog';
+    if (code === 51) return 'Light drizzle';
+    if (code === 53) return 'Moderate drizzle';
+    if (code === 55) return 'Dense drizzle';
+    if (code === 56) return 'Light freezing drizzle';
+    if (code === 57) return 'Dense freezing drizzle';
+    if (code === 61) return 'Slight rain';
+    if (code === 63) return 'Moderate rain';
+    if (code === 65) return 'Heavy rain';
+    if (code === 66) return 'Light freezing rain';
+    if (code === 67) return 'Heavy freezing rain';
+    if (code === 71) return 'Slight snow fall';
+    if (code === 73) return 'Moderate snow fall';
+    if (code === 75) return 'Heavy snow fall';
+    if (code === 77) return 'Snow grains';
+    if (code === 80) return 'Slight rain showers';
+    if (code === 81) return 'Moderate rain showers';
+    if (code === 82) return 'Violent rain showers';
+    if (code === 85) return 'Slight snow showers';
+    if (code === 86) return 'Heavy snow showers';
+    if (code === 95) return 'Thunderstorm';
+    if (code === 96) return 'Thunderstorm with slight hail';
+    if (code === 99) return 'Thunderstorm with heavy hail';
+    return 'Unknown weather condition';
+  };
+
+  /**
+   * Fetches weather data from the Open-Meteo API or uses mock data
    */
   const fetchWeather = async () => {
     setLoading(true);
     
     try {
-      // Determine which API key to use
-      const apiKey = localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey;
+      const location = localConfig.location || 'New York';
+      const useMetric = localConfig.units !== 'imperial';
       
-      // If we have an API key, fetch real data, otherwise use mock data
-      if (apiKey) {
-        const units = localConfig.units || 'metric';
-        const location = localConfig.location || 'New York';
-        
-        // Fetch current weather
-        const currentResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${apiKey}`
-        );
-        
-        if (!currentResponse.ok) {
-          throw new Error(`Weather API error: ${currentResponse.statusText}`);
-        }
-        
-        const currentData = await currentResponse.json();
-        
-        // Fetch forecast
-        const forecastResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=${units}&appid=${apiKey}`
-        );
-        
-        if (!forecastResponse.ok) {
-          throw new Error(`Forecast API error: ${forecastResponse.statusText}`);
-        }
-        
-        const forecastData = await forecastResponse.json();
-        
-        // Process forecast data to get daily forecasts
-        const dailyForecasts: { [key: string]: any } = {};
-        
-        forecastData.list.forEach((item: any) => {
-          const date = new Date(item.dt * 1000);
-          const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-          
-          if (!dailyForecasts[day]) {
-            dailyForecasts[day] = {
-              day,
-              temp: {
-                min: item.main.temp_min,
-                max: item.main.temp_max
-              },
-              condition: item.weather[0].main,
-              description: item.weather[0].description,
-              icon: item.weather[0].icon
-            };
-          } else {
-            // Update min/max temps if needed
-            if (item.main.temp_min < dailyForecasts[day].temp.min) {
-              dailyForecasts[day].temp.min = item.main.temp_min;
-            }
-            if (item.main.temp_max > dailyForecasts[day].temp.max) {
-              dailyForecasts[day].temp.max = item.main.temp_max;
-            }
-          }
-        });
-        
-        // Convert to array and limit to 5 days
-        const forecast = Object.values(dailyForecasts).slice(0, 5);
-        
-        setWeather({
-          location: currentData.name,
-          temperature: currentData.main.temp,
-          feelsLike: currentData.main.feels_like,
-          condition: currentData.weather[0].main,
-          description: currentData.weather[0].description,
-          icon: currentData.weather[0].icon,
-          humidity: currentData.main.humidity,
-          windSpeed: currentData.wind.speed,
-          windDirection: currentData.wind.deg,
-          sunrise: currentData.sys.sunrise,
-          sunset: currentData.sys.sunset,
-          forecast
-        });
-        
-        setLoading(false);
-        setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
-        setError(null);
-      } else {
-        // Use mock data
-        setWeather(mockWeatherData);
-        
-        setLoading(false);
-        setError(null);
+      // First, get coordinates for the location using Open-Meteo's geocoding API
+      const geocodingResponse = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`
+      );
+      
+      if (!geocodingResponse.ok) {
+        throw new Error(`Geocoding API error: ${geocodingResponse.statusText}`);
       }
+      
+      const geocodingData = await geocodingResponse.json();
+      
+      if (!geocodingData.results || geocodingData.results.length === 0) {
+        throw new Error(`Location not found: ${location}`);
+      }
+      
+      const { latitude, longitude, name } = geocodingData.results[0];
+      
+      // Now fetch weather data using Open-Meteo's forecast API
+      const temperatureUnit = useMetric ? 'celsius' : 'fahrenheit';
+      const windSpeedUnit = useMetric ? 'kmh' : 'mph';
+      
+      const weatherResponse = await fetch(
+        `https://api.open-meteo.com/v1/forecast?` +
+        `latitude=${latitude}&longitude=${longitude}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset` +
+        `&temperature_unit=${temperatureUnit}&wind_speed_unit=${windSpeedUnit}` +
+        `&forecast_days=5&timezone=auto`
+      );
+      
+      if (!weatherResponse.ok) {
+        throw new Error(`Weather API error: ${weatherResponse.statusText}`);
+      }
+      
+      const weatherData = await weatherResponse.json();
+      
+      // Process forecast data to match our format
+      const forecast = weatherData.daily.time.map((date: string, index: number) => {
+        const weatherCode = weatherData.daily.weather_code[index];
+        return {
+          day: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+          temp: {
+            min: weatherData.daily.temperature_2m_min[index],
+            max: weatherData.daily.temperature_2m_max[index]
+          },
+          condition: mapWeatherCodeToCondition(weatherCode),
+          description: mapWeatherCodeToDescription(weatherCode),
+          icon: `${weatherCode}` // We'll use the weather code as the icon
+        };
+      });
+      
+      // Get current weather data
+      const currentWeatherCode = weatherData.current.weather_code;
+      
+      setWeather({
+        location: name,
+        temperature: weatherData.current.temperature_2m,
+        feelsLike: weatherData.current.apparent_temperature,
+        condition: mapWeatherCodeToCondition(currentWeatherCode),
+        description: mapWeatherCodeToDescription(currentWeatherCode),
+        icon: `${currentWeatherCode}`,
+        humidity: weatherData.current.relative_humidity_2m,
+        windSpeed: weatherData.current.wind_speed_10m,
+        windDirection: weatherData.current.wind_direction_10m,
+        sunrise: Date.parse(weatherData.daily.sunrise[0]) / 1000, // Convert to UNIX timestamp
+        sunset: Date.parse(weatherData.daily.sunset[0]) / 1000, // Convert to UNIX timestamp
+        forecast
+      });
+      
+      setLoading(false);
+      setUnit(useMetric ? 'celsius' : 'fahrenheit');
+      setError(null);
     } catch (err) {
+      console.error('[WeatherWidget] Error:', err);
       setError('Failed to fetch weather data');
       setLoading(false);
+      
+      // Use mock data if available
+      if (mockWeatherData) {
+        setWeather(mockWeatherData);
+        setLoading(false);
+      }
     }
   };
 
@@ -204,7 +258,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
     };
     
     fetchData();
-  }, [localConfig.location, localConfig.units, localConfig.apiKey, localConfig.useSharedCredential, sharedApiKey]);
+  }, [localConfig.location, localConfig.units]);
 
   /**
    * Format temperature with unit
@@ -221,29 +275,73 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
    * Get weather icon component based on condition
    * 
    * @param {string} condition - Weather condition
-   * @param {string} [icon] - Icon code from API
+   * @param {string} [icon] - Icon code or WMO weather code
    * @returns {JSX.Element} Weather icon component
    */
   const getWeatherIcon = (condition: string, icon?: string): JSX.Element => {
-    // Check if it's day or night based on icon code
-    const isNight = icon?.includes('n');
+    // Default size and style
     const defaultSize = 24;
     const className = "text-gray-700 dark:text-gray-300";
     
+    // Get WMO weather code if provided
+    const weatherCode = icon ? parseInt(icon) : null;
+    
+    // Check if it's day or night (for Open-Meteo we'll default to day)
+    const isNight = false;
+    
+    // Map icons based on weather codes or condition
+    if (weatherCode !== null) {
+      if (weatherCode === 0) 
+        return isNight ? <SunDim size={defaultSize} className={className} /> : <Sun size={defaultSize} className={className} />;
+      
+      if (weatherCode === 1 || weatherCode === 2) 
+        return <Cloud size={defaultSize} className={className} />;
+      
+      if (weatherCode === 3) 
+        return <Cloud size={defaultSize} className={className} />;
+      
+      if (weatherCode === 45 || weatherCode === 48) 
+        return <Wind size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 51 && weatherCode <= 57) 
+        return <CloudRain size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 61 && weatherCode <= 67) 
+        return <CloudRain size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 71 && weatherCode <= 77) 
+        return <CloudSnow size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 80 && weatherCode <= 82) 
+        return <CloudRain size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 85 && weatherCode <= 86) 
+        return <CloudSnow size={defaultSize} className={className} />;
+      
+      if (weatherCode >= 95 && weatherCode <= 99) 
+        return <CloudLightning size={defaultSize} className={className} />;
+    }
+    
+    // Fallback to condition string if no valid weather code
     switch (condition.toLowerCase()) {
       case 'clear':
         return isNight ? <SunDim size={defaultSize} className={className} /> : <Sun size={defaultSize} className={className} />;
+      case 'mainly clear':
+      case 'partly cloudy':
+      case 'overcast':
       case 'clouds':
         return <Cloud size={defaultSize} className={className} />;
       case 'rain':
       case 'drizzle':
+      case 'freezing drizzle':
+      case 'freezing rain':
         return <CloudRain size={defaultSize} className={className} />;
       case 'snow':
         return <CloudSnow size={defaultSize} className={className} />;
       case 'thunderstorm':
         return <CloudLightning size={defaultSize} className={className} />;
-      case 'mist':
       case 'fog':
+      case 'mist':
       case 'haze':
         return <Wind size={defaultSize} className={className} />;
       default:
@@ -270,14 +368,12 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
    * @returns {JSX.Element} Error indicator
    */
   const renderError = () => {
-    const hasApiKey = localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey;
-    
     return (
       <div className="flex flex-col items-center justify-center h-full p-3 text-center">
         <Info className="text-amber-500 mb-2" size={24} />
         <p className="text-sm text-amber-500 mb-1">{error}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {hasApiKey ? 'Check your API key or network connection.' : 'Add an API key in settings.'}
+          Check your location or try again later.
         </p>
       </div>
     );
@@ -613,74 +709,23 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         </div>
         
         <div className="space-y-2">
-          <Label>API Key Settings</Label>
-          
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-              <div>
-                <Label htmlFor="useSharedCredential" className="text-sm font-medium">
-                  Use shared API key
-                </Label>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {hasSharedApiKey ? "✓ Shared key available" : "No shared key set yet"} • Reuse across all weather widgets
-                </p>
-              </div>
-              <Switch
-                id="useSharedCredential"
-                checked={localConfig.useSharedCredential}
-                onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, useSharedCredential: checked})}
-              />
-            </div>
-            
-            {localConfig.useSharedCredential ? (
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="OpenWeatherMap shared API Key"
-                  value={sharedApiKey || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSharedApiKey(e.target.value)}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This API key will be used by all weather widgets that opt to use the shared key.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="OpenWeatherMap widget-specific API Key"
-                  value={localConfig.apiKey || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, apiKey: e.target.value})}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  This API key will only be used by this widget instance.
-                </p>
-              </div>
-            )}
-            
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Get a free API key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenWeatherMap</a>
-            </p>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label>Units</Label>
+          <Label>Temperature Units</Label>
           <RadioGroup
-            value={localConfig.units || 'metric'}
-            onValueChange={(value: string) => setLocalConfig({...localConfig, units: value as 'metric' | 'imperial'})}
-            className="space-y-2"
+            value={localConfig.units === 'imperial' ? 'imperial' : 'metric'}
+            onValueChange={(value: string) => setLocalConfig({...localConfig, units: value})}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="metric" id="metric" />
-              <Label htmlFor="metric">Celsius</Label>
+              <Label htmlFor="metric">Celsius (°C)</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="imperial" id="imperial" />
-              <Label htmlFor="imperial">Fahrenheit</Label>
+              <Label htmlFor="imperial">Fahrenheit (°F)</Label>
             </div>
           </RadioGroup>
         </div>
+        
+    
       </div>
     );
   };
@@ -717,12 +762,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <Button
             variant="default"
             onClick={() => {
-              // Make sure shared API key is saved properly if using shared credentials
-              if (localConfig.useSharedCredential && sharedApiKey) {
-                console.log('[WeatherWidget] Saving shared API key on settings close');
-                updateSharedApiKey(sharedApiKey);
-              }
-              
               // Save settings via onUpdate callback (will use configManager in App.tsx)
               if (config?.onUpdate) {
                 console.log('[WeatherWidget] Saving local config to parent component');
