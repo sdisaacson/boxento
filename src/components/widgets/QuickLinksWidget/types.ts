@@ -7,13 +7,13 @@ import { WidgetProps } from '@/types';
  * @property {number} id - Unique identifier for the link
  * @property {string} title - Display name of the link
  * @property {string} url - URL the link points to
- * @property {string} color - Color associated with the link (hex code)
+ * @property {string} favicon - URL to the favicon of the link
  */
 export interface LinkItem {
   id: number;
-  title: string;
   url: string;
-  color: string;
+  title: string;
+  favicon: string;
 }
 
 /**
@@ -27,7 +27,8 @@ export interface LinkItem {
  */
 export interface QuickLinksWidgetConfig {
   id?: string;
-  links?: LinkItem[];
+  links: LinkItem[];
+  theme?: 'white' | 'gray' | 'cream' | 'peach' | 'mint' | 'blue' | 'pink' | 'purple' | 'beige';
   onDelete?: () => void;
   onUpdate?: (config: QuickLinksWidgetConfig) => void;
 }

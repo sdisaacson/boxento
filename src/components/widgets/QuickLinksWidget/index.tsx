@@ -8,7 +8,73 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog'
-import { QuickLinksWidgetProps, LinkItem } from './types'
+import { Input } from '@/components/ui/input'
+import { QuickLinksWidgetProps, LinkItem, QuickLinksWidgetConfig } from './types'
+import './styles.css'
+
+/**
+ * Fetches metadata from a URL including title and favicon
+ * @param url The URL to fetch metadata from
+ * @returns Promise with title and favicon extracted from favicon
+ */
+const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: string }> => {
+  try {
+    // Validate and normalize the URL
+    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+    const urlObj = new URL(normalizedUrl);
+
+    // Get favicon using Google's favicon service
+    const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+
+    // Try to fetch the page directly first
+    try {
+      const response = await fetch(normalizedUrl, { method: 'HEAD' });
+      if (!response.ok) {
+        throw new Error('Direct fetch failed');
+      }
+    } catch (error) {
+      console.warn('Direct fetch failed, using fallback:', error);
+    }
+
+    // Use a more reliable service for metadata
+    const response = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(normalizedUrl)}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL metadata: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Extract the title from the response
+    let title = data.title || '';
+    
+    // If no title is found, use the hostname
+    if (!title) {
+      title = urlObj.hostname;
+    }
+
+    return { 
+      title: title.trim(),
+      favicon
+    };
+  } catch (error) {
+    console.error('Error fetching URL metadata:', error);
+    // Return a basic fallback using the URL's hostname
+    try {
+      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return {
+        title: urlObj.hostname,
+        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
+      };
+    } catch (e) {
+      // If URL parsing fails, return the raw URL
+      return {
+        title: url,
+        favicon: `https://www.google.com/s2/favicons?domain=unknown&sz=32`
+      };
+    }
+  }
+};
 
 /**
  * QuickLinks Widget Component
@@ -25,7 +91,72 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const [links, setLinks] = useState<LinkItem[]>(config?.links || []);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [newLinkUrl, setNewLinkUrl] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const newLinkInputRef = useRef<HTMLInputElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
+  const [loadingLinkIds, setLoadingLinkIds] = useState<number[]>([]);
+
+  type ThemeColors = {
+    [key in NonNullable<QuickLinksWidgetConfig['theme']>]: {
+      light: string;
+      dark: string;
+    }
+  };
+
+  const themeColors: ThemeColors = {
+    white: { light: '#FFFFFF', dark: '#1E293B' },
+    gray: { light: '#F5F5F5', dark: '#1E293B' },
+    cream: { light: '#FFFBE6', dark: '#1E293B' },
+    peach: { light: '#FFE8D9', dark: '#1E293B' },
+    mint: { light: '#E8FFE9', dark: '#1E293B' },
+    blue: { light: '#E6F4FF', dark: '#1E293B' },
+    pink: { light: '#FFE6EF', dark: '#1E293B' },
+    purple: { light: '#F0E7FF', dark: '#1E293B' },
+    beige: { light: '#FFF3E6', dark: '#1E293B' }
+  } as const;
+
+  const handleThemeChange = (theme: NonNullable<QuickLinksWidgetConfig['theme']>) => {
+    if (config?.onUpdate) {
+      const newConfig = {
+        ...config,
+        theme
+      };
+      config.onUpdate(newConfig);
+
+      // Immediately update the CSS variables
+      if (widgetRef.current) {
+        const colors = themeColors[theme];
+        widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
+        widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
+      }
+    }
+  };
+
+  // Get current theme colors
+  const getCurrentThemeColors = () => {
+    const theme = config?.theme || 'white';
+    return themeColors[theme];
+  };
+
+  // Set initial theme colors
+  React.useEffect(() => {
+    if (widgetRef.current) {
+      const colors = getCurrentThemeColors();
+      widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
+      widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
+    }
+  }, []);
+
+  // Update theme colors when config changes
+  React.useEffect(() => {
+    if (widgetRef.current && config?.theme) {
+      const colors = themeColors[config.theme];
+      widgetRef.current.style.setProperty('--widget-bg-light', colors.light);
+      widgetRef.current.style.setProperty('--widget-bg-dark', colors.dark);
+    }
+  }, [config?.theme]);
 
   // Check if there are any links in the configuration
   React.useEffect(() => {
@@ -96,356 +227,213 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
    * @param {LinkItem | null} link - The link to edit, or null to create a new one
    */
   const startEdit = (link: LinkItem | null = null) => {
-    setEditingLink(link || { id: 0, title: '', url: '', color: '#3B82F6' }) // Use a blue color that works in both light/dark modes
+    setEditingLink(link || { id: 0, title: '', url: '', favicon: '' }) // Use a blue color that works in both light/dark modes
   }
 
   /**
-   * Renders a subset of links based on available space
-   * 
-   * @param {number} maxLinks - Maximum number of links to render
-   * @returns {JSX.Element[]} Array of link elements
+   * Adds a new link from the quick input
    */
-  const renderLinks = (maxLinks: number) => {
-    return links.slice(0, maxLinks).map(link => (
-      <a 
-        key={link.id}
-        href={link.url} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="flex items-center p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group"
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        aria-label={`Visit ${link.title} at ${link.url}`}
-      >
-        <div 
-          className="w-2.5 h-2.5 rounded-full mr-2.5 ring-1 ring-gray-200 dark:ring-gray-600 transition-colors" 
-          style={{ backgroundColor: link.color }}
-        />
-        <span className="font-medium">{link.title}</span>
-        <ExternalLink size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
-      </a>
-    ))
-  }
+  const handleQuickAdd = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const rawUrl = newLinkUrl.trim();
+    if (!rawUrl) return;
 
-  /**
-   * Determines which view to render based on widget dimensions
-   * 
-   * @returns {JSX.Element} The appropriate view for the current dimensions
-   */
-  const renderContent = () => {
-    if (width >= 4 && height >= 4) {
-      return renderFullView()
-    } else if (width >= 3 && height >= 3) {
-      return renderTallView()
-    } else if (width >= 3) {
-      return renderWideView()
-    } else {
-      return renderDefaultView()
+    // Generate new ID outside try block
+    const newId = Math.max(0, ...links.map(link => link.id)) + 1;
+
+    try {
+      // Validate and normalize the URL
+      let normalizedUrl = rawUrl;
+      if (!rawUrl.match(/^https?:\/\//)) {
+        normalizedUrl = `https://${rawUrl}`;
+      }
+
+      // Basic URL validation
+      try {
+        new URL(normalizedUrl);
+      } catch (error) {
+        console.error('Invalid URL:', error);
+        return;
+      }
+
+      const urlObj = new URL(normalizedUrl);
+      // Add link immediately with basic info
+      const newLink: LinkItem = {
+        id: newId,
+        url: normalizedUrl,
+        title: urlObj.hostname,
+        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
+      };
+
+      // Update state and clear input
+      setLinks(prev => [...prev, newLink]);
+      setNewLinkUrl('');
+      setLoadingLinkIds(prev => [...prev, newId]);
+
+      // Focus the input field after adding
+      if (newLinkInputRef.current) {
+        newLinkInputRef.current.focus();
+      }
+
+      // Update config with basic info
+      if (config?.onUpdate) {
+        config.onUpdate({
+          ...config,
+          links: [...links, newLink]
+        });
+      }
+
+      // Fetch metadata asynchronously
+      try {
+        const metadata = await fetchUrlMetadata(normalizedUrl);
+        
+        // Only update if the title is different from the hostname
+        if (metadata.title !== newLink.title) {
+          const finalLink = {
+            ...newLink,
+            title: metadata.title,
+            favicon: metadata.favicon
+          };
+
+          setLinks(prevLinks => 
+            prevLinks.map(link => 
+              link.id === newId ? finalLink : link
+            )
+          );
+
+          // Update config with final metadata
+          if (config?.onUpdate) {
+            config.onUpdate({
+              ...config,
+              links: links.map(link => 
+                link.id === newId ? finalLink : link
+              )
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching link metadata:', error);
+        // Link is already added with basic info, so we just remove the loading state
+      }
+    } catch (error) {
+      console.error('Error adding link:', error);
+    } finally {
+      setLoadingLinkIds(prev => prev.filter(id => id !== newId));
     }
-  }
-
-  /**
-   * Renders the default view for standard widget size (2x2)
-   * 
-   * @returns {JSX.Element} Default view
-   */
-  const renderDefaultView = () => {
-    return (
-      <div className="flex flex-col space-y-1 overflow-y-auto">
-        {renderLinks(4)}
-      </div>
-    )
-  }
-
-  /**
-   * Renders a wider view with more links and details
-   * 
-   * @returns {JSX.Element} Wide layout view
-   */
-  const renderWideView = () => {
-    return (
-      <div className="grid grid-cols-2 gap-2">
-        {links.slice(0, 6).map(link => (
-          <a 
-            key={link.id}
-            href={link.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            aria-label={`Visit ${link.title} at ${link.url}`}
-          >
-            <div 
-              className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
-              style={{ backgroundColor: link.color }}
-            />
-            <span className="font-medium truncate">{link.title}</span>
-            <ExternalLink size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
-          </a>
-        ))}
-        {links.length < 6 && (
-          <button
-            onClick={() => {
-              setShowSettings(true)
-              startEdit()
-            }}
-            className="flex items-center justify-center p-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all bg-gray-50/50 dark:bg-slate-700/30 shadow-sm dark:shadow-md dark:shadow-slate-900/30 group"
-            aria-label="Add new link"
-          >
-            <Plus size={16} className="text-gray-500 dark:text-gray-300" />
-            <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-300">Add link</span>
-          </button>
-        )}
-      </div>
-    )
-  }
-
-  /**
-   * Renders a taller view with vertical link layout
-   * 
-   * @returns {JSX.Element} Tall layout view
-   */
-  const renderTallView = () => {
-    return (
-      <div className="grid grid-cols-2 gap-2">
-        {links.slice(0, 8).map(link => (
-          <a 
-            key={link.id}
-            href={link.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-md dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            aria-label={`Visit ${link.title} at ${link.url}`}
-          >
-            <div 
-              className="w-3 h-3 rounded-full mr-2 ring-1 ring-gray-200 dark:ring-gray-600" 
-              style={{ backgroundColor: link.color }}
-            />
-            <span className="font-medium truncate">{link.title}</span>
-            <ExternalLink size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
-          </a>
-        ))}
-        {links.length < 8 && (
-          <button
-            onClick={() => {
-              setShowSettings(true)
-              startEdit()
-            }}
-            className="flex items-center justify-center p-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all bg-gray-50/50 dark:bg-slate-700/30 shadow-sm dark:shadow-md dark:shadow-slate-900/30 group"
-            aria-label="Add new link"
-          >
-            <Plus size={16} className="text-gray-500 dark:text-gray-300" />
-            <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-300">Add link</span>
-          </button>
-        )}
-      </div>
-    )
-  }
-
-  /**
-   * Renders the full-size view with maximum links and details
-   * 
-   * @returns {JSX.Element} Full-size layout view
-   */
-  const renderFullView = () => {
-    return (
-      <div className="grid grid-cols-3 gap-3">
-        {links.slice(0, 11).map(link => (
-          <a 
-            key={link.id}
-            href={link.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-lg dark:shadow-slate-900/30 transition-all relative bg-white dark:bg-slate-800/50 text-gray-800 dark:text-gray-100 group"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            aria-label={`Visit ${link.title} at ${link.url}`}
-          >
-            <div 
-              className="w-10 h-10 rounded-full mb-2 flex items-center justify-center"
-              style={{ backgroundColor: link.color }}
-            >
-              <ExternalLink size={20} className="text-white" />
-            </div>
-            <span className="font-medium text-center">{link.title}</span>
-          </a>
-        ))}
-        {links.length < 11 && (
-          <button
-            onClick={() => {
-              setShowSettings(true)
-              startEdit()
-            }}
-            className="flex flex-col items-center justify-center p-3 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Add new link"
-          >
-            <div className="w-10 h-10 rounded-full mb-2 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-              <Plus size={20} className="text-gray-500 dark:text-gray-400" />
-            </div>
-            <span className="text-sm font-medium text-gray-500 dark:text-slate-400">Add link</span>
-          </button>
-        )}
-      </div>
-    )
-  }
-
-  /**
-   * Renders the settings content for the modal
-   * 
-   * @returns Settings content
-   */
-  const renderSettingsContent = () => {
-    return (
-      <div>
-        {editingLink ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Link Title
-              </label>
-              <input 
-                type="text" 
-                value={editingLink.title} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                placeholder="Google"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                URL
-              </label>
-              <input 
-                type="url" 
-                value={editingLink.url} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, url: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                placeholder="https://google.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Color
-              </label>
-              <div className="flex items-center">
-                <input 
-                  type="color" 
-                  value={editingLink.color} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
-                  className="w-10 h-10 p-1 rounded border border-gray-300 dark:border-slate-600"
-                />
-                <input 
-                  type="text" 
-                  value={editingLink.color} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, color: e.target.value})}
-                  className="flex-1 ml-2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md dark:bg-slate-700 text-gray-900 dark:text-slate-100"
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-1">
-              {links.map(link => (
-                <div 
-                  key={link.id} 
-                  className="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                >
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: link.color }}
-                    />
-                    <span className="font-medium">{link.title}</span>
-                  </div>
-                  <div className="flex space-x-1">
-                    <button 
-                      onClick={() => startEdit(link)}
-                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                      aria-label={`Edit ${link.title} link`}
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      onClick={() => removeLink(link.id)}
-                      className="p-1 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-                      aria-label={`Remove ${link.title} link`}
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => startEdit()}
-              className="w-full py-2 border border-dashed border-gray-300 dark:border-slate-600 rounded-md flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 mt-4"
-              aria-label="Add new link"
-            >
-              <Plus size={16} className="text-gray-500 mr-1" />
-              <span className="text-sm text-gray-500">Add new link</span>
-            </button>
-          </>
-        )}
-      </div>
-    );
   };
 
   /**
-   * Renders the settings footer for the modal
-   * 
-   * @returns Settings footer
+   * Renders the main content of the widget
    */
-  const renderSettingsFooter = () => {
+  const renderContent = () => {
     return (
-      <>
-        {config?.onDelete && !editingLink && (
-          <button
-            className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-            onClick={() => {
-              if (config.onDelete) {
-                config.onDelete();
-              }
-            }}
-            aria-label="Delete this widget"
-          >
-            Delete Widget
-          </button>
-        )}
-        
-        <div className="flex space-x-2">
-          <button
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
-            onClick={() => {
-              setShowSettings(false);
-              setEditingLink(null);
-            }}
-          >
-            {editingLink ? 'Cancel' : 'Close'}
-          </button>
-          
-          {editingLink && (
-            <button 
-              onClick={() => {
-                addLink();
-              }}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
-              disabled={!editingLink.title || !editingLink.url}
-            >
-              {editingLink.id ? 'Update' : 'Add'}
-            </button>
+      <div className="h-full flex flex-col">
+        <div className="flex-grow overflow-y-auto">
+          {links.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <p>No links yet. Add one below!</p>
+            </div>
+          ) : (
+            <div className="space-y-2 pr-1">
+              {links.map(link => (
+                <a 
+                  key={link.id}
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`flex items-center p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group ${
+                    loadingLinkIds.includes(link.id) ? 'opacity-50' : ''
+                  }`}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  aria-label={`Visit ${link.title} at ${link.url}`}
+                >
+                  <img 
+                    src={link.favicon}
+                    alt=""
+                    className={`w-4 h-4 mr-2.5 ${
+                      loadingLinkIds.includes(link.id) ? 'animate-pulse' : ''
+                    }`}
+                    loading="lazy"
+                  />
+                  <span className="font-medium flex-grow truncate">
+                    {loadingLinkIds.includes(link.id) ? 'Loading...' : link.title}
+                  </span>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startEdit(link);
+                      }}
+                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      aria-label={`Edit ${link.title} link`}
+                      disabled={loadingLinkIds.includes(link.id)}
+                    >
+                      <Edit size={14} />
+                    </button>
+                    <button 
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        removeLink(link.id);
+                      }}
+                      className="p-1 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                      aria-label={`Remove ${link.title} link`}
+                      disabled={loadingLinkIds.includes(link.id)}
+                    >
+                      <Trash size={14} />
+                    </button>
+                    <ExternalLink size={14} className="text-gray-400" />
+                  </div>
+                </a>
+              ))}
+            </div>
           )}
         </div>
-      </>
+
+        {/* Integrated add link form */}
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <form 
+            onSubmit={handleQuickAdd}
+            className="flex items-center gap-2"
+          >
+            <Input
+              ref={newLinkInputRef}
+              type="url"
+              value={newLinkUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLinkUrl(e.target.value)}
+              placeholder="Paste a URL and press Enter..."
+              className="flex-grow"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+              disabled={!newLinkUrl.trim() || isLoading}
+              aria-label="Add link"
+            >
+              <Plus size={20} />
+            </button>
+          </form>
+        </div>
+      </div>
     );
   };
 
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div 
+      ref={widgetRef} 
+      className="widget-container quicklinks-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+      style={{
+        '--widget-bg-light': getCurrentThemeColors().light,
+        '--widget-bg-dark': getCurrentThemeColors().dark,
+      } as React.CSSProperties}
+    >
       <WidgetHeader 
         title="Quick Links" 
         onSettingsClick={() => setShowSettings(true)}
       />
-      <div className="flex-1 overflow-auto p-1">
+      <div className="flex-1 overflow-hidden p-3">
         {renderContent()}
       </div>
       
@@ -455,17 +443,157 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           onOpenChange={(open: boolean) => {
             if (!open) {
               setShowSettings(false);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Widget Settings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Page color
+                </span>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(Object.keys(themeColors) as Array<keyof typeof themeColors>).map((theme) => (
+                    <button
+                      key={theme}
+                      onClick={() => handleThemeChange(theme as NonNullable<QuickLinksWidgetConfig['theme']>)}
+                      className={`
+                        w-8 h-8 rounded-full transition-all
+                        ${config?.theme === theme ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-slate-900' : ''}
+                      `}
+                      style={{
+                        backgroundColor: themeColors[theme as keyof ThemeColors].light,
+                      }}
+                      aria-label={`${theme} theme`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="flex justify-between items-center">
+              <div className="flex-1">
+                {config?.onDelete && (
+                  <button
+                    className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
+                    onClick={() => {
+                      if (config.onDelete) {
+                        config.onDelete();
+                      }
+                    }}
+                    aria-label="Delete this widget"
+                  >
+                    Delete Widget
+                  </button>
+                )}
+              </div>
+              <button
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+                onClick={() => setShowSettings(false)}
+              >
+                Close
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {editingLink && (
+        <Dialog
+          open={true}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
               setEditingLink(null);
             }
           }}
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingLink ? 'Edit Link' : 'Quick Links Settings'}</DialogTitle>
+              <DialogTitle>Edit Link</DialogTitle>
             </DialogHeader>
-            {renderSettingsContent()}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <img 
+                  src={editingLink.favicon}
+                  alt=""
+                  className="w-5 h-5"
+                  loading="lazy"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {editingLink.url}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  URL
+                </label>
+                <Input 
+                  type="url" 
+                  value={editingLink.url} 
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const url = e.target.value;
+                    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+                    const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+                    
+                    setEditingLink({...editingLink, url, favicon});
+                    
+                    if (url && url.match(/^https?:\/\/.+/)) {
+                      try {
+                        const metadata = await fetchUrlMetadata(url);
+                        setEditingLink(prev => ({
+                          ...prev!,
+                          url,
+                          title: metadata.title,
+                          favicon
+                        }));
+                      } catch (error) {
+                        console.error('Error fetching URL metadata:', error);
+                      }
+                    }
+                  }}
+                  placeholder="https://google.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Display Title
+                </label>
+                <Input 
+                  type="text" 
+                  value={editingLink.title} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLink({...editingLink, title: e.target.value})}
+                  placeholder="Override auto-detected title"
+                />
+              </div>
+            </div>
             <DialogFooter>
-              {renderSettingsFooter()}
+              <div className="flex space-x-2">
+                <button
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-medium"
+                  onClick={() => {
+                    setEditingLink(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    if (editingLink.url) {
+                      addLink();
+                      setEditingLink(null);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!editingLink.url}
+                >
+                  {editingLink.id ? 'Update' : 'Add'}
+                </button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>

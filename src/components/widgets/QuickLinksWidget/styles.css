@@ -1,0 +1,11 @@
+.widget-container.quicklinks-widget {
+  background-color: var(--widget-bg-light) !important;
+  transition: background-color 0.2s ease-in-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  .widget-container.quicklinks-widget {
+    background-color: var(--widget-bg-dark) !important;
+    transition: background-color 0.2s ease-in-out;
+  }
+} 
