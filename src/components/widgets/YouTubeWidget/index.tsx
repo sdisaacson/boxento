@@ -8,6 +8,7 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { YouTubeWidgetProps, YouTubeWidgetConfig } from './types';
+import { Button } from '../../ui/button';
 
 /**
  * Size categories for widget content rendering
@@ -714,27 +715,28 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={saveSettings}
+                disabled={videoIdFeedback.type === 'error'}
               >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              disabled={videoIdFeedback.type === 'error'}
-            >
-              Save
-            </button>
+                Save
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,6 +8,10 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { WidgetProps } from '@/types';
+import { Label } from '../../ui/label';
+import { Input } from '../../ui/input';
+import { Switch } from '../../ui/switch';
+import { Button } from '../../ui/button';
 
 // Define types inline since there's an issue with importing them
 interface TemplateWidgetConfig {
@@ -474,61 +478,55 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
           
           <div className="space-y-4 py-2">
             {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Widget Title</Label>
+              <Input
                 id="title-input"
                 type="text"
                 value={localConfig.title || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, title: e.target.value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Debug mode toggle */}
-            <div className="flex items-center">
-              <input
+            <div className="flex items-center justify-between">
+              <Label htmlFor="debug-toggle">Show Debug Info (Size)</Label>
+              <Switch
                 id="debug-toggle"
-                type="checkbox"
                 checked={localConfig.showDebug || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setLocalConfig({...localConfig, showDebug: e.target.checked})
+                onCheckedChange={(checked: boolean) => 
+                  setLocalConfig({...localConfig, showDebug: checked})
                 }
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="debug-toggle" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show Debug Info (Size)
-              </label>
             </div>
             
             {/* Add more settings fields here */}
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
+              <Button
+                variant="default"
+                onClick={saveSettings}
               >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Save
-            </button>
+                Save
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

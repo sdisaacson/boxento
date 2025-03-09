@@ -9,6 +9,9 @@ import {
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import WidgetHeader from '../common/WidgetHeader';
 import { PomodoroWidgetConfig, PomodoroWidgetProps } from './types';
+import { Label } from '../../ui/label';
+import { Input } from '../../ui/input';
+import { Button } from '../../ui/button';
 
 /**
  * Pomodoro Widget Component
@@ -361,27 +364,22 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
           
           <div className="space-y-4 py-2">
             {/* Title setting */}
-            <div>
-              <label htmlFor="title-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Widget Title
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="title-input">Widget Title</Label>
+              <Input
                 id="title-input"
                 type="text"
                 value={localConfig.title || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, title: e.target.value})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Work duration setting */}
-            <div>
-              <label htmlFor="work-duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Focus Time Duration (minutes)
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="work-duration">Focus Time Duration (minutes)</Label>
+              <Input
                 id="work-duration"
                 type="number"
                 min="1"
@@ -390,16 +388,13 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, workDuration: parseInt(e.target.value)})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Break duration setting */}
-            <div>
-              <label htmlFor="break-duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Short Break Duration (minutes)
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="break-duration">Short Break Duration (minutes)</Label>
+              <Input
                 id="break-duration"
                 type="number"
                 min="1"
@@ -408,16 +403,13 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, breakDuration: parseInt(e.target.value)})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Long break duration setting */}
-            <div>
-              <label htmlFor="long-break-duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Long Break Duration (minutes)
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="long-break-duration">Long Break Duration (minutes)</Label>
+              <Input
                 id="long-break-duration"
                 type="number"
                 min="1"
@@ -426,16 +418,13 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, longBreakDuration: parseInt(e.target.value)})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             {/* Cycles before long break setting */}
-            <div>
-              <label htmlFor="cycles-before-long-break" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Cycles Before Long Break
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="cycles-before-long-break">Cycles Before Long Break</Label>
+              <Input
                 id="cycles-before-long-break"
                 type="number"
                 min="1"
@@ -444,32 +433,32 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setLocalConfig({...localConfig, cyclesBeforeLongBreak: parseInt(e.target.value)})
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
           
           <DialogFooter>
-            {config?.onDelete && (
-              <button
-                className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
+              <Button
+                variant="default"
+                onClick={saveSettings}
               >
-                Delete Widget
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={saveSettings}
-              className="ml-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Save
-            </button>
+                Save
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
