@@ -216,26 +216,28 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
             </div>
           </div>
           
-          <DialogFooter className="flex justify-between">
-            {config?.onDelete && (
+          <DialogFooter>
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
               <Button
-                variant="destructive"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+                onClick={saveSettings}
+                variant="default"
               >
-                Delete Widget
+                Save
               </Button>
-            )}
-            <Button
-              onClick={saveSettings}
-              variant="default"
-            >
-              Save
-            </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1113,26 +1113,28 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             </TabsContent>
           </Tabs>
           
-          <DialogFooter className="flex justify-between">
-            {config?.onDelete && (
+          <DialogFooter>
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
               <Button
-                variant="destructive"
-                onClick={() => {
-                  if (config.onDelete) {
-                    config.onDelete();
-                  }
-                }}
-                aria-label="Delete this widget"
+                type="submit"
+                onClick={saveSettings}
               >
-                Delete Widget
+                Save Changes
               </Button>
-            )}
-            <Button
-              type="submit"
-              onClick={saveSettings}
-            >
-              Save Changes
-            </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
