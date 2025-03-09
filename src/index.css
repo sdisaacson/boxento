@@ -18,55 +18,39 @@ body.dragging-active {
   -webkit-touch-callout: none !important;
 }
 
-/* Widget container - contains styling ONLY for widgets themselves */
+/* Global Widget Container Styles */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words;
+  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words bg-white dark:bg-slate-800;
   /* Prevent text selection during any interaction */
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Safari */
-  -khtml-user-select: none; /* Konqueror HTML */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
-/* Notes widget specific styling */
-.widget-container.notes-widget {
-  @apply bg-amber-50 dark:bg-slate-800;
-}
-
-/* Default styling for other widgets */
-.widget-container:not(.notes-widget) {
-  @apply bg-white dark:bg-slate-800;
-}
-
-/* Fix for the drag handle */
+/* Global Widget Interaction Styles */
 .widget-drag-handle {
   @apply cursor-move touch-none select-none;
 }
 
-/* Non-draggable widget content */
 .widget-container > div:not(.widget-drag-handle) {
   @apply cursor-default pointer-events-auto;
 }
 
-/* Special handling for the QuickLinks widget buttons */
-.widget-container button[class*="hover:bg-gray"] {
-  @apply cursor-pointer pointer-events-auto;
-}
-
-/* Make all links inside widgets explicitly clickable */
+/* Global Widget Interactive Elements */
 .widget-container a,
 .widget-container button:not(.settings-button) {
   @apply cursor-pointer pointer-events-auto relative z-10;
 }
 
-/* Ensure the widget content is visible and clickable */
 .widget-container *:not(.widget-drag-handle):not(.settings-button) {
   @apply pointer-events-auto;
 }
 
+/* Global Widget Settings Button */
 .widget-container .settings-button {
   @apply cursor-pointer z-10 opacity-0 transition-opacity duration-200 ease-in-out pointer-events-auto;
   border-radius: var(--border-radius-standard);
@@ -76,29 +60,23 @@ body.dragging-active {
   @apply opacity-100;
 }
 
-/* Make sure clicks on settings buttons are never blocked */
 .settings-button,
 .settings-button * {
   @apply pointer-events-auto;
 }
 
-/* Basic container - completely unstyled */
+/* Grid Layout Styles */
 .grid-item-container {
   @apply p-0 bg-transparent h-full w-full;
 }
 
-/* Base widget styling with enhanced selection prevention */
 .react-grid-item {
   @apply transition-all duration-200 ease-in-out;
-  -webkit-user-drag: none; /* Prevent dragging of content */
+  -webkit-user-drag: none;
 }
 
-/* Apply selection prevention immediately on mousedown */
 .react-grid-item:active,
-.react-grid-item:focus {
-  @apply select-none;
-}
-
+.react-grid-item:focus,
 .react-grid-item:active *,
 .react-grid-item:focus * {
   @apply select-none;
@@ -165,18 +143,6 @@ body.dragging-active {
 .react-grid-item:hover .react-resizable-handle {
   @apply opacity-100;
 }
-
-/* Remove these custom classes that might interfere with default behavior */
-/* 
-.react-grid-item.cssTransforms {
-  transition-property: transform;
-  transition-duration: 0.2s;
-}
-
-.react-grid-item.moving {
-  transition: none !important;
-}
-*/
 
 /* App Header Styles */
 .app-header {

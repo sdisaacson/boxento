@@ -8,4 +8,9 @@
     background-color: var(--widget-bg-dark) !important;
     transition: background-color 0.2s ease-in-out;
   }
+}
+
+/* QuickLinks specific button styles */
+.widget-container.quicklinks-widget button[class*="hover:bg-gray"] {
+  @apply cursor-pointer pointer-events-auto;
 } 
