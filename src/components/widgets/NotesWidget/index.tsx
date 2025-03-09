@@ -126,39 +126,13 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
     const lineHeight = localConfig.lineHeight || defaultConfig.lineHeight || 26;
     const lineColor = localConfig.lineColor || defaultConfig.lineColor || '#E6E6E6';
     
-    // Create a linear gradient with a single thin line at the bottom of each row
-    return `linear-gradient(to bottom, transparent ${lineHeight - 1}px, ${lineColor} ${lineHeight - 1}px, ${lineColor} ${lineHeight}px, transparent ${lineHeight}px)`;
-  };
-
-  // Render different views based on widget size
-  const renderContent = () => {
-    
-    return (
-      <div 
-        className="h-full relative bg-amber-50 dark:bg-gray-900 overflow-hidden rounded-md"
-        style={{
-          background: getLinedPaperBackground(),
-          backgroundSize: `100% ${localConfig.lineHeight || defaultConfig.lineHeight}px`,
-          backgroundRepeat: 'repeat-y',
-        }}
-      >
-        <textarea
-          ref={textareaRef}
-          value={localConfig.content || ''}
-          onChange={handleContentChange}
-          className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 bg-transparent 
-                    text-gray-800 dark:text-gray-200 py-1 leading-relaxed"
-          style={{
-            fontFamily: localConfig.fontFamily || defaultConfig.fontFamily,
-            fontSize: `${localConfig.fontSize || defaultConfig.fontSize}px`,
-            lineHeight: `${localConfig.lineHeight || defaultConfig.lineHeight}px`,
-            caretColor: '#000000',
-          }}
-          placeholder="Write your notes here..."
-          aria-label="Notes content"
-        />
-      </div>
-    );
+    return `repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent ${lineHeight - 1}px,
+      ${lineColor} ${lineHeight - 1}px,
+      ${lineColor} ${lineHeight}px
+    )`;
   };
 
   // Settings modal using shadcn/ui Dialog
@@ -260,14 +234,42 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   };
 
   return (
-    <div ref={widgetRef} className="widget-container notes-widget h-full flex flex-col rounded-lg shadow overflow-hidden">
+    <div 
+      ref={widgetRef} 
+      className="widget-container notes-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+      style={{
+        backgroundColor: 'rgb(254 243 199)' // Tailwind amber-50
+      }}
+    >
       <WidgetHeader 
         title={localConfig.title || 'Notes'} 
         onSettingsClick={() => setShowSettings(!showSettings)}
       />
       
       <div className="flex-1 overflow-hidden p-2">
-        {renderContent()}
+        <div 
+          className="h-full relative overflow-hidden rounded-md"
+          style={{
+            backgroundImage: getLinedPaperBackground(),
+            backgroundColor: 'transparent'
+          }}
+        >
+          <textarea
+            ref={textareaRef}
+            value={localConfig.content || ''}
+            onChange={handleContentChange}
+            className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 bg-transparent 
+                      text-gray-800 dark:text-gray-200 py-1 leading-relaxed"
+            style={{
+              fontFamily: localConfig.fontFamily || defaultConfig.fontFamily,
+              fontSize: `${localConfig.fontSize || defaultConfig.fontSize}px`,
+              lineHeight: `${localConfig.lineHeight || defaultConfig.lineHeight}px`,
+              caretColor: '#000000',
+            }}
+            placeholder="Write your notes here..."
+            aria-label="Notes content"
+          />
+        </div>
       </div>
       
       {/* Settings modal */}
