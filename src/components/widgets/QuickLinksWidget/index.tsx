@@ -486,16 +486,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
               </div>
             </div>
             <DialogFooter>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditingLink(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                
+              <div className="flex justify-end">
                 <Button
                   variant="default"
                   onClick={() => {

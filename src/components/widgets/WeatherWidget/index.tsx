@@ -752,13 +752,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           </Button>
         )}
         
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsSettingsOpen(false)}
-          >
-            Cancel
-          </Button>
+        <div className="flex">
           <Button
             variant="default"
             onClick={() => {

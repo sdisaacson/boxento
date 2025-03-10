@@ -1310,10 +1310,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             </TabsContent>
           </Tabs>
           
-          <DialogFooter className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-            <Button variant="outline" onClick={() => setShowSettings(false)}>
-              Cancel
-            </Button>
+          <DialogFooter className="flex justify-end items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
             <Button 
               onClick={() => {
                 saveSettings();

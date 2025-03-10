@@ -913,13 +913,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddForm(false)}
-                >
-                  Cancel
-                </Button>
+              <div className="flex justify-end pt-2">
                 <Button
                   variant="default"
                   onClick={addTimezone}
@@ -995,16 +989,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           </Button>
         )}
         
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setShowSettings(false);
-              setShowAddForm(false);
-            }}
-          >
-            Cancel
-          </Button>
+        <div className="flex justify-end">
           <Button
             variant="default"
             onClick={() => {
