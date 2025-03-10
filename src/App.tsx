@@ -88,27 +88,32 @@ function App() {
       lg: [
         { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
         { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 }
+        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        { i: 'default-notes', x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
       ],
       md: [
         { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
         { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 }
+        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        { i: 'default-notes', x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
       ],
       sm: [
         { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
         { i: 'default-weather', x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 }
+        { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
+        { i: 'default-notes', x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
       ],
       xs: [
         { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
         { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 }
+        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
       ],
       xxs: [
         { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
         { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 }
+        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+        { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
       ]
     };
     return defaultLayout;
@@ -136,6 +141,11 @@ function App() {
             id: 'default-quick-links',
             type: 'quick-links',
             config: getWidgetConfigByType('quick-links') || {}
+          },
+          {
+            id: 'default-notes',
+            type: 'notes',
+            config: getWidgetConfigByType('notes') || {}
           }
         ];
       }
