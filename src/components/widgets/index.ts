@@ -213,17 +213,6 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Education',
     description: 'Test your geography knowledge with an interactive quiz'
-  },
-  {
-    type: 'spotify',
-    name: 'Spotify',
-    icon: 'Music',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 2,
-    defaultHeight: 2,
-    category: 'Entertainment',
-    description: 'Display and control your Spotify playback'
   }
 ];
 
