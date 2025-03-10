@@ -17,6 +17,7 @@ import RSSWidget from './RSSWidget/index';
 import GitHubStreakWidget from './GitHubStreakWidget/index';
 import FlightTrackerWidget from './FlightTrackerWidget/index';
 import GeographyQuizWidget from './GeographyQuizWidget/index';
+// import SpotifyWidget from './SpotifyWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -36,6 +37,7 @@ export * from './RSSWidget/types';
 export * from './GitHubStreakWidget/types';
 export * from './FlightTrackerWidget/types';
 export * from './GeographyQuizWidget/types';
+// export * from './SpotifyWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -211,6 +213,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Education',
     description: 'Test your geography knowledge with an interactive quiz'
+  },
+  {
+    type: 'spotify',
+    name: 'Spotify',
+    icon: 'Music',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Entertainment',
+    description: 'Display and control your Spotify playback'
   }
 ];
 
@@ -259,6 +272,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return FlightTrackerWidget;
     case 'geography-quiz':
       return GeographyQuizWidget;
+    // case 'spotify':
+    //   return SpotifyWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
