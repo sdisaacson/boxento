@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Moon, Sun } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
-// @ts-ignore - The types don't correctly represent the module structure
+// @ts-expect-error - The types don't correctly represent the module structure
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -172,10 +172,9 @@ function App() {
   })
   
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
-  const [sidebarOpen, _setSidebarOpen] = useState<boolean>(false)
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false)
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg')
-  const [widgetCategories, _setWidgetCategories] = useState<WidgetCategory>(() => {
+  const widgetCategories: WidgetCategory = (() => {
     // Group widgets by category
     const categories: WidgetCategory = {};
     
@@ -188,7 +187,7 @@ function App() {
     });
     
     return categories;
-  });
+  })();
   
   // Save widgets and layout to localStorage when they change
   useEffect(() => {
@@ -198,8 +197,13 @@ function App() {
       // Save each widget's configuration separately using configManager
       widgets.forEach(widget => {
         if (widget.config && widget.id) {
-          // Don't save event handlers like onDelete
-          const { onDelete, onUpdate, ...configToSave } = widget.config;
+          // Extract config without function properties
+          const { ...configToSave } = widget.config;
+          
+          // Remove function properties that shouldn't be serialized
+          delete configToSave.onDelete;
+          delete configToSave.onUpdate;
+          
           configManager.saveWidgetConfig(widget.id, configToSave);
         }
       });
@@ -221,15 +225,12 @@ function App() {
   useEffect(() => {
     const handleResize = () => {
       const bodyPadding = 40; // Account for any potential body margin/padding
-      setWindowWidth(window.innerWidth - (sidebarOpen ? 250 : 0) - bodyPadding);
+      setWindowWidth(window.innerWidth - bodyPadding);
     };
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [sidebarOpen]);
-  
-  // Track if we're currently transitioning between breakpoints to prevent layout updates
-  const [isBreakpointChanging, setIsBreakpointChanging] = useState<boolean>(false);
+  }, []);
   
   // Listen for resize events to update the breakpoint
   useEffect(() => {
@@ -247,14 +248,8 @@ function App() {
       }
       
       if (newBreakpoint !== currentBreakpoint) {
-        setIsBreakpointChanging(true);
         setCurrentBreakpoint(newBreakpoint);
         console.log('Breakpoint changed to:', newBreakpoint);
-        
-        // Reset the flag after a short delay to allow the layout to settle
-        setTimeout(() => {
-          setIsBreakpointChanging(false);
-        }, 400);
       }
     };
     
@@ -355,31 +350,6 @@ function App() {
     }
   };
   
-  // Helper function to find the best position for a new widget
-  const calculatePositions = (layout: LayoutItem[], cols: number) => {
-    if (layout.length === 0) return { x: 0, y: 0 };
-    
-    // Find the highest y coordinate
-    const maxY = Math.max(...layout.map(item => item.y + item.h), 0);
-    
-    // Try to position in the first row if space available
-    for (let x = 0; x <= cols - 2; x++) {
-      const overlapping = layout.some(item => 
-        item.x <= x + 2 - 1 && 
-        item.x + item.w > x && 
-        item.y <= 0 + 2 - 1 && 
-        item.y + item.h > 0
-      );
-      
-      if (!overlapping) {
-        return { x, y: 0 };
-      }
-    }
-    
-    // Default to positioning at the bottom
-    return { x: 0, y: maxY };
-  };
-
   const deleteWidget = (widgetId: string): void => {
     // Remove widget config from storage
     configManager.clearConfig(widgetId);
@@ -399,11 +369,8 @@ function App() {
     localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
   };
   
-  // Store the last layout update timestamp to throttle updates
-  const [lastLayoutUpdate, setLastLayoutUpdate] = useState<number>(0);
-  
   // Add this near the top of the App component along with other state variables
-  const layoutUpdateTimeout = React.useRef<any>(null);
+  const layoutUpdateTimeout = React.useRef<number | null>(null);
   
   // Update handleLayoutChange function to handle all responsive layouts
   const handleLayoutChange = (currentLayout: LayoutItem[], allLayouts?: { [key: string]: LayoutItem[] }): void => {
@@ -416,8 +383,10 @@ function App() {
     // If we have all layouts from the responsive grid
     if (allLayouts) {
       // Use a timeout to debounce the layout update to prevent excessive state updates
-      clearTimeout(layoutUpdateTimeout.current);
-      layoutUpdateTimeout.current = setTimeout(() => {
+      if (layoutUpdateTimeout.current !== null) {
+        clearTimeout(layoutUpdateTimeout.current);
+      }
+      layoutUpdateTimeout.current = window.setTimeout(() => {
         // Create a validated copy to prevent mutating the input
         const validatedLayouts = { ...allLayouts };
         
@@ -451,11 +420,11 @@ function App() {
   };
   
   /**
-   * Update a widget's configuration
-   * @param widgetId The ID of the widget to update
+   * Updates a widget's configuration
+   * @param widgetId ID of the widget to update
    * @param newConfig New configuration object
    */
-  const updateWidgetConfig = (widgetId: string, newConfig: any): void => {
+  const updateWidgetConfig = (widgetId: string, newConfig: Record<string, unknown>): void => {
     // Update widget in state
     setWidgets(widgets.map(widget => 
       widget.id === widgetId 
@@ -464,7 +433,16 @@ function App() {
     ));
     
     // Save to configManager - excluding function properties
-    const { onDelete, onUpdate, ...configToSave } = newConfig;
+    const { ...configToSave } = newConfig as { 
+      onDelete?: () => void; 
+      onUpdate?: (config: Record<string, unknown>) => void;
+      [key: string]: unknown;
+    };
+    
+    // Remove function properties that shouldn't be serialized
+    delete configToSave.onDelete;
+    delete configToSave.onUpdate;
+    
     configManager.saveWidgetConfig(widgetId, configToSave);
   };
 
@@ -493,7 +471,7 @@ function App() {
             config={{
               ...widget.config,
               onDelete: () => deleteWidget(widget.id),
-              onUpdate: (newConfig: any) => updateWidgetConfig(widget.id, newConfig)
+              onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
             }}
           />
         } />
@@ -509,7 +487,7 @@ function App() {
           config={{
             ...widget.config,
             onDelete: () => deleteWidget(widget.id),
-            onUpdate: (newConfig: any) => updateWidgetConfig(widget.id, newConfig)
+            onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
           }}
         />
       } />
@@ -786,54 +764,25 @@ function App() {
             <button
               onClick={toggleTheme}
               className="h-9 w-9 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <button
               onClick={toggleWidgetSelector}
-              className="h-9 w-9 rounded-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400"
+              className="group flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500 dark:bg-blue-600 text-white 
+                      text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              title="Add Widget"
+              aria-label="Add Widget"
             >
-              <Plus size={18} />
+              <Plus size={18} className="transition-transform group-hover:rotate-90" />
+              <span className="hidden sm:inline">Add Widget</span>
             </button>
           </div>
         </div>
       </div>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
-        <header className="app-header">
-          <div className="header-container">
-            <div className="header-left">
-              <h1 className="app-title">Boxento</h1>
-            </div>
-            
-            <div className="header-right">
-              <button 
-                onClick={toggleWidgetSelector}
-                className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500 dark:bg-blue-600 text-white 
-                         text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
-                         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-                title="Add Widget"
-                aria-label="Add Widget"
-              >
-                <Plus size={16} className="transition-transform group-hover:rotate-90" />
-                <span className="hidden sm:inline">Add Widget</span>
-              </button>
-              
-              <button 
-                onClick={toggleTheme}
-                className="p-1.5 rounded-full bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200
-                         text-gray-700 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2"
-                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-              >
-                {theme === 'light' ? (
-                  <Moon size={16} className="text-slate-700" />
-                ) : (
-                  <Sun size={16} className="text-yellow-400" />
-                )}
-              </button>
-            </div>
-          </div>
-        </header>
-        
         <main className="pt-16 md:pt-20">
           <WidgetSelector 
             isOpen={widgetSelectorOpen}
