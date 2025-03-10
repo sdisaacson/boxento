@@ -4,14 +4,15 @@ Boxento includes a shared credentials system that allows multiple widget instanc
 
 ## How It Works
 
-The shared credentials system stores encrypted API keys and other sensitive data in localStorage. Each credential type has a unique identifier (e.g., "openweathermap-api" for weather widgets). When a widget is configured to use shared credentials, it retrieves its API key from this central store instead of its individual widget configuration.
+The shared credentials system stores encrypted API keys and other sensitive data in localStorage. Each credential type has a unique identifier (e.g., "openexchangerates-api" for currency converter widgets). When a widget is configured to use shared credentials, it retrieves its API key from this central store instead of its individual widget configuration.
 
 ## Implemented Widgets
 
 The following widgets support shared credentials:
 
-1. **Weather Widget** - Allows sharing OpenWeatherMap API keys between multiple Weather widget instances.
-2. **Currency Converter Widget** - Allows sharing Open Exchange Rates API keys between multiple Currency Converter widget instances.
+1. **Currency Converter Widget** - Allows sharing Open Exchange Rates API keys between multiple Currency Converter widget instances.
+
+> **Note:** The **Weather Widget** uses the Open-Meteo API which does not require authentication or API keys, so it does not implement the shared credentials system.
 
 ## User Interface
 
@@ -92,7 +93,6 @@ When implementing a new shared credential type, add it to the `CredentialType` t
 
 ```typescript
 export type CredentialType = 
-  | 'openweathermap-api'  // Weather widget
   | 'openexchangerates-api'  // Currency converter widget
   | 'your-new-credential-type'  // Your new widget
   | string;  // Allow extension for future widgets

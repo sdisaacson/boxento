@@ -13,7 +13,6 @@ const SHARED_CREDENTIALS_KEY = 'boxento-shared-credentials';
 
 // Credential types that widgets can use
 export type CredentialType = 
-  | 'openweathermap-api'  // Weather widget
   | 'openexchangerates-api'  // Currency converter widget
   | string;               // Allow extension for future widgets
 
