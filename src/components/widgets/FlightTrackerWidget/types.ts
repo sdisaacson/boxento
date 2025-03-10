@@ -10,6 +10,8 @@ import { WidgetProps } from '@/types';
  * @property {string} [flightNumber] - Combined flight number (e.g., "AA123" or "AXB744")
  * @property {string} [flightDate] - Flight date in YYYY-MM-DD format
  * @property {string} [airline] - Optional airline code to filter results
+ * @property {number} [refreshInterval] - Automatic refresh interval in milliseconds
+ * @property {string} [accentColor] - UI accent color theme
  * 
  * @property {string} [_airlineCode] - Internal use: extracted airline code from flightNumber (IATA or ICAO)
  * @property {string} [_flightNumberOnly] - Internal use: extracted numeric part from flightNumber
@@ -22,6 +24,8 @@ export interface FlightTrackerWidgetConfig {
   flightNumber?: string;
   flightDate?: string;
   airline?: string;
+  refreshInterval?: number;
+  accentColor?: string;
   
   // Internal properties used after parsing the combined flight number
   _airlineCode?: string;

@@ -26,7 +26,7 @@ import {
   AviationStackResponse,
   AviationStackFlight
 } from './types';
-import { Plane, MapPin, Clock, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plane, MapPin, Clock, Calendar, AlertCircle, RefreshCw, Cloud, Wind, Thermometer, ArrowRight, Map, Info, ChevronRight, Wifi, Shield, Sunset, Sunrise } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -319,7 +319,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                     estimated: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
                     actual: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
                     estimated_runway: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                    actual_runway: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
+                    actual_runway: null
                   },
                   arrival: {
                     airport: arrAirport,
@@ -525,179 +525,57 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   // Render initial setup view
   const renderSetupView = () => {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-        <Plane className="mb-2 h-8 w-8 text-gray-400" />
-        <h3 className="mb-2 text-base font-medium">Flight Tracker Setup</h3>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Click the settings icon to configure your API key and flight details.
-        </p>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="rounded bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-        >
-          Configure Widget
-        </button>
+      <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
+        <div className="p-3 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
+          <Plane className="h-8 w-8 text-blue-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold mb-1">Track Your Flight</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Enter your flight details to get real-time updates and information
+          </p>
+          <Button 
+            onClick={() => setShowSettings(true)}
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium"
+          >
+            Configure Flight Tracker
+          </Button>
+        </div>
       </div>
     );
   };
 
   // Render error state
   const renderErrorState = () => {
-    // Detect specific error types to provide more helpful information
-    let errorTitle = "Error";
-    let errorMessage = error;
-    let helpText = "";
-    
-    if (error?.includes("No flight data found")) {
-      errorTitle = "Flight Not Found";
-      
-      // Check if the flight number might be from FlightAware
-      const mightBeFlightAware = localConfig.flightNumber && 
-                               localConfig.flightNumber.length > 0 && 
-                               localConfig._airlineCode && 
-                               localConfig._airlineCode.length === 3;
-      
-      // Provide specific guidance for common issues
-      helpText = (
-        <>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Try these solutions:
-          </p>
-          <ul className="mt-1 text-left text-xs text-gray-500 dark:text-gray-400 list-disc pl-4">
-            <li>Double-check your flight number format (e.g., AA123 for IATA or AXB744 for ICAO)</li>
-            <li>Make sure you're using the correct airline code (2-letter IATA or 3-letter ICAO)</li>
-            <li>Try a different date or a more recent flight</li>
-            {mightBeFlightAware && (
-              <li className="text-amber-600 dark:text-amber-400">
-                It appears you may be using a FlightAware code. Try using one of our demo flights instead.
-              </li>
-            )}
-            <li>Not all flights are available in the free API tier (limited to 100 monthly calls)</li>
-          </ul>
-          <div className="mt-2">
-            <p className="text-xs text-blue-500 dark:text-blue-400">
-              Try one of these demo flights:
-            </p>
-            <div className="mt-1 grid grid-cols-2 gap-1">
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'ASH6040'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                ASH6040 (Air Shuttle)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'UAL123'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                UAL123 (United)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'AAL456'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                AAL456 (American)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'DAL789'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                DAL789 (Delta)
-              </button>
-            </div>
-          </div>
-        </>
-      );
-    } else if (error?.includes("API responded with status") || error?.includes("API error")) {
-      errorTitle = "API Error";
-      helpText = (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Please check your AviationStack API access key and ensure you're within usage limits (100 calls/month for free tier).
-        </p>
-      );
-    } else if (error?.includes("Network request failed")) {
-      errorTitle = "Connection Error";
-      helpText = (
-        <>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Please check your internet connection and try again.
-          </p>
-          <button
-            onClick={handleManualRefresh}
-            className="mt-2 flex items-center text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
-          >
-            <RefreshCw className="mr-1 h-3 w-3" /> Retry connection
-          </button>
-          <div className="mt-3">
-            <p className="text-xs text-amber-600 dark:text-amber-400">
-              Try our offline demo flights:
-            </p>
-            <div className="mt-1 grid grid-cols-2 gap-1">
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'ASH6040'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                ASH6040 (Air Shuttle)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'UAL123'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                UAL123 (United)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'AAL456'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                AAL456 (American)
-              </button>
-              <button 
-                onClick={() => {
-                  setLocalConfig({...localConfig, flightNumber: 'DAL789'});
-                  setIsManualRefresh(true);
-                }}
-                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                DAL789 (Delta)
-              </button>
-            </div>
-          </div>
-        </>
-      );
-    }
-    
     return (
-      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-        <AlertCircle className="mb-2 h-8 w-8 text-red-500" />
-        <h3 className="mb-2 text-base font-medium">{errorTitle}</h3>
-        <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">{errorMessage}</p>
-        {helpText}
-        <button
-          onClick={() => setShowSettings(true)}
-          className="mt-4 rounded bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-        >
-          Configure Widget
-        </button>
+      <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
+        <div className="p-3 rounded-full bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-900/20">
+          <AlertCircle className="h-8 w-8 text-red-500" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold mb-1">Unable to Track Flight</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            {error || "There was an error retrieving flight information"}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+            Please check your flight number and API key
+          </p>
+          <div className="flex space-x-3 justify-center">
+            <Button 
+              onClick={() => setShowSettings(true)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
+            >
+              Settings
+            </Button>
+            <Button 
+              onClick={handleManualRefresh}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -705,9 +583,15 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   // Render loading state
   const renderLoadingState = () => {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-        <div className="animate-spin mb-2 h-8 w-8 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading flight details...</p>
+      <div className="h-full flex flex-col items-center justify-center p-4 text-center">
+        <div className="animate-pulse mb-4 relative">
+          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+            <Plane className="h-8 w-8 text-blue-500 animate-pulse" />
+          </div>
+          <div className="absolute inset-0 rounded-full border-2 border-blue-200 dark:border-blue-800 border-t-transparent dark:border-t-transparent animate-spin"></div>
+        </div>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Loading flight details...</p>
+        <p className="text-xs text-gray-500 mt-1">Retrieving the latest information</p>
       </div>
     );
   };
@@ -725,105 +609,192 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     const arrTime = arrivalDateTime === 'N/A' ? 'N/A' : arrivalDateTime.time;
     const arrDate = arrivalDateTime === 'N/A' ? 'N/A' : arrivalDateTime.date;
     
-    // Determine flight status display
+    // Determine flight status display with Flighty-inspired styling
     let statusClass = "text-blue-500";
     let statusText = flightData.flight_status || "Unknown";
-    let statusBgClass = "bg-blue-100 dark:bg-blue-900/30";
+    let statusBgClass = "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30";
+    let statusIconBg = "bg-blue-500";
+    let statusIcon = <Clock className="h-4 w-4" />;
     
     switch (flightData.flight_status?.toLowerCase()) {
       case "scheduled":
         statusClass = "text-blue-500";
-        statusBgClass = "bg-blue-100 dark:bg-blue-900/30";
+        statusBgClass = "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30";
+        statusIconBg = "bg-blue-500";
+        statusIcon = <Calendar className="h-4 w-4 text-white" />;
         break;
       case "active":
         statusClass = "text-green-500";
-        statusBgClass = "bg-green-100 dark:bg-green-900/30";
+        statusBgClass = "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30";
+        statusIconBg = "bg-green-500";
         statusText = "In Flight";
+        statusIcon = <Plane className="h-4 w-4 text-white" />;
         break;
       case "landed":
         statusClass = "text-green-500";
-        statusBgClass = "bg-green-100 dark:bg-green-900/30";
+        statusBgClass = "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30";
+        statusIconBg = "bg-green-500";
+        statusIcon = <MapPin className="h-4 w-4 text-white" />;
         break;
       case "cancelled":
         statusClass = "text-red-500";
-        statusBgClass = "bg-red-100 dark:bg-red-900/30";
+        statusBgClass = "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30";
+        statusIconBg = "bg-red-500";
+        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "incident":
         statusClass = "text-red-500";
-        statusBgClass = "bg-red-100 dark:bg-red-900/30";
+        statusBgClass = "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30";
+        statusIconBg = "bg-red-500";
+        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "diverted":
         statusClass = "text-orange-500";
-        statusBgClass = "bg-orange-100 dark:bg-orange-900/30";
+        statusBgClass = "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30";
+        statusIconBg = "bg-orange-500";
+        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "delayed":
         statusClass = "text-orange-500";
-        statusBgClass = "bg-orange-100 dark:bg-orange-900/30";
+        statusBgClass = "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30";
+        statusIconBg = "bg-orange-500";
+        statusIcon = <Clock className="h-4 w-4 text-white" />;
         break;
       default:
         statusClass = "text-gray-500";
-        statusBgClass = "bg-gray-100 dark:bg-gray-800";
+        statusBgClass = "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700";
+        statusIconBg = "bg-gray-500";
+        statusIcon = <Info className="h-4 w-4 text-white" />;
     }
 
-    // Format delay information
-    const departureDelay = flightData.departure.delay ? `Delayed ${Math.floor(flightData.departure.delay / 60)}h ${flightData.departure.delay % 60}m` : null;
-    const arrivalDelay = flightData.arrival.delay ? `Delayed ${Math.floor(flightData.arrival.delay / 60)}h ${flightData.arrival.delay % 60}m` : null;
+    // Format delay information in Flighty style
+    const departureDelay = flightData.departure.delay 
+      ? { minutes: flightData.departure.delay, 
+          formatted: `${Math.floor(flightData.departure.delay / 60)}h ${flightData.departure.delay % 60}m` } 
+      : null;
+    
+    const arrivalDelay = flightData.arrival.delay 
+      ? { minutes: flightData.arrival.delay, 
+          formatted: `${Math.floor(flightData.arrival.delay / 60)}h ${flightData.arrival.delay % 60}m` } 
+      : null;
 
     // Different layout based on widget size
     const isCompact = [WidgetSizeCategory.SMALL].includes(sizeCategory);
     
-    // Small widget design (2x2)
+    // Small widget design (2x2) - Optimized for critical information
     if (isCompact) {
       const isInFlight = flightData.flight_status?.toLowerCase() === 'active';
+      const isDelayed = departureDelay !== null || arrivalDelay !== null;
+      const delay = departureDelay || arrivalDelay;
       
       return (
-        <div className="h-full flex flex-col">
-          {/* Status bar with date and refresh */}
-          <div className={`flex items-center justify-between px-3 py-1.5 ${statusBgClass}`}>
+        <div className="h-full flex flex-col overflow-hidden">
+          {/* Status bar - simplified and informative */}
+          <div className={`flex items-center justify-between px-3 py-2 ${
+            isInFlight ? "bg-green-50 dark:bg-green-900/20" : 
+            isDelayed ? "bg-orange-50 dark:bg-orange-900/20" :
+            "bg-gray-50 dark:bg-gray-800/40"
+          }`}>
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${statusClass} ${isInFlight ? 'animate-pulse' : ''}`}></div>
-              <span className={`text-sm font-medium ${statusClass}`}>{statusText}</span>
+              <div className={`flex items-center justify-center h-5 w-5 text-${
+                isInFlight ? "green" : isDelayed ? "orange" : "gray"
+              }-500`}>
+                {isInFlight ? <Plane className="h-5 w-5" /> : 
+                 isDelayed ? <Clock className="h-5 w-5" /> :
+                 <Calendar className="h-5 w-5" />}
+              </div>
+              <span className={`text-sm font-medium text-${
+                isInFlight ? "green" : isDelayed ? "orange" : "gray"
+              }-700 dark:text-${isInFlight ? "green" : isDelayed ? "orange" : "gray"}-300`}>
+                {isInFlight ? "In Flight" : 
+                 isDelayed ? `Delayed ${delay?.formatted}` : 
+                 statusText}
+              </span>
             </div>
-            <div className="flex items-center space-x-1.5">
-              <div className="text-xs text-gray-500 dark:text-gray-400">{flightData.flight_date}</div>
-              <button 
-                onClick={handleManualRefresh} 
-                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                title="Refresh data"
-                disabled={loading}
-              >
-                <RefreshCw className={`h-3 w-3 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
+            <button 
+              onClick={handleManualRefresh} 
+              className="p-1 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+              title="Refresh data"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
           
-          {/* Flight info */}
-          <div className="flex flex-col flex-1 p-3">
-            <div className="mb-2">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Flight</div>
-              <div className="flex items-center justify-between">
-                <div className="text-xl font-bold">{flightData.flight.iata}</div>
-                <Plane className={`h-5 w-5 text-blue-500 ${isInFlight ? 'animate-bounce' : ''}`} />
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300 truncate">{flightData.airline.name}</div>
-            </div>
-            
-            <div className="mt-auto grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">From</div>
-                <div className="text-sm font-medium">{flightData.departure.iata}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-gray-500 dark:text-gray-400">To</div>
-                <div className="text-sm font-medium">{flightData.arrival.iata}</div>
+          {/* Main flight info - compact and prioritized */}
+          <div className="flex-1 flex flex-col p-2">
+            {/* Flight number and route */}
+            <div className="mb-1 pb-1 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex justify-between items-center">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  {flightData.flight.iata || flightData.flight.icao || 'N/A'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {flightData.flight_date}
+                </div>
               </div>
             </div>
             
+            {/* Origin and destination with times - the most important info */}
+            <div className="flex-1 grid grid-cols-2 gap-x-2">
+              {/* Departure */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{flightData.departure.iata || flightData.departure.icao || 'N/A'}</div>
+                  <div className="text-sm font-medium mt-0.5">
+                    {depTime}
+                  </div>
+                  {departureDelay && (
+                    <div className="text-xs text-orange-500 mt-0.5">
+                      +{departureDelay.formatted}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Terminal/Gate info if available */}
+                {(flightData.departure.terminal || flightData.departure.gate) && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {flightData.departure.terminal && `T${flightData.departure.terminal}`}
+                    {flightData.departure.terminal && flightData.departure.gate && ' • '}
+                    {flightData.departure.gate && `Gate ${flightData.departure.gate}`}
+                  </div>
+                )}
+              </div>
+              
+              {/* Arrival */}
+              <div className="flex flex-col justify-between text-right">
+                <div>
+                  <div className="text-2xl font-bold">{flightData.arrival.iata || flightData.arrival.icao || 'N/A'}</div>
+                  <div className="text-sm font-medium mt-0.5">
+                    {arrTime}
+                  </div>
+                  {arrivalDelay && (
+                    <div className="text-xs text-orange-500 mt-0.5">
+                      +{arrivalDelay.formatted}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Terminal/Gate info if available */}
+                {(flightData.arrival.terminal || flightData.arrival.gate) && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {flightData.arrival.terminal && `T${flightData.arrival.terminal}`}
+                    {flightData.arrival.terminal && flightData.arrival.gate && ' • '}
+                    {flightData.arrival.gate && `Gate ${flightData.arrival.gate}`}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Live info if in flight */}
             {isInFlight && flightData.live && (
-              <div className="mt-2 pt-1 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs text-green-500 flex items-center justify-center space-x-1">
-                  <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></div>
-                  <span>Live: {Math.round(flightData.live.altitude)} ft</span>
+              <div className="mt-1 pt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <div className="flex items-center text-xs text-green-600 dark:text-green-400">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-1.5"></div>
+                  <span>Live</span>
+                </div>
+                <div className="text-xs">
+                  {Math.round(flightData.live.altitude).toLocaleString()} ft • {Math.round(flightData.live.speed_horizontal)} km/h
                 </div>
               </div>
             )}
@@ -832,125 +803,230 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       );
     }
     
-    // Regular layout for larger widgets
+    // Medium and larger widget designs with information-focused layout
+    const isInFlight = flightData.flight_status?.toLowerCase() === 'active';
+    const isDelayed = departureDelay !== null || arrivalDelay !== null;
+    
     return (
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Flight Status Bar */}
-        <div className={`w-full py-2 px-4 ${statusClass} ${statusBgClass} flex justify-between items-center`}>
-          <div className="flex items-center space-x-1">
-            <div className={`w-2 h-2 rounded-full ${statusClass}`}></div>
-            <span className="text-sm font-medium">{statusText}</span>
+        {/* Status bar with clean, information-focused design */}
+        <div className={`flex items-center justify-between px-4 py-3 ${
+          isInFlight ? "bg-green-50 dark:bg-green-900/20" : 
+          isDelayed ? "bg-orange-50 dark:bg-orange-900/20" :
+          "bg-gray-50 dark:bg-gray-800/40"
+        }`}>
+          <div className="flex items-center space-x-2.5">
+            <div className={`flex items-center justify-center h-6 w-6 text-${
+              isInFlight ? "green" : isDelayed ? "orange" : "gray"
+            }-500`}>
+              {isInFlight ? <Plane className="h-6 w-6" /> : 
+               isDelayed ? <Clock className="h-6 w-6" /> :
+               <Calendar className="h-6 w-6" />}
+            </div>
+            <span className={`text-sm font-medium text-${
+              isInFlight ? "green" : isDelayed ? "orange" : "gray"
+            }-700 dark:text-${isInFlight ? "green" : isDelayed ? "orange" : "gray"}-300`}>
+              {isInFlight ? "In Flight" : 
+               isDelayed ? `Delayed ${departureDelay?.formatted || arrivalDelay?.formatted}` : 
+               statusText}
+            </span>
+            <div className="flex items-center space-x-1.5 bg-white/80 dark:bg-gray-800/80 px-2 py-0.5 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+              <span>{flightData.flight.iata || flightData.flight.icao}</span>
+              <span>•</span>
+              <span>{flightData.flight_date}</span>
+            </div>
           </div>
-          <div className="flex items-center">
-            <div className="text-sm mr-2">{flightData.flight_date}</div>
-            <button 
-              onClick={handleManualRefresh} 
-              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-              title="Refresh data"
-              disabled={loading}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+          <button 
+            onClick={handleManualRefresh} 
+            className="p-1.5 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+            title="Refresh data"
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
         
-        {/* Flight Info */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          {/* Flight Number & Airline */}
-          <div className="mb-4 flex justify-between items-center">
-            <div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">Flight</div>
-              <div className="text-lg font-bold">{flightData.flight.iata}</div>
-              <div className="text-sm">{flightData.airline.name}</div>
-            </div>
-            <Plane className="h-7 w-7 text-blue-500" />
-          </div>
-          
-          {/* Route Information */}
-          <div className="mb-4 flex justify-between items-start">
-            {/* Departure */}
-            <div className="flex-1">
-              <div className="text-sm text-gray-500 dark:text-gray-400">From</div>
-              <div className="text-lg font-medium">{flightData.departure.iata}</div>
-              <div className="text-sm">{flightData.departure.airport}</div>
-              <div className="mt-1 text-xs flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                {depTime}
-              </div>
-              <div className="text-xs flex items-center">
-                <Calendar className="h-3 w-3 mr-1" />
-                {depDate}
-              </div>
-              {departureDelay && (
-                <div className="mt-1 text-xs text-orange-500">{departureDelay}</div>
-              )}
-              {flightData.departure.terminal && (
-                <div className="mt-1 text-xs">Terminal {flightData.departure.terminal}</div>
-              )}
-              {flightData.departure.gate && (
-                <div className="text-xs">Gate {flightData.departure.gate}</div>
-              )}
-            </div>
-            
-            {/* Arrow */}
-            <div className="mx-2 pt-6">
-              <div className="w-12 h-0.5 bg-gray-300 dark:bg-gray-700 relative">
-                <div className="absolute right-0 -top-1.5 w-3 h-3 border-t-2 border-r-2 border-gray-300 dark:border-gray-700 transform rotate-45"></div>
-              </div>
-            </div>
-            
-            {/* Arrival */}
-            <div className="flex-1 text-right">
-              <div className="text-sm text-gray-500 dark:text-gray-400">To</div>
-              <div className="text-lg font-medium">{flightData.arrival.iata}</div>
-              <div className="text-sm">{flightData.arrival.airport}</div>
-              <div className="mt-1 text-xs flex items-center justify-end">
-                <Clock className="h-3 w-3 mr-1" />
-                {arrTime}
-              </div>
-              <div className="text-xs flex items-center justify-end">
-                <Calendar className="h-3 w-3 mr-1" />
-                {arrDate}
-              </div>
-              {arrivalDelay && (
-                <div className="mt-1 text-xs text-orange-500">{arrivalDelay}</div>
-              )}
-              {flightData.arrival.terminal && (
-                <div className="mt-1 text-xs">Terminal {flightData.arrival.terminal}</div>
-              )}
-              {flightData.arrival.gate && (
-                <div className="text-xs">Gate {flightData.arrival.gate}</div>
-              )}
-            </div>
-          </div>
-          
-          {/* Aircraft Info - Only show on larger widgets */}
-          {!isCompact && flightData.aircraft && (
-            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-800">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aircraft</div>
-              <div className="flex justify-between">
-                <div className="text-sm">
-                  {flightData.aircraft.iata ? `Type: ${flightData.aircraft.iata}` : ''}
-                </div>
-                <div className="text-sm">
-                  {flightData.aircraft.registration ? `Reg: ${flightData.aircraft.registration}` : ''}
+        {/* Main content with improved information layout */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Flight route map visualization - Keep it clean */}
+          <div className="relative bg-gradient-to-b from-blue-50/80 to-blue-100/60 dark:from-blue-950/40 dark:to-blue-900/30 h-32 overflow-hidden border-b border-gray-100 dark:border-gray-800">
+            {/* Flight Path Line */}
+            <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-blue-300 dark:bg-blue-600 transform -translate-y-1/2">
+              <div className="absolute left-0 h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 transform -translate-y-1/2"></div>
+              <div className="absolute right-0 h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 transform -translate-y-1/2"></div>
+              
+              {/* Plane Icon that moves along the path based on status */}
+              <div 
+                className={`absolute h-6 w-6 transform -translate-x-1/2 -translate-y-1/2 ${
+                  isInFlight ? 'animate-pulse' : ''
+                }`}
+                style={{ 
+                  left: isInFlight ? '50%' : 
+                         flightData.flight_status?.toLowerCase() === 'landed' ? '85%' : '15%',
+                  top: '50%'
+                }}
+              >
+                <div className={`flex items-center justify-center h-6 w-6 rounded-full bg-white dark:bg-gray-800 shadow-md`}>
+                  <Plane className="h-3.5 w-3.5 text-blue-500" />
                 </div>
               </div>
             </div>
-          )}
+            
+            {/* Origin and Destination Labels */}
+            <div className="absolute bottom-3 left-[15%] text-center">
+              <div className="text-lg font-bold text-gray-800 dark:text-gray-200">{flightData.departure.iata || flightData.departure.icao}</div>
+            </div>
+            <div className="absolute bottom-3 right-[15%] text-center">
+              <div className="text-lg font-bold text-gray-800 dark:text-gray-200">{flightData.arrival.iata || flightData.arrival.icao}</div>
+            </div>
+          </div>
           
-          {/* Live Data - Only show when available and on larger widgets */}
-          {!isCompact && flightData.live && flightData.flight_status === 'active' && (
-            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-800">
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Live Data</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Altitude: {Math.round(flightData.live.altitude)} ft</div>
-                <div>Speed: {Math.round(flightData.live.speed_horizontal)} km/h</div>
-                <div>Direction: {Math.round(flightData.live.direction)}°</div>
-                <div>Last updated: {new Date(flightData.live.updated).toLocaleTimeString()}</div>
+          {/* Core Flight Information - More like a dashboard */}
+          <div className="p-3">
+            {/* Main Flight Details Card - Streamlined and focused */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-700">
+                {/* Departure Side */}
+                <div className="p-3 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Departure</div>
+                    {departureDelay && (
+                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 rounded text-xs text-orange-600 dark:text-orange-400">
+                        +{departureDelay.formatted}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold mb-1">{flightData.departure.iata || flightData.departure.icao}</div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 truncate">{flightData.departure.airport}</div>
+                    
+                    <div className="flex items-center text-sm mt-2">
+                      <Clock className="h-4 w-4 text-blue-500 mr-1.5" />
+                      <span className="font-medium">{depTime}</span>
+                      <span className="mx-1 text-gray-400">•</span>
+                      <span>{depDate}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      {flightData.departure.terminal && (
+                        <div className="flex items-center">
+                          <div className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs mr-1.5">
+                            T{flightData.departure.terminal}
+                          </div>
+                        </div>
+                      )}
+                      {flightData.departure.gate && (
+                        <div className="flex items-center">
+                          <div className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+                            Gate {flightData.departure.gate}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Arrival Side */}
+                <div className="p-3 space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Arrival</div>
+                    {arrivalDelay && (
+                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 rounded text-xs text-orange-600 dark:text-orange-400">
+                        +{arrivalDelay.formatted}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold mb-1">{flightData.arrival.iata || flightData.arrival.icao}</div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 truncate">{flightData.arrival.airport}</div>
+                    
+                    <div className="flex items-center text-sm mt-2">
+                      <Clock className="h-4 w-4 text-blue-500 mr-1.5" />
+                      <span className="font-medium">{arrTime}</span>
+                      <span className="mx-1 text-gray-400">•</span>
+                      <span>{arrDate}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      {flightData.arrival.terminal && (
+                        <div className="flex items-center">
+                          <div className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs mr-1.5">
+                            T{flightData.arrival.terminal}
+                          </div>
+                        </div>
+                      )}
+                      {flightData.arrival.gate && (
+                        <div className="flex items-center">
+                          <div className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+                            Gate {flightData.arrival.gate}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Flight and Aircraft Info Row */}
+              <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between">
+                <div className="flex items-center space-x-1.5">
+                  <Plane className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-medium">
+                    {flightData.airline.name} {flightData.flight.iata || flightData.flight.icao}
+                  </span>
+                </div>
+                
+                {flightData.aircraft && flightData.aircraft.registration && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {flightData.aircraft.iata && `${flightData.aircraft.iata} • `}
+                    {flightData.aircraft.registration}
+                  </div>
+                )}
               </div>
             </div>
-          )}
+            
+            {/* Live Flight Data - Only show when in flight, prioritized display */}
+            {isInFlight && flightData.live && (
+              <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-green-100 dark:border-green-900/30 overflow-hidden">
+                <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 border-b border-green-100 dark:border-green-900/30 flex items-center">
+                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
+                  <span className="text-sm font-medium text-green-800 dark:text-green-300">Live Flight Data</span>
+                </div>
+                
+                <div className="p-3 grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Altitude</div>
+                    <div className="text-lg font-bold">
+                      {Math.round(flightData.live.altitude).toLocaleString()}
+                      <span className="text-xs ml-1 font-normal text-gray-500">ft</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Speed</div>
+                    <div className="text-lg font-bold">
+                      {Math.round(flightData.live.speed_horizontal)}
+                      <span className="text-xs ml-1 font-normal text-gray-500">km/h</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Direction</div>
+                    <div className="flex items-center">
+                      <div className="text-lg font-bold mr-1">
+                        {Math.round(flightData.live.direction)}°
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-gray-500 transform" style={{ transform: `rotate(${flightData.live.direction}deg)` }} />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="px-3 py-1.5 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 flex justify-end">
+                  Updated: {new Date(flightData.live.updated).toLocaleTimeString()}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -995,26 +1071,33 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Flight Tracker Settings</DialogTitle>
+            <DialogTitle className="flex items-center">
+              <Plane className="h-5 w-5 text-blue-500 mr-2" />
+              <span>Flight Tracker Settings</span>
+            </DialogTitle>
           </DialogHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="flight">Flight Info</TabsTrigger>
-              <TabsTrigger value="widget">Widget Options</TabsTrigger>
+              <TabsTrigger value="flight" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+                Flight Info
+              </TabsTrigger>
+              <TabsTrigger value="widget" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+                Widget Options
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="flight" className="space-y-4 py-2">
-              {/* Demo Flights - Making this more prominent */}
-              <Card>
-                <CardHeader className="pb-2">
+              {/* Demo Flights - Making this more prominent with Flighty-inspired design */}
+              <Card className="border border-blue-100 dark:border-blue-900/50 overflow-hidden">
+                <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border-b border-blue-100 dark:border-blue-900/50">
                   <div className="flex items-center">
                     <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
-                    <div className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-300">Recommended</div>
+                    <div className="ml-2 px-2 py-0.5 bg-blue-500 rounded text-xs text-white">Recommended</div>
                   </div>
                   <p className="text-xs text-gray-500">These flights work without an API key:</p>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-3">
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { code: 'ASH6040', name: 'Air Shuttle', route: 'JFK → ORD' },
@@ -1026,7 +1109,11 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                         key={flight.code}
                         variant={localConfig.flightNumber === flight.code ? "default" : "outline"}
                         onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
-                        className="h-auto flex-col items-start p-2"
+                        className={`h-auto flex-col items-start p-2 ${
+                          localConfig.flightNumber === flight.code 
+                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white" 
+                            : "hover:border-blue-300 dark:hover:border-blue-700"
+                        }`}
                       >
                         <span className="font-medium">{flight.code}</span>
                         <span className="text-xs opacity-70">{flight.name}</span>
@@ -1040,7 +1127,10 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               {/* Flight Number */}
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <Label htmlFor="flightNumber">Flight Number</Label>
+                  <Label htmlFor="flightNumber" className="flex items-center text-sm font-medium">
+                    <Plane className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                    Flight Number
+                  </Label>
                   <span className="text-red-500 ml-1">*</span>
                 </div>
                 <Input
@@ -1048,6 +1138,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   value={localConfig.flightNumber || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightNumber: e.target.value.toUpperCase() })}
                   placeholder="e.g. AA123 or AXB744"
+                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
                 />
                 <p className="text-xs text-gray-500">
                   Enter airline code + flight number (e.g., AA123 for IATA or AXB744 for ICAO)
@@ -1059,79 +1150,179 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                 )}
               </div>
 
-              {/* API Key */}
+              {/* Flight Date with Flighty-inspired design */}
               <div className="space-y-2">
-                <Label htmlFor="accessKey">AviationStack API Key</Label>
-                <Input
-                  id="accessKey"
-                  value={localConfig.accessKey || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, accessKey: e.target.value })}
-                  placeholder="Only needed for non-demo flights"
-                  type="password"
-                />
-                <p className="text-xs text-gray-500">
-                  Only required for tracking real flights. <a href="https://aviationstack.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Get API key</a>
-                </p>
-              </div>
-
-              {/* Flight Date */}
-              <div className="space-y-2">
-                <Label htmlFor="flightDate">Flight Date</Label>
-                <div className="relative">
+                <Label htmlFor="flightDate" className="flex items-center text-sm font-medium">
+                  <Calendar className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  Flight Date
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={`h-auto py-1.5 ${
+                      localConfig.flightDate === todayFormatted() ? 
+                      "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-transparent" : 
+                      "hover:border-blue-300 dark:hover:border-blue-700"
+                    }`}
+                    onClick={() => setLocalConfig({...localConfig, flightDate: todayFormatted()})}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={`h-auto py-1.5 ${
+                      localConfig.flightDate === (() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        return tomorrow.toISOString().split('T')[0];
+                      })() ? 
+                      "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-transparent" : 
+                      "hover:border-blue-300 dark:hover:border-blue-700"
+                    }`}
+                    onClick={() => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      setLocalConfig({...localConfig, flightDate: tomorrow.toISOString().split('T')[0]});
+                    }}
+                  >
+                    Tomorrow
+                  </Button>
                   <Input
                     id="flightDate"
                     type="date"
-                    value={localConfig.flightDate || todayFormatted()}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightDate: e.target.value })}
-                    style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                    value={localConfig.flightDate}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, flightDate: e.target.value})}
+                    className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
                   />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                 </div>
                 <p className="text-xs text-gray-500">
-                  Defaults to today if left empty
+                  Select or enter the date of the flight
                 </p>
+              </div>
+
+              {/* API Key with Flighty-inspired design */}
+              <div className="space-y-2">
+                <Label htmlFor="accessKey" className="flex items-center text-sm font-medium">
+                  <Shield className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  API Key <span className="text-xs text-gray-500 ml-1">(Optional for demo flights)</span>
+                </Label>
+                <Input
+                  id="accessKey"
+                  type="password"
+                  value={localConfig.accessKey || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, accessKey: e.target.value})}
+                  placeholder="Your AviationStack API key"
+                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
+                />
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>
+                    Get a free API key at <a href="https://aviationstack.com/signup/free" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">AviationStack</a>
+                  </p>
+                  <p className="flex items-center text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Free tier is limited to 100 requests per month
+                  </p>
+                </div>
               </div>
             </TabsContent>
             
             <TabsContent value="widget" className="space-y-4 py-2">
               {/* Widget Title */}
               <div className="space-y-2">
-                <Label htmlFor="title">Widget Title</Label>
+                <Label htmlFor="widgetTitle" className="flex items-center text-sm font-medium">
+                  <Info className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  Widget Title
+                </Label>
                 <Input
-                  id="title"
+                  id="widgetTitle"
                   value={localConfig.title || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, title: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, title: e.target.value})}
                   placeholder="Flight Tracker"
+                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
                 />
+                <p className="text-xs text-gray-500">
+                  Customize the widget title
+                </p>
               </div>
-
-              {/* Additional widget options could be added here */}
+              
+              {/* Refresh Rate */}
+              <div className="space-y-2">
+                <Label htmlFor="refreshRate" className="flex items-center text-sm font-medium">
+                  <RefreshCw className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  Auto-Refresh Interval
+                </Label>
+                <select
+                  id="refreshRate"
+                  value={localConfig.refreshInterval?.toString() || '0'}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
+                    setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value)})
+                  }
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                >
+                  <option value="0">Manual refresh only</option>
+                  <option value="60000">Every minute</option>
+                  <option value="300000">Every 5 minutes</option>
+                  <option value="600000">Every 10 minutes</option>
+                  <option value="1800000">Every 30 minutes</option>
+                  <option value="3600000">Every hour</option>
+                </select>
+                <p className="text-xs text-gray-500">
+                  How often to automatically refresh flight data
+                </p>
+              </div>
+              
+              {/* Theme color selection */}
+              <div className="space-y-2">
+                <Label className="flex items-center text-sm font-medium">
+                  <div className="h-3.5 w-3.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 mr-1.5"></div>
+                  Accent Color
+                </Label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { name: 'Blue', value: 'blue' },
+                    { name: 'Purple', value: 'purple' },
+                    { name: 'Green', value: 'green' },
+                    { name: 'Red', value: 'red' },
+                    { name: 'Orange', value: 'orange' }
+                  ].map((color) => (
+                    <Button
+                      key={color.value}
+                      type="button"
+                      variant="outline"
+                      className={`h-auto py-1 px-2 ${
+                        (localConfig.accentColor || 'blue') === color.value ? 
+                        "ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-gray-900" : 
+                        ""
+                      }`}
+                      onClick={() => setLocalConfig({...localConfig, accentColor: color.value})}
+                    >
+                      <div className={`h-2 w-2 rounded-full bg-${color.value}-500 mr-1 inline-block`}></div>
+                      <span className="text-xs">{color.name}</span>
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Choose the accent color theme for the widget (coming soon)
+                </p>
+              </div>
             </TabsContent>
           </Tabs>
           
-          <DialogFooter>
-            <div className="flex justify-between w-full">
-              {config?.onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (config.onDelete) {
-                      config.onDelete();
-                    }
-                  }}
-                >
-                  Delete Widget
-                </Button>
-              )}
-              
-              <Button
-                variant="default"
-                onClick={saveSettings}
-                disabled={!localConfig.flightNumber}
-              >
-                Save Changes
-              </Button>
-            </div>
+          <DialogFooter className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+            <Button variant="outline" onClick={() => setShowSettings(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                saveSettings();
+                setShowSettings(false);
+              }}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+            >
+              Save & Apply
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
