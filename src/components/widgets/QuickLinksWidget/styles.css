@@ -1,0 +1,14 @@
+.widget-container.quicklinks-widget {
+  background-color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .widget-container.quicklinks-widget {
+    background-color: #1E293B;
+  }
+}
+
+/* QuickLinks specific button styles */
+.widget-container.quicklinks-widget button[class*="hover:bg-gray"] {
+  @apply cursor-pointer pointer-events-auto;
+} 
