@@ -26,7 +26,7 @@ import {
   AviationStackResponse,
   AviationStackFlight
 } from './types';
-import { Plane, MapPin, Clock, Calendar, AlertCircle, RefreshCw, Cloud, Wind, Thermometer, ArrowRight, Map, Info, ChevronRight, Wifi, Shield, Sunset, Sunrise } from 'lucide-react';
+import { Plane, Clock, Calendar, AlertCircle, RefreshCw, Cloud, Wind, Thermometer, ArrowRight, Map, Info, ChevronRight, Wifi, Shield, Sunset, Sunrise } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -609,62 +609,26 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     const arrTime = arrivalDateTime === 'N/A' ? 'N/A' : arrivalDateTime.time;
     const arrDate = arrivalDateTime === 'N/A' ? 'N/A' : arrivalDateTime.date;
     
-    // Determine flight status display with Flighty-inspired styling
-    let statusClass = "text-blue-500";
+    // Determine flight status display (without accent colors and gradients)
     let statusText = flightData.flight_status || "Unknown";
-    let statusBgClass = "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30";
-    let statusIconBg = "bg-blue-500";
-    let statusIcon = <Clock className="h-4 w-4" />;
     
     switch (flightData.flight_status?.toLowerCase()) {
       case "scheduled":
-        statusClass = "text-blue-500";
-        statusBgClass = "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30";
-        statusIconBg = "bg-blue-500";
-        statusIcon = <Calendar className="h-4 w-4 text-white" />;
         break;
       case "active":
-        statusClass = "text-green-500";
-        statusBgClass = "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30";
-        statusIconBg = "bg-green-500";
         statusText = "In Flight";
-        statusIcon = <Plane className="h-4 w-4 text-white" />;
         break;
       case "landed":
-        statusClass = "text-green-500";
-        statusBgClass = "bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30";
-        statusIconBg = "bg-green-500";
-        statusIcon = <MapPin className="h-4 w-4 text-white" />;
         break;
       case "cancelled":
-        statusClass = "text-red-500";
-        statusBgClass = "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30";
-        statusIconBg = "bg-red-500";
-        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "incident":
-        statusClass = "text-red-500";
-        statusBgClass = "bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30";
-        statusIconBg = "bg-red-500";
-        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "diverted":
-        statusClass = "text-orange-500";
-        statusBgClass = "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30";
-        statusIconBg = "bg-orange-500";
-        statusIcon = <AlertCircle className="h-4 w-4 text-white" />;
         break;
       case "delayed":
-        statusClass = "text-orange-500";
-        statusBgClass = "bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30";
-        statusIconBg = "bg-orange-500";
-        statusIcon = <Clock className="h-4 w-4 text-white" />;
         break;
       default:
-        statusClass = "text-gray-500";
-        statusBgClass = "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700";
-        statusIconBg = "bg-gray-500";
-        statusIcon = <Info className="h-4 w-4 text-white" />;
     }
 
     // Format delay information in Flighty style
@@ -690,22 +654,14 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       return (
         <div className="h-full flex flex-col overflow-hidden">
           {/* Status bar - simplified and informative */}
-          <div className={`flex items-center justify-between px-3 py-2 ${
-            isInFlight ? "bg-green-50 dark:bg-green-900/20" : 
-            isDelayed ? "bg-orange-50 dark:bg-orange-900/20" :
-            "bg-gray-50 dark:bg-gray-800/40"
-          }`}>
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/40">
             <div className="flex items-center space-x-2">
-              <div className={`flex items-center justify-center h-5 w-5 text-${
-                isInFlight ? "green" : isDelayed ? "orange" : "gray"
-              }-500`}>
+              <div className="flex items-center justify-center h-5 w-5">
                 {isInFlight ? <Plane className="h-5 w-5" /> : 
                  isDelayed ? <Clock className="h-5 w-5" /> :
                  <Calendar className="h-5 w-5" />}
               </div>
-              <span className={`text-sm font-medium text-${
-                isInFlight ? "green" : isDelayed ? "orange" : "gray"
-              }-700 dark:text-${isInFlight ? "green" : isDelayed ? "orange" : "gray"}-300`}>
+              <span className="text-sm font-medium">
                 {isInFlight ? "In Flight" : 
                  isDelayed ? `Delayed ${delay?.formatted}` : 
                  statusText}
@@ -789,8 +745,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             {/* Live info if in flight */}
             {isInFlight && flightData.live && (
               <div className="mt-1 pt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                <div className="flex items-center text-xs text-green-600 dark:text-green-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-1.5"></div>
+                <div className="flex items-center text-xs">
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse mr-1.5"></div>
                   <span>Live</span>
                 </div>
                 <div className="text-xs">
@@ -810,22 +766,14 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     return (
       <div className="h-full flex flex-col overflow-hidden">
         {/* Status bar with clean, information-focused design */}
-        <div className={`flex items-center justify-between px-4 py-3 ${
-          isInFlight ? "bg-green-50 dark:bg-green-900/20" : 
-          isDelayed ? "bg-orange-50 dark:bg-orange-900/20" :
-          "bg-gray-50 dark:bg-gray-800/40"
-        }`}>
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/40">
           <div className="flex items-center space-x-2.5">
-            <div className={`flex items-center justify-center h-6 w-6 text-${
-              isInFlight ? "green" : isDelayed ? "orange" : "gray"
-            }-500`}>
+            <div className="flex items-center justify-center h-6 w-6">
               {isInFlight ? <Plane className="h-6 w-6" /> : 
                isDelayed ? <Clock className="h-6 w-6" /> :
                <Calendar className="h-6 w-6" />}
             </div>
-            <span className={`text-sm font-medium text-${
-              isInFlight ? "green" : isDelayed ? "orange" : "gray"
-            }-700 dark:text-${isInFlight ? "green" : isDelayed ? "orange" : "gray"}-300`}>
+            <span className="text-sm font-medium">
               {isInFlight ? "In Flight" : 
                isDelayed ? `Delayed ${departureDelay?.formatted || arrivalDelay?.formatted}` : 
                statusText}
@@ -849,11 +797,11 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
         {/* Main content with improved information layout */}
         <div className="flex-1 overflow-y-auto">
           {/* Flight route map visualization - Keep it clean */}
-          <div className="relative bg-gradient-to-b from-blue-50/80 to-blue-100/60 dark:from-blue-950/40 dark:to-blue-900/30 h-32 overflow-hidden border-b border-gray-100 dark:border-gray-800">
+          <div className="relative bg-gray-50 dark:bg-gray-800/40 h-32 overflow-hidden border-b border-gray-100 dark:border-gray-800">
             {/* Flight Path Line */}
-            <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-blue-300 dark:bg-blue-600 transform -translate-y-1/2">
-              <div className="absolute left-0 h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 transform -translate-y-1/2"></div>
-              <div className="absolute right-0 h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400 transform -translate-y-1/2"></div>
+            <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-300 dark:bg-gray-600 transform -translate-y-1/2">
+              <div className="absolute left-0 h-2 w-2 rounded-full bg-gray-500 dark:bg-gray-400 transform -translate-y-1/2"></div>
+              <div className="absolute right-0 h-2 w-2 rounded-full bg-gray-500 dark:bg-gray-400 transform -translate-y-1/2"></div>
               
               {/* Plane Icon that moves along the path based on status */}
               <div 
@@ -866,8 +814,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   top: '50%'
                 }}
               >
-                <div className={`flex items-center justify-center h-6 w-6 rounded-full bg-white dark:bg-gray-800 shadow-md`}>
-                  <Plane className="h-3.5 w-3.5 text-blue-500" />
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-white dark:bg-gray-800 shadow-md">
+                  <Plane className="h-3.5 w-3.5" />
                 </div>
               </div>
             </div>
@@ -1072,28 +1020,28 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              <Plane className="h-5 w-5 text-blue-500 mr-2" />
+              <Plane className="h-5 w-5 mr-2" />
               <span>Flight Tracker Settings</span>
             </DialogTitle>
           </DialogHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="flight" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+              <TabsTrigger value="flight">
                 Flight Info
               </TabsTrigger>
-              <TabsTrigger value="widget" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+              <TabsTrigger value="widget">
                 Widget Options
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="flight" className="space-y-4 py-2">
               {/* Demo Flights - Making this more prominent with Flighty-inspired design */}
-              <Card className="border border-blue-100 dark:border-blue-900/50 overflow-hidden">
-                <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border-b border-blue-100 dark:border-blue-900/50">
+              <Card className="border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <CardHeader className="pb-2 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center">
                     <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
-                    <div className="ml-2 px-2 py-0.5 bg-blue-500 rounded text-xs text-white">Recommended</div>
+                    <div className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Recommended</div>
                   </div>
                   <p className="text-xs text-gray-500">These flights work without an API key:</p>
                 </CardHeader>
@@ -1111,8 +1059,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                         onClick={() => setLocalConfig({ ...localConfig, flightNumber: flight.code })}
                         className={`h-auto flex-col items-start p-2 ${
                           localConfig.flightNumber === flight.code 
-                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white" 
-                            : "hover:border-blue-300 dark:hover:border-blue-700"
+                            ? "bg-gray-800 text-white" 
+                            : ""
                         }`}
                       >
                         <span className="font-medium">{flight.code}</span>
@@ -1138,7 +1086,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   value={localConfig.flightNumber || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({ ...localConfig, flightNumber: e.target.value.toUpperCase() })}
                   placeholder="e.g. AA123 or AXB744"
-                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-gray-300 dark:border-gray-600"
                 />
                 <p className="text-xs text-gray-500">
                   Enter airline code + flight number (e.g., AA123 for IATA or AXB744 for ICAO)
@@ -1153,7 +1101,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               {/* Flight Date with Flighty-inspired design */}
               <div className="space-y-2">
                 <Label htmlFor="flightDate" className="flex items-center text-sm font-medium">
-                  <Calendar className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
                   Flight Date
                 </Label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1162,8 +1110,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                     variant="outline"
                     className={`h-auto py-1.5 ${
                       localConfig.flightDate === todayFormatted() ? 
-                      "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-transparent" : 
-                      "hover:border-blue-300 dark:hover:border-blue-700"
+                      "bg-gray-800 text-white border-transparent" : 
+                      ""
                     }`}
                     onClick={() => setLocalConfig({...localConfig, flightDate: todayFormatted()})}
                   >
@@ -1178,8 +1126,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                         tomorrow.setDate(tomorrow.getDate() + 1);
                         return tomorrow.toISOString().split('T')[0];
                       })() ? 
-                      "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-transparent" : 
-                      "hover:border-blue-300 dark:hover:border-blue-700"
+                      "bg-gray-800 text-white border-transparent" : 
+                      ""
                     }`}
                     onClick={() => {
                       const tomorrow = new Date();
@@ -1194,7 +1142,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                     type="date"
                     value={localConfig.flightDate}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, flightDate: e.target.value})}
-                    className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
+                    className="border-gray-300 dark:border-gray-600"
                   />
                 </div>
                 <p className="text-xs text-gray-500">
@@ -1205,7 +1153,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               {/* API Key with Flighty-inspired design */}
               <div className="space-y-2">
                 <Label htmlFor="accessKey" className="flex items-center text-sm font-medium">
-                  <Shield className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  <Shield className="h-3.5 w-3.5 mr-1.5" />
                   API Key <span className="text-xs text-gray-500 ml-1">(Optional for demo flights)</span>
                 </Label>
                 <Input
@@ -1214,13 +1162,13 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   value={localConfig.accessKey || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, accessKey: e.target.value})}
                   placeholder="Your AviationStack API key"
-                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-gray-300 dark:border-gray-600"
                 />
                 <div className="text-xs text-gray-500 space-y-1">
                   <p>
-                    Get a free API key at <a href="https://aviationstack.com/signup/free" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">AviationStack</a>
+                    Get a free API key at <a href="https://aviationstack.com/signup/free" target="_blank" rel="noopener noreferrer">AviationStack</a>
                   </p>
-                  <p className="flex items-center text-amber-600 dark:text-amber-400">
+                  <p className="flex items-center">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     Free tier is limited to 100 requests per month
                   </p>
@@ -1232,7 +1180,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               {/* Widget Title */}
               <div className="space-y-2">
                 <Label htmlFor="widgetTitle" className="flex items-center text-sm font-medium">
-                  <Info className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  <Info className="h-3.5 w-3.5 mr-1.5" />
                   Widget Title
                 </Label>
                 <Input
@@ -1240,7 +1188,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   value={localConfig.title || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, title: e.target.value})}
                   placeholder="Flight Tracker"
-                  className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20"
+                  className="border-gray-300 dark:border-gray-600"
                 />
                 <p className="text-xs text-gray-500">
                   Customize the widget title
@@ -1250,7 +1198,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               {/* Refresh Rate */}
               <div className="space-y-2">
                 <Label htmlFor="refreshRate" className="flex items-center text-sm font-medium">
-                  <RefreshCw className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
                   Auto-Refresh Interval
                 </Label>
                 <select
@@ -1259,7 +1207,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => 
                     setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value)})
                   }
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
                 >
                   <option value="0">Manual refresh only</option>
                   <option value="60000">Every minute</option>
@@ -1274,52 +1222,36 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               </div>
               
               {/* Theme color selection */}
-              <div className="space-y-2">
-                <Label className="flex items-center text-sm font-medium">
-                  <div className="h-3.5 w-3.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 mr-1.5"></div>
-                  Accent Color
-                </Label>
-                <div className="grid grid-cols-5 gap-2">
-                  {[
-                    { name: 'Blue', value: 'blue' },
-                    { name: 'Purple', value: 'purple' },
-                    { name: 'Green', value: 'green' },
-                    { name: 'Red', value: 'red' },
-                    { name: 'Orange', value: 'orange' }
-                  ].map((color) => (
-                    <Button
-                      key={color.value}
-                      type="button"
-                      variant="outline"
-                      className={`h-auto py-1 px-2 ${
-                        (localConfig.accentColor || 'blue') === color.value ? 
-                        "ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-gray-900" : 
-                        ""
-                      }`}
-                      onClick={() => setLocalConfig({...localConfig, accentColor: color.value})}
-                    >
-                      <div className={`h-2 w-2 rounded-full bg-${color.value}-500 mr-1 inline-block`}></div>
-                      <span className="text-xs">{color.name}</span>
-                    </Button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500">
-                  Choose the accent color theme for the widget (coming soon)
-                </p>
-              </div>
+
             </TabsContent>
           </Tabs>
           
-          <DialogFooter className="flex justify-end items-center border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-            <Button 
-              onClick={() => {
-                saveSettings();
-                setShowSettings(false);
-              }}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-            >
-              Save & Apply
-            </Button>
+          <DialogFooter>
+            <div className="flex justify-between w-full">
+              {config?.onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (config.onDelete) {
+                      config.onDelete();
+                    }
+                  }}
+                  aria-label="Delete this widget"
+                >
+                  Delete Widget
+                </Button>
+              )}
+              
+              <Button 
+                variant="default"
+                onClick={() => {
+                  saveSettings();
+                  setShowSettings(false);
+                }}
+              >
+                Save
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
