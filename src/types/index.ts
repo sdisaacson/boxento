@@ -50,7 +50,8 @@ export interface WidgetSize {
 export interface Widget {
   id: string;
   type: string;
-  config: Record<string, unknown>;
+  config?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export type LayoutItem = Layout;
