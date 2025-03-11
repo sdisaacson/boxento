@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import { useAuth, AuthContextType } from '@/lib/AuthContext';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { 
-  Github, 
-  Twitter, 
-  Facebook, 
-  Apple, 
-  Phone 
-} from 'lucide-react';
 import { SocialLoginButtons } from './SocialLoginButtons';
 
 interface LoginFormProps {
@@ -19,21 +12,16 @@ interface LoginFormProps {
   onSuccess?: () => void;
 }
 
+interface AuthContextType {
+  login: (email: string, password: string) => Promise<void>;
+}
+
 export function LoginForm({ onToggleForm, onForgotPassword, onSuccess }: LoginFormProps) {
+  const { login } = useAuth() as AuthContextType;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { 
-    login, 
-    googleSignIn,
-    githubSignIn,
-    twitterSignIn,
-    facebookSignIn,
-    appleSignIn,
-    microsoftSignIn,
-    phoneSignIn
-  } = useAuth() as AuthContextType;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,44 +31,9 @@ export function LoginForm({ onToggleForm, onForgotPassword, onSuccess }: LoginFo
     try {
       await login(email, password);
       if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialSignIn = async (provider: string) => {
-    setError('');
-    setIsLoading(true);
-    
-    try {
-      switch (provider) {
-        case 'google':
-          await googleSignIn();
-          break;
-        case 'github':
-          await githubSignIn();
-          break;
-        case 'twitter':
-          await twitterSignIn();
-          break;
-        case 'facebook':
-          await facebookSignIn();
-          break;
-        case 'apple':
-          await appleSignIn();
-          break;
-        case 'microsoft':
-          await microsoftSignIn();
-          break;
-        case 'phone':
-          await phoneSignIn();
-          break;
-      }
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to sign in with ${provider}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

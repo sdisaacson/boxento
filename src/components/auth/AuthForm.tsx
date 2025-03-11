@@ -5,10 +5,9 @@ import { SignupForm } from './SignupForm';
 interface AuthFormProps {
   onSuccess?: () => void;
   onForgotPassword?: () => void;
-  onPhoneAuth?: () => void;
 }
 
-export function AuthForm({ onSuccess, onForgotPassword, onPhoneAuth }: AuthFormProps) {
+export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleForm = () => {

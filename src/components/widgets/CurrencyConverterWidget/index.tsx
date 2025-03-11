@@ -9,9 +9,9 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { CurrencyConverterWidgetProps, CurrencyConverterWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "../../ui/switch";
 import { Checkbox } from "../../ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
@@ -22,6 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/lib/AuthContext";
+import { Auth, RecaptchaVerifier } from "firebase/auth";
+import { FormEvent } from "react";
 
 // Comprehensive currency database
 // This includes all currencies supported by Open Exchange Rates
@@ -319,6 +323,24 @@ const useExchangeRates = (apiKey?: string, baseCurrency: string = 'USD', autoRef
   };
 };
 
+interface CurrencyConverterConfig {
+  title?: string;
+  baseCurrency?: string;
+  targetCurrencies?: string[];
+  useSharedCredential?: boolean;
+  apiKey?: string;
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+  onUpdate?: (config: CurrencyConverterConfig) => void;
+  onDelete?: () => void;
+}
+
+interface CurrencyConverterWidgetProps {
+  width: number;
+  height: number;
+  config?: CurrencyConverterConfig;
+}
+
 /**
  * Currency Converter Widget Component
  * 
@@ -327,9 +349,23 @@ const useExchangeRates = (apiKey?: string, baseCurrency: string = 'USD', autoRef
  * @param {CurrencyConverterWidgetProps} props - Component props
  * @returns {JSX.Element} Widget component
  */
-const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width, height, config }) => {
+const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width, height, config = {} }) => {
+  const [amount, setAmount] = useState('1');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('general'); // Tabs: general, currencies, advanced
+  const [showSettings, setShowSettings] = useState(false);
+  const [localConfig, setLocalConfig] = useState<CurrencyConverterConfig>({
+    title: 'Currency Converter',
+    baseCurrency: 'USD',
+    targetCurrencies: ['EUR', 'GBP', 'JPY'],
+    useSharedCredential: false,
+    autoRefresh: false,
+    refreshInterval: 60,
+    ...config
+  });
+
   // Default configuration
-  const defaultConfig: CurrencyConverterWidgetConfig = {
+  const defaultConfig: CurrencyConverterConfig = {
     title: 'Currency Converter',
     baseCurrency: 'USD',
     targetCurrencies: ['EUR', 'GBP', 'JPY'],
@@ -339,18 +375,6 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
 
   // Access shared credentials first to ensure it's available before other hooks
   const { credential: sharedApiKey, updateCredential: updateSharedApiKey, hasCredential: hasSharedApiKey } = useSharedCredential('openexchangerates-api');
-  
-  // Component state
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [localConfig, setLocalConfig] = useState<CurrencyConverterWidgetConfig>({
-    ...defaultConfig,
-    ...config,
-    useSharedCredential: config?.useSharedCredential || false
-  });
-  const [amount, setAmount] = useState<string>('100');
-  const [selectedCurrency, setSelectedCurrency] = useState<string>(
-    localConfig.targetCurrencies?.[0] || 'EUR'
-  );
   
   // Ref for the widget container
   const widgetRef = useRef<HTMLDivElement | null>(null);
@@ -910,16 +934,23 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
       ...allCurrencyCodes.filter(code => !POPULAR_CURRENCIES.includes(code))
     ];
     
-    // Filter function for search
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('general'); // Tabs: general, currencies, advanced
-    
     const filteredCurrencies = organizedCurrencyCodes.filter(code => {
       const currencyName = CURRENCIES[code as keyof typeof CURRENCIES]?.name || '';
       return code.toLowerCase().includes(searchQuery.toLowerCase()) || 
              currencyName.toLowerCase().includes(searchQuery.toLowerCase());
     });
     
+    const handleValueChange = (key: keyof CurrencyConverterConfig, value: string | boolean | number | string[]) => {
+      setLocalConfig(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    };
+
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
@@ -941,7 +972,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                   id="title-input"
                   value={localConfig.title || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                    setLocalConfig({...localConfig, title: e.target.value})
+                    handleValueChange('title', e.target.value)
                   }
                 />
               </div>
@@ -950,7 +981,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 <Label htmlFor="base-currency-select">Base Currency</Label>
                 <Select
                   value={localConfig.baseCurrency || 'USD'}
-                  onValueChange={(value) => setLocalConfig({...localConfig, baseCurrency: value})}
+                  onValueChange={(value) => handleValueChange('baseCurrency', value)}
                 >
                   <SelectTrigger id="base-currency-select">
                     <SelectValue placeholder="Select base currency" />
@@ -978,7 +1009,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 <Input
                   type="text"
                   value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   placeholder="Search currencies..."
                   className="mb-2"
                 />
@@ -993,10 +1024,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                           size="sm"
                           className="h-4 w-4 p-0 ml-1 hover:bg-secondary/80"
                           onClick={() => {
-                            setLocalConfig({
-                              ...localConfig, 
-                              targetCurrencies: (localConfig.targetCurrencies || []).filter(c => c !== code)
-                            });
+                            handleValueChange('targetCurrencies', (localConfig.targetCurrencies || []).filter(c => c !== code));
                           }}
                         >
                           ×
@@ -1021,15 +1049,9 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                             onCheckedChange={(checked: boolean) => {
                               const currentTargets = localConfig.targetCurrencies || [];
                               if (checked) {
-                                setLocalConfig({
-                                  ...localConfig, 
-                                  targetCurrencies: [...currentTargets, code]
-                                });
+                                handleValueChange('targetCurrencies', [...currentTargets, code]);
                               } else {
-                                setLocalConfig({
-                                  ...localConfig, 
-                                  targetCurrencies: currentTargets.filter(c => c !== code)
-                                });
+                                handleValueChange('targetCurrencies', currentTargets.filter(c => c !== code));
                               }
                             }}
                           />
@@ -1053,7 +1075,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                     <Switch
                       id="useSharedCredential"
                       checked={localConfig.useSharedCredential}
-                      onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, useSharedCredential: checked})}
+                      onCheckedChange={(checked: boolean) => handleValueChange('useSharedCredential', checked)}
                     />
                     <div>
                       <Label htmlFor="useSharedCredential">Use shared API key</Label>
@@ -1072,7 +1094,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                         console.log('[CurrencyConverter] Updating shared API key:', e.target.value);
                         updateSharedApiKey(e.target.value);
                       } else {
-                        setLocalConfig({...localConfig, apiKey: e.target.value});
+                        handleValueChange('apiKey', e.target.value);
                       }
                     }}
                   />
@@ -1088,7 +1110,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                   <Switch
                     id="auto-refresh-checkbox"
                     checked={localConfig.autoRefresh || false}
-                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, autoRefresh: checked})}
+                    onCheckedChange={(checked: boolean) => handleValueChange('autoRefresh', checked)}
                   />
                   <Label htmlFor="auto-refresh-checkbox">Auto Refresh</Label>
                 </div>
@@ -1102,7 +1124,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                       max="1440"
                       value={localConfig.refreshInterval || 60}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                        setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 60})
+                        handleValueChange('refreshInterval', parseInt(e.target.value) || 60)
                       }
                       className="w-20"
                     />

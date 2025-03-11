@@ -1,55 +1,63 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/lib/AuthContext';
-import { RecaptchaVerifier } from 'firebase/auth';
+import { Button } from "@/components/ui/button";
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/AuthContext";
+import { Auth, RecaptchaVerifier } from "firebase/auth";
+import { FormEvent, useState } from "react";
 
 interface PhoneAuthProps {
   onBack: () => void;
   onSuccess?: () => void;
 }
 
+interface AuthContextType {
+  verifyPhoneNumber: (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => Promise<string>;
+  confirmPhoneCode: (verificationId: string, code: string) => Promise<void>;
+  auth: Auth;
+}
+
 export function PhoneAuth({ onBack, onSuccess }: PhoneAuthProps) {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [error, setError] = useState('');
+  const { verifyPhoneNumber, confirmPhoneCode, auth } = useAuth() as AuthContextType;
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'phone' | 'code'>('phone');
-  const { verifyPhoneNumber, confirmPhoneCode } = useAuth();
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
       });
       
       const verificationId = await verifyPhoneNumber(phoneNumber, recaptchaVerifier);
       setVerificationId(verificationId);
       setStep('code');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send verification code');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send verification code';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
       await confirmPhoneCode(verificationId, verificationCode);
       if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify code');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to verify code';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

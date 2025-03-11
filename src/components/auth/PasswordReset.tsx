@@ -10,12 +10,16 @@ interface PasswordResetProps {
   onSuccess?: () => void;
 }
 
+interface AuthContextType {
+  resetPassword: (email: string) => Promise<void>;
+}
+
 export function PasswordReset({ onBack, onSuccess }: PasswordResetProps) {
+  const { resetPassword } = useAuth() as AuthContextType;
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +31,9 @@ export function PasswordReset({ onBack, onSuccess }: PasswordResetProps) {
       await resetPassword(email);
       setSuccess(true);
       if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to reset password';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

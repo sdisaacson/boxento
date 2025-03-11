@@ -1,39 +1,27 @@
-import React, { useState } from 'react';
-import { useAuth, AuthContextType } from '@/lib/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { 
-  Github, 
-  Twitter, 
-  Facebook, 
-  Apple, 
-  Phone 
-} from 'lucide-react';
-import { SocialLoginButtons } from './SocialLoginButtons';
+import { Button } from "@/components/ui/button";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/AuthContext";
+import { useState } from "react";
+import { SocialLoginButtons } from "./SocialLoginButtons";
 
 interface SignupFormProps {
   onToggleForm: () => void;
   onSuccess?: () => void;
 }
 
+interface AuthContextType {
+  signup: (email: string, password: string) => Promise<void>;
+}
+
 export function SignupForm({ onToggleForm, onSuccess }: SignupFormProps) {
+  const { signup } = useAuth() as AuthContextType;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { 
-    signup, 
-    googleSignIn,
-    githubSignIn,
-    twitterSignIn,
-    facebookSignIn,
-    appleSignIn,
-    microsoftSignIn,
-    phoneSignIn
-  } = useAuth() as AuthContextType;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,44 +37,9 @@ export function SignupForm({ onToggleForm, onSuccess }: SignupFormProps) {
     try {
       await signup(email, password);
       if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialSignIn = async (provider: string) => {
-    setError('');
-    setIsLoading(true);
-    
-    try {
-      switch (provider) {
-        case 'google':
-          await googleSignIn();
-          break;
-        case 'github':
-          await githubSignIn();
-          break;
-        case 'twitter':
-          await twitterSignIn();
-          break;
-        case 'facebook':
-          await facebookSignIn();
-          break;
-        case 'apple':
-          await appleSignIn();
-          break;
-        case 'microsoft':
-          await microsoftSignIn();
-          break;
-        case 'phone':
-          await phoneSignIn();
-          break;
-      }
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to sign up with ${provider}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create account';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
