@@ -19,6 +19,29 @@ import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSourc
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
 
+// Add these interfaces at the top with other types
+interface GoogleCalendarEvent {
+  id: string;
+  summary?: string;
+  start: {
+    dateTime?: string;
+    date?: string;
+  };
+  end: {
+    dateTime?: string;
+    date?: string;
+  };
+  location?: string;
+  description?: string;
+}
+
+interface GoogleCalendarSource {
+  id: string;
+  summary: string;
+  backgroundColor?: string;
+  primary?: boolean;
+}
+
 /**
  * Calendar Widget Component
  * 
@@ -63,8 +86,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  // Using error state for displaying error messages to users
-  const [_error, setError] = useState<string | null>(null) // Prefixed with _ to indicate intentional non-usage
   const [isGoogleConnected, setIsGoogleConnected] = useState<boolean>(false)
   
   // Google OAuth configuration
@@ -202,7 +223,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
     
     return accessToken;
-  }, [getTokenKeys]);
+  }, [getTokenKeys, refreshAccessToken]);
   
   /**
    * Fetches events from Google Calendar
@@ -217,7 +238,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     
     try {
       setIsLoading(true);
-      setError(null);
       
       // Get a valid access token
       const accessToken = await getValidAccessToken();
@@ -277,9 +297,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         console.log(`Calendar ${calendar.name} events:`, data.items);
         
         // Convert Google Calendar events to our format
-        const calendarEvents = data.items.map((event: any) => {
-          const startDateTime = event.start.dateTime ? new Date(event.start.dateTime) : new Date(event.start.date);
-          const endDateTime = event.end.dateTime ? new Date(event.end.dateTime) : new Date(event.end.date);
+        const calendarEvents = data.items.map((event: GoogleCalendarEvent) => {
+          // Ensure we have valid date strings before creating Date objects
+          const startDateTime = event.start.dateTime || event.start.date;
+          const endDateTime = event.end.dateTime || event.end.date;
+          
+          if (!startDateTime || !endDateTime) {
+            console.error('Invalid event dates:', event);
+            return null;
+          }
+          
+          const start = new Date(startDateTime);
+          const end = new Date(endDateTime);
           const isAllDay = !event.start.dateTime;
           
           // Format time string
@@ -287,26 +316,26 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           if (isAllDay) {
             timeString = 'All day';
           } else {
-            timeString = startDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            timeString = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             
             // Add end time if on same day
-            if (startDateTime.toDateString() === endDateTime.toDateString()) {
-              timeString += ' - ' + endDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            if (start.toDateString() === end.toDateString()) {
+              timeString += ' - ' + end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             }
           }
           
           return {
             id: event.id,
             title: event.summary || 'Untitled Event',
-            start: startDateTime,
-            end: endDateTime,
+            start,
+            end,
             allDay: isAllDay,
             location: event.location || '',
             description: event.description || '',
             color: calendar.color,
             time: timeString
           };
-        });
+        }).filter((event: CalendarEvent | null): event is CalendarEvent => event !== null);
         
         allEvents.push(...calendarEvents);
       }
@@ -325,7 +354,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     } catch (err) {
       if (!silentMode) console.error('Failed to fetch events', err);
       setIsLoading(false);
-      setError('Failed to fetch events');
     }
   }, [isGoogleConnected, localConfig.calendars, getValidAccessToken])
   
@@ -346,7 +374,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     const data = await response.json();
     
     // Make sure at least one calendar is selected by default
-    const calendars = data.items.map((calendar: any) => ({
+    const calendars = data.items.map((calendar: GoogleCalendarSource) => ({
       id: calendar.id,
       name: calendar.summary,
       color: calendar.backgroundColor || '#4285F4',
@@ -367,7 +395,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   const connectGoogleCalendar = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
       
       // Generate and store state parameter to prevent CSRF attacks
       const state = generateStateParam();
@@ -389,9 +416,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     } catch (err) {
       console.error('Failed to connect to Google Calendar', err);
       setIsLoading(false);
-      setError('Failed to connect to Google Calendar');
     }
-  }, []);
+  }, [GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, GOOGLE_SCOPES]);
   
   /**
    * Handles the OAuth callback and exchanges the code for tokens
@@ -470,7 +496,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     } catch (err) {
       console.error('Failed to handle OAuth callback', err);
       setIsLoading(false);
-      setError('Failed to complete Google Calendar authentication');
     }
   }, [localConfig, fetchEvents]);
   
@@ -615,15 +640,15 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   
   // Refresh events periodically
   useEffect(() => {
-    if (!isGoogleConnected) return
+    if (!isGoogleConnected) return;
     
     const refreshTimer = setInterval(() => {
       // Use silent mode for background refreshes to reduce console noise
-      fetchEvents(true)
-    }, 300000) // Refresh every 5 minutes
+      fetchEvents(true);
+    }, 300000); // Refresh every 5 minutes
     
-    return () => clearInterval(refreshTimer)
-  }, [isGoogleConnected, fetchEvents])
+    return () => clearInterval(refreshTimer);
+  }, [isGoogleConnected, fetchEvents, localConfig]);
 
   /**
    * Get the number of days in a month
@@ -1283,7 +1308,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           <Label htmlFor="first-day-select">First Day of Week</Label>
           <Select
             value={localConfig.startDay || 'sunday'}
-            onValueChange={(value) => setLocalConfig({...localConfig, startDay: value as 'sunday' | 'monday'})}
+            onValueChange={(value: string) => setLocalConfig({...localConfig, startDay: value as 'sunday' | 'monday'})}
           >
             <SelectTrigger id="first-day-select" className="w-full">
               <SelectValue placeholder="Select first day of week" />
