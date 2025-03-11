@@ -10,13 +10,14 @@ interface LoginFormProps {
   onToggleForm: () => void;
   onForgotPassword: () => void;
   onSuccess?: () => void;
+  onPhoneAuth?: () => void;
 }
 
 interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
 }
 
-export function LoginForm({ onToggleForm, onForgotPassword, onSuccess }: LoginFormProps) {
+export function LoginForm({ onToggleForm, onForgotPassword, onSuccess, onPhoneAuth }: LoginFormProps) {
   const { login } = useAuth() as AuthContextType;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,6 +96,11 @@ export function LoginForm({ onToggleForm, onForgotPassword, onSuccess }: LoginFo
           <Button variant="link" onClick={onForgotPassword} type="button" className="text-primary">
             Forgot password?
           </Button>
+          {onPhoneAuth && (
+            <Button variant="link" onClick={onPhoneAuth} type="button" className="text-primary">
+              Sign in with phone
+            </Button>
+          )}
           <Button variant="link" onClick={onToggleForm} type="button" className="text-primary">
             Don't have an account? Sign up
           </Button>

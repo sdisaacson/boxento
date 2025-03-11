@@ -5,9 +5,10 @@ import { SignupForm } from './SignupForm';
 interface AuthFormProps {
   onSuccess?: () => void;
   onForgotPassword?: () => void;
+  onPhoneAuth?: () => void;
 }
 
-export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
+export function AuthForm({ onSuccess, onForgotPassword, onPhoneAuth }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleForm = () => {
@@ -21,6 +22,7 @@ export function AuthForm({ onSuccess, onForgotPassword }: AuthFormProps) {
           onToggleForm={toggleForm} 
           onSuccess={onSuccess}
           onForgotPassword={onForgotPassword || (() => {})}
+          onPhoneAuth={onPhoneAuth}
         />
       ) : (
         <SignupForm 
