@@ -48,7 +48,6 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   const [showSettings, setShowSettings] = useState<boolean>(false)
   const [showAddForm, setShowAddForm] = useState<boolean>(false)
   const [newTimezone, setNewTimezone] = useState<NewTimezoneItem>({ name: '', timezone: '' })
-  const settingsRef = useRef<HTMLDivElement | null>(null)
   const widgetRef = useRef<HTMLDivElement | null>(null)
   
   useEffect(() => {
@@ -75,8 +74,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         hour12: true,
         timeZone: timezone
       });
-    } catch (error) {
-      console.error('Error formatting time:', error);
+    } catch (error: unknown) {
+      console.error('Error formatting time:', error instanceof Error ? error.message : error);
       return 'Invalid timezone';
     }
   }
@@ -150,8 +149,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         const sign = hoursDiff > 0 ? '+' : '';
         return `${sign}${hoursDiff}h`;
       }
-    } catch (error) {
-      console.error('Error calculating time difference:', error);
+    } catch (error: unknown) {
+      console.error('Error calculating time difference:', error instanceof Error ? error.message : error);
       return '';
     }
   }
@@ -208,7 +207,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * @param {boolean} [isDarkMode=false] - Whether to use dark mode colors
    * @returns {JSX.Element} Analog clock SVG
    */
-  const renderClock = (timezone: string, size: number = 80, isDarkMode: boolean = false) => {
+  const renderClock = (timezone: string, size: number = 80, isDarkMode: boolean = false): JSX.Element => {
     try {
       // Get the current time in the specified timezone
       const date = new Date(currentTime.toLocaleString('en-US', { timeZone: timezone }));
@@ -339,8 +338,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           />
         </svg>
       );
-    } catch (error) {
-      console.error('Error rendering clock:', error);
+    } catch (error: unknown) {
+      console.error('Error rendering clock:', error instanceof Error ? error.message : error);
       return <div className="text-red-500 text-xs">Invalid timezone</div>;
     }
   }
@@ -357,7 +356,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Compact view optimized for 1x1 grid size
    */
-  const renderCompactView = () => {
+  const renderCompactView = (): JSX.Element => {
     const mainTimezone = timezones[0] || { id: 0, name: 'Local', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
     const timeString = formatTime(currentTime, mainTimezone.timezone).split(':').slice(0, 2).join(':');
     const period = formatTime(currentTime, mainTimezone.timezone).split(' ')[1];
@@ -391,7 +390,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Default view optimized for 2x2 grid size
    */
-  const renderDefaultView = () => {
+  const renderDefaultView = (): JSX.Element => {
     // For small number of timezones, use a cleaner layout
     if (timezones.length <= 2) {
       return (
@@ -452,7 +451,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Medium view optimized for 2x2 grid size with multiple timezones
    */
-  const renderMediumView = () => {
+  const renderMediumView = (): JSX.Element => {
     return (
       <div className="grid grid-cols-2 gap-1 p-1 h-full overflow-y-auto">
         {timezones.map(tz => (
@@ -478,7 +477,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Wide view optimized for 3x2 grid size
    */
-  const renderWideView = () => {
+  const renderWideView = (): JSX.Element => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-3 timezones, show analog clocks
@@ -552,7 +551,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Tall view optimized for 2x3+ grid sizes
    */
-  const renderTallView = () => {
+  const renderTallView = (): JSX.Element => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-4 timezones, show larger clocks with more details
@@ -612,7 +611,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Full view optimized for 4x4+ grid sizes
    */
-  const renderFullView = () => {
+  const renderFullView = (): JSX.Element => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     return (
@@ -651,7 +650,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Extra-wide view optimized for 6×2 or wider layouts
    */
-  const renderExtraWideView = () => {
+  const renderExtraWideView = (): JSX.Element => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-6 timezones, show in a single row with larger analog clocks
@@ -732,7 +731,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} Tall-wide view optimized for 2×3 or 2×4 grid sizes
    */
-  const renderTallWideView = () => {
+  const renderTallWideView = (): JSX.Element => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     return (
@@ -782,7 +781,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns {JSX.Element} The appropriate view for the current dimensions and timezone count
    */
-  const renderContent = () => {
+  const renderContent = (): JSX.Element => {
     if (timezones.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -863,9 +862,9 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns Settings content
    */
-  const renderSettingsContent = () => {
+  const renderSettingsContent = (): JSX.Element => {
     // Common timezones for easy selection
-    const commonTimezones = [
+    const commonTimezones: Array<{ name: string; timezone: string }> = [
       { name: 'New York', timezone: 'America/New_York' },
       { name: 'Los Angeles', timezone: 'America/Los_Angeles' },
       { name: 'London', timezone: 'Europe/London' },
@@ -899,7 +898,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
                 <Label htmlFor="timezone-select">Timezone</Label>
                 <Select
                   value={newTimezone.timezone}
-                  onValueChange={(value) => setNewTimezone({...newTimezone, timezone: value})}
+                  onValueChange={(value: string) => setNewTimezone({...newTimezone, timezone: value})}
                 >
                   <SelectTrigger id="timezone-select">
                     <SelectValue placeholder="Select a timezone" />
@@ -972,7 +971,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * 
    * @returns Settings footer
    */
-  const renderSettingsFooter = () => {
+  const renderSettingsFooter = (): JSX.Element => {
     return (
       <div className="flex justify-between w-full">
         {config?.onDelete && (
