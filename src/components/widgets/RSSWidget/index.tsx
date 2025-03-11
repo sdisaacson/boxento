@@ -8,16 +8,10 @@ import {
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
 import { RSSWidgetProps, RSSWidgetConfig, RSSFeedItem, RSSDisplayMode } from './types';
-import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
+import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 
 /**
@@ -70,37 +64,14 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  // Update local config when props config changes
-  useEffect(() => {
-    setLocalConfig((prevConfig: RSSWidgetConfig) => ({
-      ...prevConfig,
-      ...config
-    }));
-  }, [config]);
-  
-  // Fetch RSS feed when feedUrl changes
-  useEffect(() => {
-    if (!localConfig.feedUrl) {
-      setFeedItems([]);
-      setFeedTitle('');
-      return;
-    }
-    
-    fetchRSSFeed();
-    
-    // Cleanup function to abort fetch if component unmounts
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [localConfig.feedUrl]);
+  const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<string>('content');
   
   /**
    * Fetch and parse RSS feed
    */
-  const fetchRSSFeed = async () => {
-    const { feedUrl } = localConfig;
+  const fetchRSSFeed = React.useCallback(async () => {
+    const { feedUrl, maxItems } = localConfig;
     
     if (!feedUrl) return;
     
@@ -163,7 +134,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
         };
       });
       
-      setFeedItems(items.slice(0, localConfig.maxItems || 5));
+      setFeedItems(items.slice(0, maxItems || 5));
       setIsLoading(false);
     } catch (error: unknown) {
       // Type guard to check if error is an Error object or AbortError
@@ -180,7 +151,33 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
         setIsLoading(false);
       }
     }
-  };
+  }, [localConfig]);
+  
+  // Update local config when props config changes
+  useEffect(() => {
+    setLocalConfig((prevConfig: RSSWidgetConfig) => ({
+      ...prevConfig,
+      ...config
+    }));
+  }, [config]);
+  
+  // Fetch RSS feed when feedUrl changes
+  useEffect(() => {
+    if (!localConfig.feedUrl) {
+      setFeedItems([]);
+      setFeedTitle('');
+      return;
+    }
+    
+    fetchRSSFeed();
+    
+    // Cleanup function to abort fetch if component unmounts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [localConfig.feedUrl, fetchRSSFeed]);
   
   /**
    * Format publication date
@@ -195,7 +192,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
         month: 'short', 
         day: 'numeric' 
       });
-    } catch (e) {
+    } catch {
       return dateString;
     }
   };
@@ -521,7 +518,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
     try {
       new URL(url);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -530,9 +527,6 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
    * Settings dialog
    */
   const renderSettings = () => {
-    const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
-    const [activeTab, setActiveTab] = useState<string>('content');
-    
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
