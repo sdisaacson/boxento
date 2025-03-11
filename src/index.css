@@ -305,6 +305,33 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 /* 
  * =================================
+ * DRAG DIRECTION ANIMATION STYLES
+ * =================================
+ */
+
+/* Base transition for all drag states */
+.react-grid-item.react-draggable-dragging {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Left drag animation with rotation */
+.react-grid-item.dragging-left {
+  transform: rotate(-5deg) !important;
+}
+
+/* Right drag animation with rotation */
+.react-grid-item.dragging-right {
+  transform: rotate(5deg) !important;
+}
+
+/* When drag stops, animate back to normal with a spring effect */
+.react-grid-item.drag-rebound {
+  transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5) !important;
+  transform: rotate(0deg) !important;
+}
+
+/* 
+ * =================================
  * PLACEHOLDER STYLES
  * =================================
  */

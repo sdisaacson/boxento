@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Plus, Moon, Sun } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
@@ -494,17 +494,74 @@ function App() {
     );
   };
   
-  // Drag and resize event handlers
-  const handleDragStart = (): void => {
+  // Add state to track dragging direction and current dragged widget
+  const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
+  const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null);
+  const lastMousePos = useRef<{ x: number, y: number } | null>(null);
+  const dragThreshold = 5; // Minimum mouse movement to determine direction
+  
+  // Update drag handlers to track direction
+  const handleDragStart = (layout: LayoutItem[], oldItem: LayoutItem, newItem: LayoutItem, placeholder: LayoutItem, event: MouseEvent): void => {
     // Add a class to the body to indicate we're dragging
     document.body.classList.add('dragging');
     document.body.classList.add('react-grid-layout--dragging');
+    
+    // Store the widget ID being dragged
+    setDraggedWidgetId(newItem.i);
+    
+    // Initialize mouse position
+    lastMousePos.current = { x: event.clientX, y: event.clientY };
+    
+    // Reset direction at start
+    setDragDirection(null);
     
     // Log for debugging
     console.log('Drag started');
   };
   
+  const handleDrag = (layout: LayoutItem[], oldItem: LayoutItem, newItem: LayoutItem, placeholder: LayoutItem, event: MouseEvent): void => {
+    // Skip if no mouse position
+    if (!lastMousePos.current) return;
+    
+    // Calculate direction based on mouse movement
+    const deltaX = event.clientX - lastMousePos.current.x;
+    
+    // Only change direction if movement is significant
+    if (Math.abs(deltaX) > dragThreshold) {
+      const newDirection = deltaX < 0 ? 'left' : 'right';
+      
+      // Only update if direction changed
+      if (newDirection !== dragDirection) {
+        setDragDirection(newDirection);
+      }
+      
+      // Update last position
+      lastMousePos.current = { x: event.clientX, y: event.clientY };
+    }
+  };
+  
   const handleDragStop = (): void => {
+    // Apply rebound class before removing direction class
+    if (draggedWidgetId) {
+      // Find the widget that was being dragged by ID
+      const widgetElement = document.querySelector(`.react-grid-item[data-grid*="i:${draggedWidgetId}"]`);
+      if (widgetElement) {
+        widgetElement.classList.add('drag-rebound');
+        
+        // Remove rebound class after animation completes
+        setTimeout(() => {
+          widgetElement.classList.remove('drag-rebound');
+        }, 500); // Match the animation duration in CSS
+      }
+    }
+    
+    // Reset direction and dragged widget
+    setDragDirection(null);
+    setDraggedWidgetId(null);
+    
+    // Reset last mouse position
+    lastMousePos.current = null;
+    
     // Remove classes
     document.body.classList.remove('dragging');
     document.body.classList.remove('react-grid-layout--dragging');
@@ -516,6 +573,22 @@ function App() {
     // Log for debugging
     console.log('Drag completed, layout saved');
   };
+  
+  // Apply drag direction classes to the dragged widget
+  useEffect(() => {
+    if (draggedWidgetId && dragDirection) {
+      // Find the dragged widget element
+      const widgetElement = document.querySelector(`.react-grid-item[data-grid*="i:${draggedWidgetId}"].react-draggable-dragging`);
+      
+      if (widgetElement) {
+        // Remove any existing direction classes
+        widgetElement.classList.remove('dragging-left', 'dragging-right');
+        
+        // Add the appropriate direction class
+        widgetElement.classList.add(`dragging-${dragDirection}`);
+      }
+    }
+  }, [draggedWidgetId, dragDirection]);
   
   const handleResizeStart = (): void => {
     document.body.classList.add('react-grid-layout--resizing');
@@ -814,6 +887,7 @@ function App() {
                   }
                 }}
                 onDragStart={handleDragStart}
+                onDrag={handleDrag}
                 onDragStop={handleDragStop}
                 onResizeStart={handleResizeStart}
                 onResizeStop={handleResizeStop}
