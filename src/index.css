@@ -226,21 +226,19 @@ body.drag-complete .widget-container button {
 
 /* 
  * =================================
- * 4. GRID LAYOUT STYLES
+ * 4. GRID LAYOUT INTERACTION STYLES
  * =================================
  */
 
-/* Grid Container */
-.grid-item-container {
-  @apply p-0 bg-transparent h-full w-full;
-}
-
-/* Grid Item */
+/* Base Grid Item */
 .react-grid-item {
-  @apply transition-all duration-200 ease-in-out;
+  @apply transition-all duration-300 ease-in-out;
   -webkit-user-drag: none;
+  border-radius: var(--border-radius-standard);
+  backface-visibility: hidden; /* Prevents flickering during transitions */
 }
 
+/* Mouse interaction states */
 .react-grid-item:active,
 .react-grid-item:focus,
 .react-grid-item:active *,
@@ -248,32 +246,42 @@ body.drag-complete .widget-container button {
   @apply select-none;
 }
 
-/* Grid States */
+/* Active dragging state with enhanced visual feedback */
 .react-grid-item.react-draggable-dragging {
-  @apply z-[100] transition-none pointer-events-none;
+  @apply z-[100] shadow-xl;
+  border-radius: var(--border-radius-standard) !important;
+  transition: box-shadow 0.2s ease-out !important;
+  /* No transform transitions - allows RGL to handle positioning */
+  cursor: grabbing !important;
+  opacity: 0.92; /* Slight transparency while dragging */
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+/* Active resizing state */
 .react-grid-item.resizing {
-  @apply z-10 transition-none;
+  @apply z-10 shadow-lg;
+  transition: none; /* No transitions during resize for responsiveness */
+  cursor: nwse-resize !important;
+  opacity: 0.95;
 }
 
-.react-grid-item,
-.react-grid-item.react-draggable-dragging,
-.react-grid-item.resizing {
-  @apply touch-none select-none;
-}
-
-/* Temporarily disable dragging during the click window after drag/resize completes */
+/* Reset after interaction completes - smooth return to normal */
 body.drag-complete .react-grid-item {
-  @apply transition-transform duration-300 ease-in-out;
+  @apply transition-all duration-400 ease-out;
 }
 
-/* Grid Layout */
+/* Grid Layout container styles */
 .react-grid-layout {
   @apply relative;
   -webkit-user-drag: none;
 }
 
+/* Grid Container */
+.grid-item-container {
+  @apply p-0 bg-transparent h-full w-full;
+}
+
+/* Dragging/resizing states for the entire grid */
 .react-grid-layout--dragging,
 .react-grid-layout--resizing {
   @apply cursor-move select-none;
@@ -285,22 +293,81 @@ body.drag-complete .react-grid-item {
   cursor: inherit !important;
 }
 
-/* Dragging Global Styles */
-body.react-grid-layout--dragging .react-grid-item {
-  @apply opacity-75 transition-none;
+/* Subtle visual states for non-active items during drag/resize */
+body.react-grid-layout--dragging .react-grid-item:not(.react-draggable-dragging) {
+  @apply opacity-80 transition-opacity duration-300 ease-in;
+  filter: saturate(0.95);
 }
 
-body.react-grid-layout--resizing .react-grid-item {
-  @apply opacity-100 transition-none;
+body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
+  @apply opacity-90 transition-opacity duration-300 ease-in;
 }
 
-/* Grid Placeholder */
-.react-grid-item.react-grid-placeholder {
-  border-radius: var(--border-radius-standard);
-  z-index: -1;
-  @apply bg-gray-50/60 border border-dashed border-gray-200/50 shadow-sm shadow-black/[0.01] ring-1 ring-inset ring-white/80;
-  transition: all 0.2s ease-in-out !important;
-  @apply dark:bg-blue-800/40 dark:border-blue-700;
+/* 
+ * =================================
+ * PLACEHOLDER STYLES
+ * =================================
+ */
+
+/* Grid Placeholder - enhanced for better positioning feedback */
+.react-grid-placeholder,
+.react-grid-item.react-grid-placeholder,
+.react-draggable-dragging.react-grid-placeholder,
+.react-grid-item.dropping {
+  border-radius: var(--border-radius-standard) !important;
+  z-index: 2;
+  background: linear-gradient(135deg, rgba(22, 78, 99, 0.04), rgba(76, 110, 245, 0.08)) !important;
+  @apply border border-blue-100/60 shadow-md;
+  box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.15), 0 4px 14px rgba(76, 110, 245, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.0) !important;
+  @apply dark:bg-gradient-to-br dark:from-blue-900/15 dark:to-indigo-900/20 dark:border-blue-700/30;
+  box-shadow: inset 0 0 0 1px rgba(76, 130, 245, 0.2), 0 4px 14px rgba(30, 64, 175, 0.15) !important;
+  opacity: 0.75 !important;
+  animation: placeholderPulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+/* Subtle animation for the placeholder */
+@keyframes placeholderPulse {
+  0% { 
+    box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.1), 0 4px 10px rgba(76, 110, 245, 0.1); 
+    opacity: 0.7;
+  }
+  100% { 
+    box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.2), 0 6px 16px rgba(76, 110, 245, 0.2); 
+    opacity: 0.8;
+  }
+}
+
+/* Ensure border radius is maintained during CSS transforms */
+.react-grid-item.cssTransforms {
+  border-radius: var(--border-radius-standard) !important;
+  transform-origin: center center !important; /* Ensures proper scaling behavior */
+}
+
+/* Resize Handle - reverted to previous styling */
+.react-resizable-handle,
+.react-resizable .react-resizable-handle,
+.react-grid-item .react-resizable-handle {
+  @apply absolute w-[30px] h-[30px] bottom-0 right-0 bg-none pointer-events-auto 
+         cursor-se-resize z-10 opacity-0 transition-opacity duration-500 ease-in-out;
+}
+
+.react-resizable-handle::after,
+.react-resizable .react-resizable-handle::after,
+.react-grid-item .react-resizable-handle::after {
+  @apply content-[''] absolute bottom-1 right-1 w-[30px] h-[30px] border-b-2 border-r-2 border-black/20 dark:border-white/30;
+  border-radius: 0 0 var(--border-radius-standard) 0;
+}
+
+.widget-container:hover .react-resizable-handle,
+.react-grid-item:hover .react-resizable-handle {
+  @apply opacity-100;
+}
+
+/* Adding a subtle hover effect to grid items */
+.react-grid-item:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  @apply dark:shadow-lg dark:shadow-black/20;
 }
 
 /* Widget Header Styles */
@@ -317,26 +384,6 @@ body.react-grid-layout--resizing .react-grid-item {
   overflow: hidden;
   position: relative;
   @apply dark:bg-slate-800 dark:shadow-lg dark:shadow-black/20;
-}
-
-/* Resize Handle */
-.react-resizable-handle,
-.react-resizable .react-resizable-handle,
-.react-grid-item .react-resizable-handle {
-  @apply absolute w-[30px] h-[30px] bottom-0 right-0 bg-none pointer-events-auto 
-         cursor-se-resize z-10 opacity-0 transition-opacity duration-300 ease-in-out;
-}
-
-.react-resizable-handle::after,
-.react-resizable .react-resizable-handle::after,
-.react-grid-item .react-resizable-handle::after {
-  @apply content-[''] absolute bottom-1 right-1 w-[30px] h-[30px] border-b-2 border-r-2 border-black/20 dark:border-white/30;
-  border-radius: 0 0 var(--border-radius-standard) 0;
-}
-
-.widget-container:hover .react-resizable-handle,
-.react-grid-item:hover .react-resizable-handle {
-  @apply opacity-100;
 }
 
 /* 
