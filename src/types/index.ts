@@ -17,7 +17,7 @@ export interface WidgetConfig {
   maxSize?: { w: number, h: number };
 }
 
-export interface WidgetProps<T = any> {
+export interface WidgetProps<T extends Record<string, unknown> = Record<string, unknown>> {
   width: number;
   height: number;
   config?: T & {
@@ -50,7 +50,7 @@ export interface WidgetSize {
 export interface Widget {
   id: string;
   type: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export type LayoutItem = Layout;
