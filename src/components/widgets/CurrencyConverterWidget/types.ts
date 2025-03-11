@@ -13,7 +13,7 @@ import { WidgetProps } from '@/types';
  * @property {boolean} [autoRefresh] - Whether to automatically refresh rates
  * @property {number} [refreshInterval] - Interval in minutes for auto-refresh
  */
-export interface CurrencyConverterWidgetConfig {
+export interface CurrencyConverterWidgetConfig extends Record<string, unknown> {
   id?: string;
   title?: string;
   apiKey?: string;
@@ -31,4 +31,17 @@ export interface CurrencyConverterWidgetConfig {
  * 
  * @type CurrencyConverterWidgetProps
  */
-export type CurrencyConverterWidgetProps = WidgetProps<CurrencyConverterWidgetConfig>; 
+export type CurrencyConverterWidgetProps = WidgetProps<CurrencyConverterWidgetConfig>;
+
+/**
+ * Data structure for currency conversion results
+ * 
+ * @interface ConversionData
+ */
+export interface ConversionData {
+  code: string;
+  name: string;
+  symbol: string;
+  rate: number;
+  value: string;
+} 
