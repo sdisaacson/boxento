@@ -3,28 +3,30 @@
 // If you're getting errors about React JSX elements
 declare namespace JSX {
   interface IntrinsicElements {
-    [elemName: string]: any;
+    [elemName: string]: Record<string, unknown>;
   }
-  type Element = any;
+  type Element = React.ReactElement;
 }
 
 // If you're getting errors about React modules
 declare module 'react' {
   export const useState: <T>(initialState: T | (() => T)) => [T, (state: T | ((prevState: T) => T)) => void];
-  export const useEffect: (effect: () => void | (() => void), deps?: ReadonlyArray<any>) => void;
+  export const useEffect: (effect: () => void | (() => void), deps?: ReadonlyArray<unknown>) => void;
   export const useRef: <T>(initialValue?: T) => { current: T };
   export const createContext: <T>(defaultValue: T) => Context<T>;
   export const useContext: <T>(context: Context<T>) => T;
   export type ReactNode = React.ReactNode;
   export type RefObject<T> = { readonly current: T | null };
   export type MutableRefObject<T> = { current: T };
-  export type FunctionComponent<P = {}> = React.FC<P>;
-  export type FC<P = {}> = (props: P) => JSX.Element | null;
-  export type MouseEvent<T extends Element = Element> = any;
-  export type KeyboardEvent<T extends Element = Element> = any;
-  export type ChangeEvent<T extends Element = Element> = any;
-  export type FormEvent<T extends Element = Element> = any;
-  export type ErrorInfo = any;
+  export type FunctionComponent<P extends Record<string, unknown>> = React.FC<P>;
+  export type FC<P extends Record<string, unknown>> = (props: P) => JSX.Element | null;
+  export type MouseEvent<T extends Element> = React.MouseEvent<T>;
+  export type KeyboardEvent<T extends Element> = React.KeyboardEvent<T>;
+  export type ChangeEvent<T extends Element> = React.ChangeEvent<T>;
+  export type FormEvent<T extends Element> = React.FormEvent<T>;
+  export type ErrorInfo = {
+    componentStack: string;
+  };
 
   // Re-export default React
   export default React;
