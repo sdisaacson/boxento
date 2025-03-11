@@ -83,7 +83,7 @@ export function PhoneAuth({ onBack, onSuccess }: PhoneAuthProps) {
                 id="phone"
                 type="tel" 
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
                 required
                 placeholder="+1 (555) 555-5555"
               />
@@ -102,7 +102,7 @@ export function PhoneAuth({ onBack, onSuccess }: PhoneAuthProps) {
                 id="code"
                 type="text" 
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVerificationCode(e.target.value)}
                 required
                 placeholder="123456"
                 maxLength={6}
