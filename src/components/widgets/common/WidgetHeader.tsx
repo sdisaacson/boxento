@@ -14,12 +14,12 @@ interface WidgetHeaderProps {
  * @param props Component props
  * @returns Widget header component
  */
-const WidgetHeader: React.FC<WidgetHeaderProps> = ({ 
+const WidgetHeader = ({ 
   title, 
   icon, 
   onSettingsClick, 
   children 
-}) => {
+}: WidgetHeaderProps): JSX.Element => {
   return (
     <div className="flex justify-between items-center p-2 md:p-2 cursor-move widget-drag-handle">
       <div className="flex items-center space-x-1 md:space-x-2">

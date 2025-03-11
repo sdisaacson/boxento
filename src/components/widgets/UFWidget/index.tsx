@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -58,8 +59,8 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Fallback static UF data 
-  const fallbackUfData: UFData = {
+  // Wrap fallbackUfData in useMemo
+  const fallbackUfData = useMemo<UFData>(() => ({
     codigo: 'uf',
     nombre: 'Unidad de Fomento (UF)',
     unidad_medida: 'Pesos',
@@ -79,7 +80,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         valor: 38368.23
       }
     ]
-  };
+  }), []); // Empty dependency array since this is static data
 
   // First useEffect - fallback data
   useEffect(() => {
@@ -98,8 +99,8 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     }));
   }, [config]);
 
-  // Fetch UF data from API with retry logic
-  const fetchUfData = async () => {
+  // Wrap fetchUfData in useCallback
+  const fetchUfData = useCallback(async () => {
     try {
       setError(null);
       setUseFallbackData(false);
@@ -127,7 +128,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         setUseFallbackData(true);
       }
     }
-  };
+  }, [retryCount, maxRetries]); // Add dependencies used in the callback
   
   // Second useEffect - data fetching and refresh timer
   useEffect(() => {

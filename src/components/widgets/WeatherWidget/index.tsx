@@ -259,6 +259,18 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
     fetchData();
   }, [localConfig.location, localConfig.units]);
 
+  // Add fetchWeather to useEffect dependencies
+  useEffect(() => {
+    fetchData();
+    
+    // Set up refresh interval
+    const interval = setInterval(() => {
+      fetchData();
+    }, refreshInterval * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [refreshInterval, fetchWeather]); // Add fetchWeather to dependencies
+
   /**
    * Format temperature with unit
    * 
@@ -810,6 +822,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   );
 };
 
+// Fix export issue by explicitly exporting the component
+export { WeatherWidget };
 export default WeatherWidget;
 
 // Export types for use in other files

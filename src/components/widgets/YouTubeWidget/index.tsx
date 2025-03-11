@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -55,7 +56,6 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
   });
   const [embedError, setEmbedError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [debugInfo, setDebugInfo] = useState<string>('');
   const [embedMode, setEmbedMode] = useState<'iframe' | 'direct-link'>('iframe');
   
   // Use a ref for expanded state to prevent re-renders
@@ -137,20 +137,69 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
   const handleIframeLoad = () => {
     setIsLoading(false);
     setEmbedError(null);
-    setDebugInfo(prev => `${prev}\nIframe loaded successfully`);
   };
   
   // Handle iframe error event
   const handleIframeError = () => {
     setIsLoading(false);
     setEmbedError('Could not load the YouTube video. Please check your internet connection or try the direct link option.');
-    setDebugInfo(prev => `${prev}\nIframe error event triggered`);
   };
+  
+  // Move state hooks to component level
+  const [videoIdFeedback, setVideoIdFeedback] = useState<{type: 'success' | 'error' | 'info' | null, message: string | null}>({
+    type: null,
+    message: null
+  });
+  
+  const [activeTab, setActiveTab] = useState('general');
+  
+  // Validate video ID or URL input
+  const validateYouTubeInput = React.useCallback((input: string) => {
+    if (!input.trim()) {
+      setVideoIdFeedback({
+        type: 'info',
+        message: 'Please enter a YouTube URL or video ID'
+      });
+      return;
+    }
+    
+    if (input.includes('youtu')) {
+      const id = extractYouTubeId(input);
+      if (id) {
+        setVideoIdFeedback({
+          type: 'success',
+          message: 'Valid YouTube URL detected'
+        });
+      } else {
+        setVideoIdFeedback({
+          type: 'error',
+          message: 'Could not extract a valid YouTube video ID from this URL'
+        });
+      }
+    } else if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) {
+      setVideoIdFeedback({
+        type: 'success',
+        message: 'Valid YouTube video ID format'
+      });
+    } else {
+      setVideoIdFeedback({
+        type: 'error',
+        message: 'This doesn\'t look like a valid YouTube video ID (should be 11 characters)'
+      });
+    }
+  }, []);
+  
+  // Move useEffect to component level
+  useEffect(() => {
+    if (localConfig.videoId) {
+      validateYouTubeInput(localConfig.videoId);
+    }
+  }, [localConfig.videoId, validateYouTubeInput]);
   
   // Extract YouTube ID from various URL formats
   const extractYouTubeId = (url: string): string | null => {
-    // Regular YouTube URL pattern
-    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#\&\?]*).*/;
+    // Regular YouTube URL pattern - remove unnecessary escapes
+    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
     const match = url.match(regExp);
     
     return (match && match[2].length === 11) ? match[2] : null;
@@ -457,60 +506,6 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
   
   // Updated Settings Dialog to include debug mode and embed mode toggle
   const renderSettings = () => {
-    const [videoIdFeedback, setVideoIdFeedback] = useState<{type: 'success' | 'error' | 'info' | null, message: string | null}>({
-      type: null,
-      message: null
-    });
-    
-    const [activeTab, setActiveTab] = useState('general');
-    
-    // Validate video ID or URL input
-    const validateYouTubeInput = (input: string) => {
-      if (!input.trim()) {
-        setVideoIdFeedback({
-          type: 'info',
-          message: 'Please enter a YouTube URL or video ID'
-        });
-        return;
-      }
-      
-      if (input.includes('youtu')) {
-        const id = extractYouTubeId(input);
-        if (id) {
-          setVideoIdFeedback({
-            type: 'success',
-            message: 'Valid YouTube URL detected'
-          });
-        } else {
-          setVideoIdFeedback({
-            type: 'error',
-            message: 'Could not extract a valid YouTube video ID from this URL'
-          });
-        }
-      } else if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) {
-        setVideoIdFeedback({
-          type: 'success',
-          message: 'Valid YouTube video ID format'
-        });
-      } else {
-        setVideoIdFeedback({
-          type: 'error',
-          message: 'This doesn\'t look like a valid YouTube video ID (should be 11 characters)'
-        });
-      }
-    };
-    
-    // Debounced validation for better UX
-    useEffect(() => {
-      if (showSettings && localConfig.videoId) {
-        const timer = setTimeout(() => {
-          validateYouTubeInput(localConfig.videoId || '');
-        }, 500);
-        
-        return () => clearTimeout(timer);
-      }
-    }, [localConfig.videoId, showSettings]);
-
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
