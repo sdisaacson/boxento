@@ -10,8 +10,8 @@ interface WidgetSettingsHook {
   showSettings: boolean;
   showSettingsRef: MutableRefObject<boolean>;
   toggleSettings: () => void;
-  settingsRef: RefObject<HTMLDivElement>;
-  settingsButtonRef: RefObject<HTMLButtonElement>;
+  settingsRef: RefObject<HTMLDivElement | null>;
+  settingsButtonRef: RefObject<HTMLButtonElement | null>;
   portalContainer: HTMLElement | null;
 }
 
