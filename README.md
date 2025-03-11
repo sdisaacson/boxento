@@ -32,7 +32,7 @@ Boxento is inspired by the need for a flexible dashboard for developers, sysadmi
 ## Features
 - **Lightweight & Modular**: Built with React + Vite for fast, minimal performance, using Vite as the industry-standard build tool and Bun for package management and runtime.
 - **Modern UI Components**: Utilizes shadcn/ui for beautiful, accessible, and consistent UI elements.
-- **Resizable Widgets**: Drag, drop, and resize all widgets to show more or less information (e.g., Calendar shows month overview at 2x2, full calendar at 6x6).
+- **Resizable Widgets**: Drag, drop, and resize widgets with a minimum grid size of 2×2. When you add a new widget, it defaults to a 3×3 size on desktop and a 2×2 size on mobile, ensuring a balanced layout. Maximum widget size on desktop is determined by the grid's configuration.
 - **Theme Support**: All widgets support both light and dark modes, toggled via a sun icon in the top-right corner.
 - **Open-Source Friendly**: MIT-licensed, easy for anyone to contribute widgets.
 - **UX-Focused**: Intuitive drag-and-drop, keyboard shortcuts (cmd + k for widget picker), and clean aesthetics.
@@ -86,13 +86,14 @@ Open your browser to http://localhost:5173 (Vite's default port). Vite provides 
 ## Widgets
 
 ### Built-in Widgets
-Boxento comes with these widgets:
+Boxento comes with these default widgets:
 
-- **Calendar**: Shows today's date and events
-- **Weather**: Displays local weather
-- **World Clocks**: Shows times in multiple timezones
-- **Quick Links**: Editable grid of clickable bookmarks
-- **Notes**: A minimalist notepad for capturing thoughts and ideas
+- **Todo Widget**: A simple task manager to track your tasks.
+- **Weather Widget**: Displays local weather.
+- **Quick Links Widget**: An editable grid of clickable bookmarks.
+- **Notes Widget**: A minimalist notepad for capturing thoughts.
+
+Additional widgets—such as Calendar or World Clocks—are available via the widget selector.
 
 ### Creating Your Own Widgets
 Boxento is open-source, and anyone can create and contribute widgets! For detailed instructions, see our [Widget Development Guide](docs/WIDGET_DEVELOPMENT.md).
