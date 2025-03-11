@@ -1,13 +1,14 @@
 {
   "name": "boxento",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "bunx --bun vite",
+    "build": "bun run build:types && bunx --bun vite build",
+    "build:types": "bun tsc -b",
+    "lint": "bun eslint .",
+    "preview": "bunx --bun vite preview"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.4",
