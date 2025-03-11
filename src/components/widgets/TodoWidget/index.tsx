@@ -25,6 +25,29 @@ import {
   SelectValue,
 } from '../../ui/select';
 
+type TodoWidgetConfigValue = string | boolean | TodoItem[] | 'created' | 'alphabetical' | 'completed';
+
+interface TodoItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: Date;
+}
+
+interface TodoWidgetConfig {
+  title?: string;
+  items?: TodoItem[];
+  backgroundColor?: string;
+  showCompletedItems?: boolean;
+  sortOrder?: 'created' | 'alphabetical' | 'completed';
+}
+
+interface TodoWidgetProps {
+  width: number;
+  height: number;
+  config?: TodoWidgetConfig;
+}
+
 /**
  * Todo Widget Component
  * 
@@ -38,21 +61,25 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     title: 'Todo List',
     items: [],
     backgroundColor: '#FFFFFF',
-    darkBackgroundColor: '#1A1A1A',
     showCompletedItems: true,
     sortOrder: 'created'
   };
 
-  const [showSettings, setShowSettings] = useState(false);
   const [localConfig, setLocalConfig] = useState<TodoWidgetConfig>({
     ...defaultConfig,
     ...config
   });
-  
+
+  const [showSettings, setShowSettings] = useState(false);
   const [newTodoText, setNewTodoText] = useState('');
   const newTodoInputRef = useRef<HTMLInputElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   
+  // Determine layout based on width and height
+  const isCompact = width <= 2 || height <= 2;
+  const isWide = width >= 4;
+  const isTall = height >= 4;
+
   // Update local config when props change
   useEffect(() => {
     setLocalConfig(prevConfig => ({
@@ -63,38 +90,18 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
   // Add a new todo item
   const addTodo = () => {
-    if (!newTodoText.trim()) return;
-    
-    const newItem: TodoItem = {
-      id: Date.now().toString(),
+    const newTodo: TodoItem = {
+      id: crypto.randomUUID(),
       text: newTodoText.trim(),
       completed: false,
       createdAt: new Date()
     };
-    
-    const updatedItems = [...(localConfig.items || []), newItem];
-    
+
     setLocalConfig(prev => ({
       ...prev,
-      items: updatedItems
+      items: [...(prev.items || []), newTodo]
     }));
-    
-    // Save to parent config
-    if (config?.onUpdate) {
-      config.onUpdate({
-        ...localConfig,
-        items: updatedItems
-      });
-    }
-    
     setNewTodoText('');
-    
-    // Focus the input field after adding
-    setTimeout(() => {
-      if (newTodoInputRef.current) {
-        newTodoInputRef.current.focus();
-      }
-    }, 0);
   };
 
   // Toggle todo completion
@@ -204,10 +211,75 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     return items;
   };
 
-  // Render todo items with integrated add form
-  const renderContent = () => {
+  const renderTodoList = (items: TodoItem[]) => (
+    <ul className="space-y-2 pr-1">
+      {items.map(item => (
+        <li 
+          key={item.id} 
+          className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg group"
+        >
+          <button
+            onClick={() => toggleTodo(item.id)}
+            className={`flex-shrink-0 w-5 h-5 rounded-full border ${
+              item.completed 
+                ? 'bg-green-500 border-green-500 text-white' 
+                : 'border-gray-300 dark:border-gray-600'
+            } flex items-center justify-center`}
+            aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
+          >
+            {item.completed && <Check size={12} />}
+          </button>
+          
+          <span 
+            className={`flex-grow ${
+              item.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {item.text}
+          </span>
+          
+          <button
+            onClick={() => deleteTodo(item.id)}
+            className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="Delete task"
+          >
+            <Trash2 size={14} />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
+  const renderAddTodoForm = () => (
+    <form 
+      onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        addTodo();
+      }}
+      className="flex items-center gap-2"
+    >
+      <Input
+        ref={newTodoInputRef}
+        type="text"
+        value={newTodoText}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
+        placeholder="Add a task..."
+        className="flex-grow"
+        aria-label="New task"
+      />
+      <button
+        type="submit"
+        disabled={!newTodoText.trim()}
+        className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+        aria-label="Add task"
+      >
+        <Plus size={20} />
+      </button>
+    </form>
+  );
+
+  const renderDefaultView = () => {
     const items = getFilteredAndSortedItems();
-    
     return (
       <div className="h-full flex flex-col">
         <div className="flex-grow overflow-y-auto">
@@ -216,75 +288,174 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               <p>No tasks. Add one below!</p>
             </div>
           ) : (
-            <ul className="space-y-2 pr-1">
+            renderTodoList(items)
+          )}
+        </div>
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          {renderAddTodoForm()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderCompactView = () => {
+    const items = getFilteredAndSortedItems();
+    return (
+      <div className="h-full flex flex-col p-2">
+        <div className="flex-grow overflow-y-auto">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-xs text-gray-500 dark:text-gray-400">
+              <p>No tasks</p>
+            </div>
+          ) : (
+            <ul className="space-y-1">
               {items.map(item => (
-                <li 
-                  key={item.id} 
-                  className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg group"
-                >
+                <li key={item.id} className="flex items-center gap-2 text-xs">
                   <button
                     onClick={() => toggleTodo(item.id)}
-                    className={`flex-shrink-0 w-5 h-5 rounded-full border ${
+                    className={`flex-shrink-0 w-4 h-4 rounded-full border ${
                       item.completed 
                         ? 'bg-green-500 border-green-500 text-white' 
                         : 'border-gray-300 dark:border-gray-600'
-                    } flex items-center justify-center`}
+                    }`}
                     aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
                   >
-                    {item.completed && <Check size={12} />}
+                    {item.completed && <Check size={8} />}
                   </button>
-                  
-                  <span 
-                    className={`flex-grow ${
-                      item.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'
-                    }`}
-                  >
+                  <span className={item.completed ? 'line-through text-gray-400' : ''}>
                     {item.text}
                   </span>
-                  
-                  <button
-                    onClick={() => deleteTodo(item.id)}
-                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Delete task"
-                  >
-                    <Trash2 size={14} />
-                  </button>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        
-        {/* Integrated add todo form */}
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           <form 
             onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
               e.preventDefault();
               addTodo();
             }}
-            className="flex items-center gap-2"
+            className="flex gap-1"
           >
             <Input
               ref={newTodoInputRef}
               type="text"
               value={newTodoText}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
-              placeholder="Add a task..."
-              className="flex-grow"
-              aria-label="New task"
+              placeholder="Add task..."
+              className="flex-grow text-xs h-6"
             />
             <button
               type="submit"
               disabled={!newTodoText.trim()}
-              className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
-              aria-label="Add task"
+              className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
             >
-              <Plus size={20} />
+              <Plus size={14} />
             </button>
           </form>
         </div>
       </div>
     );
+  };
+
+  const renderWideView = () => {
+    const items = getFilteredAndSortedItems();
+    return (
+      <div className="h-full grid grid-cols-2 gap-4 p-4">
+        <div className="flex flex-col">
+          <h3 className="text-sm font-medium mb-2">Tasks</h3>
+          <div className="flex-grow overflow-y-auto">
+            {items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <p>No tasks</p>
+              </div>
+            ) : (
+              renderTodoList(items)
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-sm font-medium mb-2">Add Task</h3>
+          {renderAddTodoForm()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderTallView = () => {
+    const items = getFilteredAndSortedItems();
+    return (
+      <div className="h-full flex flex-col p-4">
+        <div className="flex-grow overflow-y-auto">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <p>No tasks</p>
+            </div>
+          ) : (
+            renderTodoList(items)
+          )}
+        </div>
+        <div className="mt-4">
+          <h3 className="text-sm font-medium mb-2">Add Task</h3>
+          {renderAddTodoForm()}
+        </div>
+      </div>
+    );
+  };
+
+  const renderLargeView = () => {
+    const items = getFilteredAndSortedItems();
+    const completedItems = items.filter(item => item.completed);
+    const pendingItems = items.filter(item => !item.completed);
+
+    return (
+      <div className="h-full grid grid-cols-2 gap-4 p-4">
+        <div className="flex flex-col">
+          <h3 className="text-sm font-medium mb-2">Pending Tasks ({pendingItems.length})</h3>
+          <div className="flex-grow overflow-y-auto">
+            {pendingItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <p>No pending tasks</p>
+              </div>
+            ) : (
+              renderTodoList(pendingItems)
+            )}
+          </div>
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Add Task</h3>
+            {renderAddTodoForm()}
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-sm font-medium mb-2">Completed Tasks ({completedItems.length})</h3>
+          <div className="flex-grow overflow-y-auto">
+            {completedItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <p>No completed tasks</p>
+              </div>
+            ) : (
+              renderTodoList(completedItems)
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render todo items with integrated add form
+  const renderContent = () => {
+    if (isCompact) {
+      return renderCompactView();
+    } else if (isWide && isTall) {
+      return renderLargeView();
+    } else if (isWide) {
+      return renderWideView();
+    } else if (isTall) {
+      return renderTallView();
+    } else {
+      return renderDefaultView();
+    }
   };
 
   // Settings modal using shadcn/ui Dialog
@@ -369,82 +540,8 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
         onSettingsClick={() => setShowSettings(true)}
       />
       
-      <div className="flex-grow p-4 overflow-hidden">
-        <div className="h-full flex flex-col">
-          <div className="flex-grow overflow-y-auto">
-            {getFilteredAndSortedItems().length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                <p>No tasks. Add one below!</p>
-              </div>
-            ) : (
-              <ul className="space-y-2 pr-1">
-                {getFilteredAndSortedItems().map(item => (
-                  <li 
-                    key={item.id} 
-                    className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg group"
-                  >
-                    <button
-                      onClick={() => toggleTodo(item.id)}
-                      className={`flex-shrink-0 w-5 h-5 rounded-full border ${
-                        item.completed 
-                          ? 'bg-green-500 border-green-500 text-white' 
-                          : 'border-gray-300 dark:border-gray-600'
-                      } flex items-center justify-center`}
-                      aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
-                    >
-                      {item.completed && <Check size={12} />}
-                    </button>
-                    
-                    <span 
-                      className={`flex-grow ${
-                        item.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'
-                      }`}
-                    >
-                      {item.text}
-                    </span>
-                    
-                    <button
-                      onClick={() => deleteTodo(item.id)}
-                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label="Delete task"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          
-          {/* Integrated add todo form */}
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <form 
-              onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-                e.preventDefault();
-                addTodo();
-              }}
-              className="flex items-center gap-2"
-            >
-              <Input
-                ref={newTodoInputRef}
-                type="text"
-                value={newTodoText}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
-                placeholder="Add a task..."
-                className="flex-grow"
-                aria-label="New task"
-              />
-              <button
-                type="submit"
-                disabled={!newTodoText.trim()}
-                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
-                aria-label="Add task"
-              >
-                <Plus size={20} />
-              </button>
-            </form>
-          </div>
-        </div>
+      <div className="flex-grow overflow-hidden">
+        {renderContent()}
       </div>
       
       {renderSettings()}

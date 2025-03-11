@@ -47,7 +47,7 @@ async function spotifyApiRequest<T>(
       if (errorData.error && errorData.error.message) {
         errorMessage = errorData.error.message;
       }
-    } catch (e) {
+    } catch {
       // Parsing error body failed, use default message
     }
     
@@ -62,6 +62,44 @@ async function spotifyApiRequest<T>(
   return await response.json();
 }
 
+interface SpotifyArtist {
+  id: string;
+  name: string;
+}
+
+interface SpotifyAlbum {
+  id: string;
+  name: string;
+  images: Array<{
+    url: string;
+    height: number;
+    width: number;
+  }>;
+}
+
+interface SpotifyTrackItem {
+  id: string;
+  name: string;
+  artists: SpotifyArtist[];
+  album: SpotifyAlbum;
+  duration_ms: number;
+  external_urls: {
+    spotify: string;
+  };
+}
+
+interface SpotifyPlaybackResponse {
+  is_playing: boolean;
+  item?: SpotifyTrackItem;
+  progress_ms?: number;
+  device?: {
+    id: string;
+    name: string;
+    type: string;
+    volume_percent: number;
+  };
+}
+
 /**
  * Fetches the user's current playback state
  * 
@@ -70,7 +108,7 @@ async function spotifyApiRequest<T>(
  */
 export async function getCurrentPlayback(accessToken: string): Promise<PlaybackState> {
   try {
-    const data = await spotifyApiRequest<any>(
+    const data = await spotifyApiRequest<SpotifyPlaybackResponse>(
       '/me/player',
       accessToken
     );
@@ -84,26 +122,38 @@ export async function getCurrentPlayback(accessToken: string): Promise<PlaybackS
     const track: SpotifyTrack = {
       id: data.item?.id || '',
       name: data.item?.name || 'Unknown Track',
-      artist: data.item?.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
-      album: data.item?.album?.name || 'Unknown Album',
-      albumArt: data.item?.album?.images?.[0]?.url,
+      artist: data.item?.artists.map(a => a.name).join(', ') || 'Unknown Artist',
+      album: data.item?.album.name || 'Unknown Album',
+      albumArt: data.item?.album.images[0]?.url,
       duration: data.item?.duration_ms || 0,
       url: data.item?.external_urls?.spotify || ''
     };
-    
+
     return {
-      isPlaying: data.is_playing || false,
+      isPlaying: data.is_playing,
       currentTrack: track,
       progress: data.progress_ms || 0,
-      device: data.device?.name || ''
+      device: data.device?.name
     };
   } catch (error) {
-    if (error instanceof SpotifyApiError && error.status === 401) {
-      // Token expired
-      throw new Error('Authentication token expired');
-    }
+    console.error('Error getting current playback:', error);
     throw error;
   }
+}
+
+interface SpotifyRecentlyPlayedResponse {
+  items: Array<{
+    track: {
+      id: string;
+      name: string;
+      artists: SpotifyArtist[];
+      album: SpotifyAlbum;
+      duration_ms: number;
+      external_urls: {
+        spotify: string;
+      };
+    };
+  }>;
 }
 
 /**
@@ -118,7 +168,7 @@ export async function getRecentlyPlayed(
   limit: number = 10
 ): Promise<SpotifyTrack[]> {
   try {
-    const data = await spotifyApiRequest<any>(
+    const data = await spotifyApiRequest<SpotifyRecentlyPlayedResponse>(
       `/me/player/recently-played?limit=${limit}`,
       accessToken
     );
@@ -127,14 +177,14 @@ export async function getRecentlyPlayed(
       return [];
     }
     
-    return data.items.map((item: any) => ({
-      id: item.track?.id || '',
-      name: item.track?.name || 'Unknown Track',
-      artist: item.track?.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
-      album: item.track?.album?.name || 'Unknown Album',
-      albumArt: item.track?.album?.images?.[0]?.url,
-      duration: item.track?.duration_ms || 0,
-      url: item.track?.external_urls?.spotify || ''
+    return data.items.map(item => ({
+      id: item.track.id || '',
+      name: item.track.name || 'Unknown Track',
+      artist: item.track.artists.map(a => a.name).join(', ') || 'Unknown Artist',
+      album: item.track.album.name || 'Unknown Album',
+      albumArt: item.track.album.images[0]?.url,
+      duration: item.track.duration_ms || 0,
+      url: item.track.external_urls.spotify || ''
     }));
   } catch (error) {
     if (error instanceof SpotifyApiError && error.status === 401) {

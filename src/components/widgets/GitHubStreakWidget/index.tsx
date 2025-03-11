@@ -104,28 +104,25 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
         
         // Mock data for demonstration
         const mockData = {
-          username: localConfig.username,
-          currentStreak: 7,
-          longestStreak: 21,
-          totalContributions: 532,
-          contributionsByDay: Array.from({ length: 60 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            return {
-              date: date.toISOString().split('T')[0],
-              count: Math.floor(Math.random() * 8) // Random contribution count 0-7
-            };
-          }).reverse(),
+          username: localConfig.username || 'octocat',
+          currentStreak: 5,
+          longestStreak: 15,
+          totalContributions: 1337,
+          contributionsByDay: Array(365).fill(0).map((_, i) => ({
+            date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
+            count: Math.floor(Math.random() * 10)
+          })),
           loading: false,
           error: null
         };
         
         setGithubData(mockData);
       } catch (error) {
+        console.error('Failed to fetch GitHub data:', error);
         setGithubData(prev => ({
           ...prev,
           loading: false,
-          error: 'Failed to fetch GitHub data. Please check the username and try again.'
+          error: error instanceof Error ? error.message : 'Failed to fetch GitHub data. Please check the username and try again.'
         }));
       }
     };

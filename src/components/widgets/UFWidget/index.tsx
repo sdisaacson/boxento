@@ -99,105 +99,34 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
   }, [config]);
 
   // Fetch UF data from API with retry logic
-  const fetchUfData = async (retryAttempt = 0) => {
-    // If already using fallback data, don't try to fetch again
-    if (useFallbackData) {
-      return {
-        abort: () => {}
-      };
-    }
-    
-    // Use AbortController to handle request cleanup
-    const abortController = new AbortController();
-    const signal = abortController.signal;
-    
+  const fetchUfData = async () => {
     try {
-      setLoading(true);
-      if (retryAttempt === 0) {
-        setError(null); // Only clear error on first attempt
-      }
-      
-      console.log(`Fetching UF data from API... (Attempt ${retryAttempt + 1}/${maxRetries + 1})`);
-      
-      // Try different API endpoints if we're retrying
-      let apiEndpoint = 'https://mindicador.cl/api/uf';
-      
-      // Try with the current date for retry attempts (sometimes the API needs a date)
-      if (retryAttempt === 1) {
-        const today = new Date().toISOString().split('T')[0];
-        apiEndpoint = `https://mindicador.cl/api/uf/${today}`;
-      }
-      
-      // Add a mode: 'cors' option to handle cross-origin issues
-      const response = await fetch(apiEndpoint, { 
-        signal,
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json'
-        },
-        // Add timeout by using a setTimeout with AbortController
-        // This prevents hanging requests
-      });
-      
-      console.log('API response status:', response.status);
-      
+      setError(null);
+      setUseFallbackData(false);
+
+      const response = await fetch('https://mindicador.cl/api/uf');
       if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
+        throw new Error('Failed to fetch UF data');
       }
-      
+
       const data = await response.json();
-      console.log('API data received:', data);
-      
-      // Validate that we received the expected data structure
-      if (!data) {
-        throw new Error('Empty data received from API');
-      }
-      
-      if (data.error) {
-        throw new Error(`API error: ${data.error}`);
-      }
-      
-      // Handle alternative API response formats - sometimes the API returns the data differently
-      const processedData: UFData = {
-        codigo: data.codigo || 'uf',
-        nombre: data.nombre || 'Unidad de Fomento (UF)',
-        unidad_medida: data.unidad_medida || 'Pesos',
-        fecha: data.fecha || new Date().toISOString().split('T')[0],
-        valor: typeof data.valor !== 'undefined' ? data.valor : 
-               (data.serie && data.serie.length > 0 ? data.serie[0].valor : 0),
-        serie: data.serie || []
-      };
-      
-      console.log('Processed data:', processedData);
-      
-      setUfData(processedData);
+      setUfData(data);
       setLastUpdated(new Date());
-      setLoading(false);
       setRetryCount(0); // Reset retry count on success
-      setUseFallbackData(false); // Make sure we're not using fallback data
     } catch (err) {
-      // Only set error if not aborted
-      if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        console.error('Error fetching UF data:', err);
-        
-        // Retry logic
-        if (retryAttempt < maxRetries) {
-          console.log(`Retrying (${retryAttempt + 1}/${maxRetries})...`);
-          // Wait longer between retries
-          setTimeout(() => {
-            fetchUfData(retryAttempt + 1);
-          }, 1000 * (retryAttempt + 1)); // Increasing backoff
-          return abortController;
-        }
-        
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-        setLoading(false);
-        setRetryCount(retryAttempt);
+      console.error('Error fetching UF data:', err);
+      
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        // Retry after a delay
+        setTimeout(() => {
+          fetchUfData();
+        }, 1000 * Math.pow(2, retryCount)); // Exponential backoff
+      } else {
+        setError('Failed to fetch UF data after multiple attempts');
+        setUseFallbackData(true);
       }
     }
-    
-    // Return the abort controller for cleanup
-    return abortController;
   };
   
   // Setup data fetching and refresh timer
