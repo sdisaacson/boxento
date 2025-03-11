@@ -487,7 +487,7 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
               <Label htmlFor="debug-toggle">Show Debug Info (Size)</Label>
               <Switch
                 id="debug-toggle"
-                checked={localConfig.showDebug || false}
+                checked={Boolean(localConfig.showDebug)}
                 onCheckedChange={(checked: boolean) => 
                   setLocalConfig({...localConfig, showDebug: checked})
                 }
@@ -537,7 +537,7 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
         {renderContent()}
       </div>
       
-      {localConfig.showDebug && (
+      {Boolean(localConfig.showDebug) && (
         <div className="absolute bottom-1 right-1 bg-black opacity-50 text-white text-xs px-1 rounded">
           {width}x{height} - {getWidgetSizeCategory(width, height)}
         </div>

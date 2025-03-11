@@ -237,7 +237,7 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
     case 'world-clocks':
       return WorldClocksWidget;
     case 'quick-links':
-      return QuickLinksWidget;
+      return QuickLinksWidget as React.ComponentType<WidgetProps<Record<string, unknown>>>;
     case 'notes':
       return NotesWidget;
     case 'todo':

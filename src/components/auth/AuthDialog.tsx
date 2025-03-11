@@ -3,14 +3,13 @@ import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
 import { AuthForm } from './AuthForm';
 import { PasswordReset } from './PasswordReset';
-import { PhoneAuth } from './PhoneAuth';
 
 interface AuthDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type AuthView = 'auth' | 'reset-password' | 'phone';
+type AuthView = 'auth' | 'reset-password' ;
 
 export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
   const [view, setView] = useState<AuthView>('auth');
@@ -30,17 +29,10 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
           <AuthForm 
             onSuccess={onClose}
             onForgotPassword={() => setView('reset-password')}
-            onPhoneAuth={() => setView('phone')}
           />
         )}
         {view === 'reset-password' && (
           <PasswordReset 
-            onBack={handleBack}
-            onSuccess={onClose}
-          />
-        )}
-        {view === 'phone' && (
-          <PhoneAuth 
             onBack={handleBack}
             onSuccess={onClose}
           />
