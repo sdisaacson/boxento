@@ -13,7 +13,6 @@ import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
-import { Switch } from '../../ui/switch';
 
 /**
  * Weather Widget Component
@@ -357,7 +356,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
   const renderLoading = () => {
     return (
       <div className="flex items-center justify-center h-full w-full">
-        <div className="animate-pulse rounded-full bg-gray-200/50 dark:bg-gray-700/50 h-10 w-10"></div>
+        <div className="animate-pulse rounded-full bg-gray-200 bg-opacity-50 dark:bg-gray-700 dark:bg-opacity-50 h-10 w-10"></div>
       </div>
     );
   };
@@ -479,7 +478,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         <div className="flex-1 overflow-hidden">
           <div className="flex space-x-2 h-full">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center justify-between py-2 px-1 bg-gray-50/50 dark:bg-slate-800/30 rounded-md">
+              <div key={index} className="flex-1 flex flex-col items-center justify-between py-2 px-1 bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md">
                 <div className="text-xs font-medium">{day.day}</div>
                 <div className="py-1">
                   {getWeatherIcon(day.condition, day.icon)}
@@ -534,15 +533,15 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         </div>
         
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-2 text-center">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
             <div className="text-xs text-gray-500 dark:text-gray-400">Humidity</div>
             <div className="text-sm font-medium mt-1">{weather.humidity}%</div>
           </div>
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-2 text-center">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
             <div className="text-xs text-gray-500 dark:text-gray-400">Wind</div>
             <div className="text-sm font-medium mt-1">{weather.windSpeed} {unit === 'celsius' ? 'm/s' : 'mph'}</div>
           </div>
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-2 text-center">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
             <div className="text-xs text-gray-500 dark:text-gray-400">Sunrise/Sunset</div>
             <div className="text-xs font-medium mt-1">{sunriseTime} / {sunsetTime}</div>
           </div>
@@ -552,7 +551,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <div className="text-xs font-medium mb-2">5-Day Forecast</div>
           <div className="space-y-2">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/30 rounded-md py-2 px-3">
+              <div key={index} className="flex items-center justify-between bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md py-2 px-3">
                 <div className="text-xs font-medium w-10">{day.day}</div>
                 <div className="flex-1 flex justify-center">
                   {getWeatherIcon(day.condition, day.icon)}
@@ -615,19 +614,19 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         </div>
         
         <div className="grid grid-cols-4 gap-3 mb-5">
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-3">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Humidity</div>
             <div className="text-lg font-medium">{weather.humidity}%</div>
           </div>
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-3">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Wind</div>
             <div className="text-lg font-medium">{weather.windSpeed} {unit === 'celsius' ? 'm/s' : 'mph'}</div>
           </div>
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-3">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sunrise</div>
             <div className="text-lg font-medium">{sunriseTime}</div>
           </div>
-          <div className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-3">
+          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sunset</div>
             <div className="text-lg font-medium">{sunsetTime}</div>
           </div>
@@ -637,7 +636,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           <h4 className="text-sm font-medium mb-3">5-Day Forecast</h4>
           <div className="grid grid-cols-5 gap-3">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="bg-gray-50/50 dark:bg-slate-800/30 rounded-md p-3 flex flex-col items-center">
+              <div key={index} className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3 flex flex-col items-center">
                 <div className="text-sm font-medium mb-2">{day.day}</div>
                 <div className="mb-2">
                   {getWeatherIcon(day.condition, day.icon)}
@@ -790,7 +789,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
       
-      <div className="flex-1 overflow-hidden bg-white/30 dark:bg-slate-900/30 rounded-md m-1">
+      <div className="flex-1 overflow-hidden bg-white bg-opacity-30 dark:bg-slate-900 dark:bg-opacity-30 rounded-md m-1">
         {renderContent()}
       </div>
       

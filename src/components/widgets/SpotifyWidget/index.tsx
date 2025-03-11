@@ -912,7 +912,7 @@ const SpotifyWidget: React.FC<SpotifyWidgetProps> = ({ width, height, config }) 
                   </div>
                   
                   {authError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 mb-2">
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start text-red-800 dark:bg-red-900 dark:bg-opacity-20 dark:border-red-800 dark:text-red-400 mb-2">
                       <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                       <p className="text-sm">
                         {authError}

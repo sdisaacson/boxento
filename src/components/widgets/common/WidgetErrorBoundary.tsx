@@ -34,7 +34,7 @@ class WidgetErrorBoundary extends React.Component<WidgetErrorBoundaryProps, Widg
   render(): React.ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 text-red-800 dark:text-red-200 rounded-lg">
           <AlertTriangle className="mb-2" size={24} aria-hidden="true" />
           <h3 className="text-sm font-medium mb-1">Widget Error</h3>
           <p className="text-xs text-center">

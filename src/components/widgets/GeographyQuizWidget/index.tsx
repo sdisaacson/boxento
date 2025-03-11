@@ -257,10 +257,10 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                   ? 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700' 
                   : selectedAnswer === option
                     ? option === currentQuestions[currentQuestionIndex].correctAnswer
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
-                      : 'bg-red-100 border-red-500 dark:bg-red-800/30 dark:border-red-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
+                      : 'bg-red-100 border-red-500 dark:bg-red-800 dark:bg-opacity-30 dark:border-red-600'
                     : option === currentQuestions[currentQuestionIndex].correctAnswer && selectedAnswer !== null
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
                       : 'border-gray-300 dark:border-gray-600'
               }`}
             >
@@ -347,10 +347,10 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                   ? 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700' 
                   : selectedAnswer === option
                     ? option === currentQuestion.correctAnswer
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
-                      : 'bg-red-100 border-red-500 dark:bg-red-800/30 dark:border-red-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
+                      : 'bg-red-100 border-red-500 dark:bg-red-800 dark:bg-opacity-30 dark:border-red-600'
                     : option === currentQuestion.correctAnswer && selectedAnswer !== null
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
                       : 'border-gray-300 dark:border-gray-600'
               }`}
             >
@@ -433,10 +433,10 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                   ? 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700' 
                   : selectedAnswer === option
                     ? option === currentQuestion.correctAnswer
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
-                      : 'bg-red-100 border-red-500 dark:bg-red-800/30 dark:border-red-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
+                      : 'bg-red-100 border-red-500 dark:bg-red-800 dark:bg-opacity-30 dark:border-red-600'
                     : option === currentQuestion.correctAnswer && selectedAnswer !== null
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
                       : 'border-gray-300 dark:border-gray-600'
               }`}
             >
@@ -528,10 +528,10 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                   ? 'border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700' 
                   : selectedAnswer === option
                     ? option === currentQuestion.correctAnswer
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
-                      : 'bg-red-100 border-red-500 dark:bg-red-800/30 dark:border-red-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
+                      : 'bg-red-100 border-red-500 dark:bg-red-800 dark:bg-opacity-30 dark:border-red-600'
                     : option === currentQuestion.correctAnswer && selectedAnswer !== null
-                      ? 'bg-green-100 border-green-500 dark:bg-green-800/30 dark:border-green-600'
+                      ? 'bg-green-100 border-green-500 dark:bg-green-800 dark:bg-opacity-30 dark:border-green-600'
                       : 'border-gray-300 dark:border-gray-600'
               }`}
             >

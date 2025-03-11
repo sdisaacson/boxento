@@ -546,7 +546,7 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
       </div>
       
       {localConfig.showDebug && (
-        <div className="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-1 rounded">
+        <div className="absolute bottom-1 right-1 bg-black opacity-50 text-white text-xs px-1 rounded">
           {width}x{height} - {getWidgetSizeCategory(width, height)}
         </div>
       )}

@@ -760,7 +760,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               sortedEvents.map((event, index) => (
                 <div 
                   key={`event-${index}`}
-                  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 flex items-start"
+                  className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-100 dark:border-blue-800 flex items-start"
                 >
                   <div className="min-w-12 text-blue-500 font-medium mr-1.5 text-xs">
                     {event.time}
@@ -826,7 +826,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 setDate(today);
                 setSelectedDate(today);
               }}
-              className="px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 rounded"
               aria-label="Today"
             >
               Today
@@ -935,7 +935,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 setDate(today);
                 setSelectedDate(today);
               }}
-              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 rounded"
               aria-label="Today"
             >
               Today
@@ -1060,7 +1060,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 setDate(today);
                 setSelectedDate(today);
               }}
-              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 rounded"
               aria-label="Today"
             >
               Today
@@ -1239,7 +1239,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                           dayEvents.map((event, eventIndex) => (
                             <div 
                               key={eventIndex}
-                              className="text-xs p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800 flex items-start"
+                              className="text-xs p-2 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded border border-blue-100 dark:border-blue-800 flex items-start"
                             >
                               <div className="min-w-8 text-blue-500 font-medium mr-1.5">
                                 {event.time}

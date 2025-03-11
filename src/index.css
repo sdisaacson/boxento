@@ -2,7 +2,7 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* 
  * =================================
@@ -10,7 +10,12 @@
  * =================================
  */
 
-/* Light mode theme colors */
+:root,
+.dark {
+  --radius: 0.625rem;
+  --border-radius-standard: 1.9rem;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -36,7 +41,6 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -45,9 +49,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  
-  /* Layout variables */
-  --border-radius-standard: 1.9rem;
 }
 
 /* Dark mode theme colors */
@@ -297,22 +298,25 @@ body.react-grid-layout--resizing .react-grid-item {
 .react-grid-item.react-grid-placeholder {
   border-radius: var(--border-radius-standard);
   z-index: -1;
-  background-color: rgba(248, 248, 250, 0.6) !important;
-  opacity: 1 !important;
-  border: 1px dotted rgba(180, 180, 180, 0.5) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01), inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+  @apply bg-gray-50/60 border border-dashed border-gray-200/50 shadow-sm shadow-black/[0.01] ring-1 ring-inset ring-white/80;
   transition: all 0.2s ease-in-out !important;
-  outline: 1px solid rgba(240, 240, 240, 0.8);
-  outline-offset: -1px;
+  @apply dark:bg-blue-800/40 dark:border-blue-700;
 }
 
-/* Dark mode styling for the placeholder */
-.dark .react-grid-item.react-grid-placeholder {
-  background-color: rgba(35, 40, 55, 0.12) !important;
-  border: 1px dotted rgba(120, 120, 140, 0.25) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(50, 50, 70, 0.1) !important;
-  outline: 1px solid rgba(45, 45, 65, 0.3);
-  outline-offset: -1px;
+/* Widget Header Styles */
+.mobile-layout .widget-header,
+.mobile-widget .widget-header {
+  padding: 4px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  @apply dark:border-white/10;
+}
+
+.mobile-widget-item {
+  border-radius: var(--border-radius-standard);
+  overflow: hidden;
+  position: relative;
+  @apply dark:bg-slate-800 dark:shadow-lg dark:shadow-black/20;
 }
 
 /* Resize Handle */
@@ -432,10 +436,9 @@ body.react-grid-layout--resizing .react-grid-item {
 }
 
 .widget-search-input {
-  @apply w-full py-2.5 sm:py-3 px-4 sm:px-5 pl-8 sm:pl-10 rounded-lg border border-gray-200 dark:border-gray-600
-         bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100
+  @apply w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg
+         bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400
          focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
-         transition-all duration-200;
 }
 
 .widget-selector-categories,
@@ -461,16 +464,15 @@ body.react-grid-layout--resizing .react-grid-item {
 }
 
 .widget-item {
-  @apply flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-600
-         bg-white dark:bg-gray-700 text-left transition-all duration-200
-         hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 
+  @apply flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg 
+         bg-white dark:bg-gray-900 transition-all duration-200 cursor-pointer
+         hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700
          hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30;
 }
 
 .widget-icon {
-  @apply flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-900/30 
-         text-blue-600 dark:text-blue-400 transition-all duration-200
-         group-hover:bg-blue-500 group-hover:text-white;
+  @apply flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-900/30
+         text-blue-600 dark:text-blue-400;
 }
 
 .widget-info {
@@ -513,9 +515,9 @@ body.react-grid-layout--resizing .react-grid-item {
 }
 
 .add-widget-button {
-  @apply flex items-center gap-2 py-3.5 px-6 bg-blue-500 text-white font-medium rounded-xl
+  @apply fixed bottom-6 right-6 bg-blue-500 text-white rounded-full p-4
          shadow-md shadow-blue-500/20 dark:shadow-blue-500/40 transition-all duration-200
-         hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50 
+         hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50
          hover:-translate-y-0.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2;
 }
 
@@ -575,18 +577,6 @@ body.react-grid-layout--resizing .react-grid-item {
   position: relative;
 }
 
-/* Widget Header Styles */
-.mobile-layout .widget-header,
-.mobile-widget .widget-header {
-  padding: 4px 0;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.dark .mobile-widget-item .widget-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 /* Mobile Widget List & Items */
 .mobile-widget-list {
   display: grid;
@@ -594,17 +584,6 @@ body.react-grid-layout--resizing .react-grid-item {
   gap: 16px;
   padding: 16px;
   width: 100%;
-}
-
-.mobile-widget-item {
-  border-radius: var(--border-radius-standard);
-  overflow: hidden;
-  position: relative;
-}
-
-.dark .mobile-widget-item {
-  background: #1e293b;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 /* Mobile View */

@@ -315,7 +315,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                   href={link.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group ${
+                  className={`flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 transition-all relative text-gray-800 dark:text-gray-100 group ${
                     loadingLinkIds.includes(link.id) ? 'opacity-50' : ''
                   }`}
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -372,7 +372,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                   href={link.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={`flex items-center p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group ${
+                  className={`flex items-center p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 transition-all relative text-gray-800 dark:text-gray-100 group ${
                     loadingLinkIds.includes(link.id) ? 'opacity-50' : ''
                   }`}
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}

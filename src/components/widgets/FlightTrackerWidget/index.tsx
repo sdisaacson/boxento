@@ -26,7 +26,7 @@ import {
   AviationStackResponse,
   AviationStackFlight
 } from './types';
-import { Plane, Clock, Calendar, AlertCircle, RefreshCw, Cloud, Wind, Thermometer, ArrowRight, Map, Info, ChevronRight, Wifi, Shield, Sunset, Sunrise } from 'lucide-react';
+import { Plane, Clock, Calendar, AlertCircle, RefreshCw,  ArrowRight, Info, Shield } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -526,7 +526,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   const renderSetupView = () => {
     return (
       <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
-        <div className="p-3 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
+        <div className="p-3 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:from-opacity-30 dark:to-indigo-900 dark:to-opacity-30">
           <Plane className="h-8 w-8 text-blue-500" />
         </div>
         <div>
@@ -549,7 +549,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   const renderErrorState = () => {
     return (
       <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
-        <div className="p-3 rounded-full bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-900/20">
+        <div className="p-3 rounded-full bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900 dark:from-opacity-30 dark:to-red-900 dark:to-opacity-20">
           <AlertCircle className="h-8 w-8 text-red-500" />
         </div>
         <div>
@@ -585,7 +585,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     return (
       <div className="h-full flex flex-col items-center justify-center p-4 text-center">
         <div className="animate-pulse mb-4 relative">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:from-opacity-30 dark:to-indigo-900 dark:to-opacity-30 flex items-center justify-center">
             <Plane className="h-8 w-8 text-blue-500 animate-pulse" />
           </div>
           <div className="absolute inset-0 rounded-full border-2 border-blue-200 dark:border-blue-800 border-t-transparent dark:border-t-transparent animate-spin"></div>
@@ -654,7 +654,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       return (
         <div className="h-full flex flex-col overflow-hidden">
           {/* Status bar - simplified and informative */}
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/40">
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 dark:bg-opacity-40">
             <div className="flex items-center space-x-2">
               <div className="flex items-center justify-center h-5 w-5">
                 {isInFlight ? <Plane className="h-5 w-5" /> : 
@@ -669,7 +669,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             </div>
             <button 
               onClick={handleManualRefresh} 
-              className="p-1 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+              className="p-1 rounded-full hover:bg-gray-200 hover:bg-opacity-50 dark:hover:bg-gray-700 dark:hover:bg-opacity-50 transition-colors"
               title="Refresh data"
               disabled={loading}
             >
@@ -766,7 +766,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     return (
       <div className="h-full flex flex-col overflow-hidden">
         {/* Status bar with clean, information-focused design */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/40">
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 dark:bg-opacity-40">
           <div className="flex items-center space-x-2.5">
             <div className="flex items-center justify-center h-6 w-6">
               {isInFlight ? <Plane className="h-6 w-6" /> : 
@@ -778,7 +778,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                isDelayed ? `Delayed ${departureDelay?.formatted || arrivalDelay?.formatted}` : 
                statusText}
             </span>
-            <div className="flex items-center space-x-1.5 bg-white/80 dark:bg-gray-800/80 px-2 py-0.5 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex items-center space-x-1.5 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-80 px-2 py-0.5 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
               <span>{flightData.flight.iata || flightData.flight.icao}</span>
               <span>•</span>
               <span>{flightData.flight_date}</span>
@@ -786,7 +786,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
           </div>
           <button 
             onClick={handleManualRefresh} 
-            className="p-1.5 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors"
+            className="p-1.5 rounded-full hover:bg-gray-200 hover:bg-opacity-50 dark:hover:bg-gray-700 dark:hover:bg-opacity-50 transition-colors"
             title="Refresh data"
             disabled={loading}
           >
@@ -797,7 +797,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
         {/* Main content with improved information layout */}
         <div className="flex-1 overflow-y-auto">
           {/* Flight route map visualization - Keep it clean */}
-          <div className="relative bg-gray-50 dark:bg-gray-800/40 h-32 overflow-hidden border-b border-gray-100 dark:border-gray-800">
+          <div className="relative bg-gray-50 dark:bg-gray-800 dark:bg-opacity-40 h-32 overflow-hidden border-b border-gray-100 dark:border-gray-800">
             {/* Flight Path Line */}
             <div className="absolute top-1/2 left-[15%] right-[15%] h-0.5 bg-gray-300 dark:bg-gray-600 transform -translate-y-1/2">
               <div className="absolute left-0 h-2 w-2 rounded-full bg-gray-500 dark:bg-gray-400 transform -translate-y-1/2"></div>
@@ -839,7 +839,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   <div className="flex items-baseline justify-between">
                     <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Departure</div>
                     {departureDelay && (
-                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 rounded text-xs text-orange-600 dark:text-orange-400">
+                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900 dark:bg-opacity-30 rounded text-xs text-orange-600 dark:text-orange-400">
                         +{departureDelay.formatted}
                       </div>
                     )}
@@ -880,7 +880,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
                   <div className="flex items-baseline justify-between">
                     <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Arrival</div>
                     {arrivalDelay && (
-                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 rounded text-xs text-orange-600 dark:text-orange-400">
+                      <div className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900 dark:bg-opacity-30 rounded text-xs text-orange-600 dark:text-orange-400">
                         +{arrivalDelay.formatted}
                       </div>
                     )}
@@ -918,7 +918,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               </div>
               
               {/* Flight and Aircraft Info Row */}
-              <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between">
+              <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:bg-opacity-60 flex items-center justify-between">
                 <div className="flex items-center space-x-1.5">
                   <Plane className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium">
@@ -937,8 +937,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             
             {/* Live Flight Data - Only show when in flight, prioritized display */}
             {isInFlight && flightData.live && (
-              <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-green-100 dark:border-green-900/30 overflow-hidden">
-                <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 border-b border-green-100 dark:border-green-900/30 flex items-center">
+              <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-green-100 dark:border-green-900 dark:border-opacity-30 overflow-hidden">
+                <div className="px-3 py-2 bg-green-50 dark:bg-green-900 dark:bg-opacity-20 border-b border-green-100 dark:border-green-900 dark:border-opacity-30 flex items-center">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
                   <span className="text-sm font-medium text-green-800 dark:text-green-300">Live Flight Data</span>
                 </div>
@@ -1038,7 +1038,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             <TabsContent value="flight" className="space-y-4 py-2">
               {/* Demo Flights - Making this more prominent with Flighty-inspired design */}
               <Card className="border border-gray-200 dark:border-gray-800 overflow-hidden">
-                <CardHeader className="pb-2 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-200 dark:border-gray-800">
+                <CardHeader className="pb-2 bg-gray-50 dark:bg-gray-800 dark:bg-opacity-40 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center">
                     <CardTitle className="text-sm">Quick Select Demo Flights</CardTitle>
                     <div className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Recommended</div>

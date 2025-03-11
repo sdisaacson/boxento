@@ -456,7 +456,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     return (
       <div className="grid grid-cols-2 gap-1 p-1 h-full overflow-y-auto">
         {timezones.map(tz => (
-          <div key={tz.id} className="flex flex-col items-center justify-center p-1.5 bg-gray-50 dark:bg-slate-700/50 rounded">
+          <div key={tz.id} className="flex flex-col items-center justify-center p-1.5 bg-gray-50 dark:bg-slate-700 dark:bg-opacity-50 rounded">
             <div className="text-base font-bold">
               {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
             </div>
