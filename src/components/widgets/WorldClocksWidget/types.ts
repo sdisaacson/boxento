@@ -40,6 +40,7 @@ export interface WorldClocksWidgetConfig {
   timezones?: TimezoneItem[];
   onDelete?: () => void;
   onUpdate?: (config: WorldClocksWidgetConfig) => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

@@ -59,6 +59,7 @@ export interface ReadwiseWidgetConfig {
   showTags?: boolean;
   onUpdate?: (config: ReadwiseWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

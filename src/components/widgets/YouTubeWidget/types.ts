@@ -22,6 +22,7 @@ export interface YouTubeWidgetConfig {
   _expandedView?: boolean; // Internal state to track if small widgets should show player
   onUpdate?: (config: YouTubeWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

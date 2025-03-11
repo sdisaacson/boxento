@@ -26,6 +26,7 @@ export interface NotesWidgetConfig {
   darkPaperColor?: string;
   onUpdate?: (config: NotesWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

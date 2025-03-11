@@ -13,12 +13,10 @@ interface LoginFormProps {
   onPhoneAuth?: () => void;
 }
 
-interface AuthContextType {
-  login: (email: string, password: string) => Promise<void>;
-}
-
 export function LoginForm({ onToggleForm, onForgotPassword, onSuccess, onPhoneAuth }: LoginFormProps) {
-  const { login } = useAuth() as AuthContextType;
+  const auth = useAuth();
+  if (!auth) throw new Error("Auth context is not available");
+  const { login } = auth;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

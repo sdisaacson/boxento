@@ -59,6 +59,7 @@ export interface RSSWidgetConfig {
   openInNewTab?: boolean;
   onUpdate?: (config: RSSWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

@@ -9,7 +9,7 @@ if (!rootElement) throw new Error('Failed to find the root element')
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <AuthProvider children={<App />}>
+    <AuthProvider>
       <App />
     </AuthProvider>
   </React.StrictMode>

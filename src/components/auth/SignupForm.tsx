@@ -1,22 +1,21 @@
-import { Button } from "@/components/ui/button";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/AuthContext";
-import { useState } from "react";
-import { SocialLoginButtons } from "./SocialLoginButtons";
+import React, { useState } from 'react';
+import { useAuth } from '@/lib/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { SocialLoginButtons } from './SocialLoginButtons';
 
 interface SignupFormProps {
   onToggleForm: () => void;
   onSuccess?: () => void;
-}
-
-interface AuthContextType {
-  signup: (email: string, password: string) => Promise<void>;
+  onPhoneAuth?: () => void;
 }
 
 export function SignupForm({ onToggleForm, onSuccess }: SignupFormProps) {
-  const { signup } = useAuth() as AuthContextType;
+  const auth = useAuth();
+  if (!auth) throw new Error("Auth context is not available");
+  const { signup } = auth;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

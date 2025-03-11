@@ -36,6 +36,7 @@ export interface TodoWidgetConfig {
   sortOrder?: 'created' | 'alphabetical' | 'completed';
   onUpdate?: (config: TodoWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

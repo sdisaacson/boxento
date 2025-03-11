@@ -18,6 +18,7 @@ export interface GitHubStreakWidgetConfig {
   daysToShow?: number;
   onUpdate?: (config: GitHubStreakWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

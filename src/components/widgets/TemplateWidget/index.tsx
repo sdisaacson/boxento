@@ -12,15 +12,7 @@ import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
 import { Button } from '../../ui/button';
-
-// Define types inline since there's an issue with importing them
-interface TemplateWidgetConfig {
-  id?: string;
-  title?: string;
-  onUpdate?: (config: TemplateWidgetConfig) => void;
-  onDelete?: () => void;
-  showDebug?: boolean; // Debug toggle for development
-}
+import { TemplateWidgetConfig } from './types';
 
 type TemplateWidgetProps = WidgetProps<TemplateWidgetConfig>;
 

@@ -12,6 +12,7 @@ export interface TemplateWidgetConfig {
   title?: string;
   onUpdate?: (config: TemplateWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

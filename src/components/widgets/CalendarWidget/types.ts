@@ -63,6 +63,7 @@ export interface CalendarWidgetConfig {
   googleCalendarConnected?: boolean;
   calendars?: CalendarSource[];
   onUpdate?: (config: CalendarWidgetConfig) => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**

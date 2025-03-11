@@ -20,6 +20,7 @@ export interface PomodoroWidgetConfig {
   cyclesBeforeLongBreak?: number;
   onUpdate?: (config: PomodoroWidgetConfig) => void;
   onDelete?: () => void;
+  [key: string]: unknown; // Index signature to satisfy Record<string, unknown>
 }
 
 /**
