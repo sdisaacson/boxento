@@ -43,6 +43,7 @@ export * from './GeographyQuizWidget/types';
 export interface EnhancedWidgetConfig extends WidgetConfig {
   category: string;
   description: string;
+  [key: string]: unknown; // Add index signature to make it compatible with Record<string, unknown>
 }
 
 // Widget registry with enhanced metadata

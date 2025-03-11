@@ -36,6 +36,7 @@ export interface QuickLinksWidgetConfig {
   showFavicons?: boolean;
   onDelete?: () => void;
   onUpdate?: (config: QuickLinksWidgetConfig) => void;
+  [key: string]: unknown;
 }
 
 /**

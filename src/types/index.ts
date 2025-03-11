@@ -23,6 +23,7 @@ export interface WidgetProps<T extends Record<string, unknown> = Record<string, 
   config?: T & {
     onDelete?: () => void;
   };
+  [key: string]: unknown;
 }
 
 // UI component types

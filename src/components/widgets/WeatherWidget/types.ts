@@ -73,7 +73,7 @@ export interface WeatherWidgetConfig {
   units?: 'metric' | 'imperial';
   onUpdate?: (config: WeatherWidgetConfig) => void;
   onDelete?: () => void;
-  [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
+  [key: string]: unknown; // Add index signature to make it compatible with Record<string, unknown>
 }
 
 /**
