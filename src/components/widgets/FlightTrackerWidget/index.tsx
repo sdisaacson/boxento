@@ -62,15 +62,16 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
 
   // Component state
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [localConfig, setLocalConfig] = useState<FlightTrackerWidgetConfig>({
+  const [localConfig, setLocalConfig] = useState<FlightTrackerWidgetConfig>(() => ({
     ...defaultConfig,
     ...config
-  });
+  }));
   const [flightData, setFlightData] = useState<AviationStackFlight | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [sizeCategory, setSizeCategory] = useState<WidgetSizeCategory>(WidgetSizeCategory.SMALL);
   const [isManualRefresh, setIsManualRefresh] = useState<boolean>(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<string>('flight');
   
   const widgetRef = useRef<HTMLDivElement | null>(null);
 
@@ -141,12 +142,14 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
     }
   }, [width, height]);
 
-  // Set initial configuration on mount
+  // Set initial configuration on mount and when config changes
   useEffect(() => {
-    setLocalConfig(prevConfig => ({
-      ...defaultConfig,
-      ...config
-    }));
+    if (config) {
+      setLocalConfig(prev => ({
+        ...prev,
+        ...config
+      }));
+    }
   }, [config]);
 
   // Update internal flight number parts when the combined flight number changes
@@ -214,232 +217,209 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
 
         console.log('Fetching flight data with params:', params.toString());
 
-        // Make API call with retry logic
-        const fetchWithRetry = async (retries = 2, backoff = 300) => {
-          try {
-            // Use a fallback URL for testing if you're having connection issues
-            // Remove the "||" part in production for actual API use
-            const apiUrl = `https://api.aviationstack.com/v1/flights?${params.toString()}`;
-            const useFallback = true; // Set to false to use actual API
+        // Use a fallback URL for testing if you're having connection issues
+        // Remove the "||" part in production for actual API use
+        const apiUrl = `https://api.aviationstack.com/v1/flights?${params.toString()}`;
+        const useFallback = true; // Set to false to use actual API
 
-            // Array of demo flight codes that will use fallback data
-            const demoFlights = ['ASH6040', 'UAL123', 'AAL456', 'DAL789'];
-            
-            // Check if the current flight number is a demo flight
-            if (useFallback && localConfig.flightNumber && demoFlights.includes(localConfig.flightNumber)) {
-              // Create mock data for demo flights
-              console.log(`Using fallback data for ${localConfig.flightNumber}`);
-              
-              // Wait a bit to simulate API call
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
-              // Get the airline info based on flight code
-              let airlineName = 'Unknown Airline';
-              let airlineIata = 'XX';
-              let airlineIcao = 'XXX';
-              let depAirport = 'New York JFK International Airport';
-              let depIata = 'JFK';
-              let depIcao = 'KJFK';
-              let arrAirport = 'Chicago O\'Hare International Airport';
-              let arrIata = 'ORD';
-              let arrIcao = 'KORD';
-              let flightIata = '';
-              let flightNumber = '';
-              
-              // Set airline-specific details based on flight code
-              switch(localConfig.flightNumber) {
-                case 'ASH6040':
-                  airlineName = 'Air Shuttle (Mesa Airlines)';
-                  airlineIata = 'ZV';
-                  airlineIcao = 'ASH';
-                  flightNumber = '6040';
-                  flightIata = 'ZV6040';
-                  break;
-                case 'UAL123':
-                  airlineName = 'United Airlines';
-                  airlineIata = 'UA';
-                  airlineIcao = 'UAL';
-                  depAirport = 'San Francisco International Airport';
-                  depIata = 'SFO';
-                  depIcao = 'KSFO';
-                  arrAirport = 'Denver International Airport';
-                  arrIata = 'DEN';
-                  arrIcao = 'KDEN';
-                  flightNumber = '123';
-                  flightIata = 'UA123';
-                  break;
-                case 'AAL456':
-                  airlineName = 'American Airlines';
-                  airlineIata = 'AA';
-                  airlineIcao = 'AAL';
-                  depAirport = 'Dallas/Fort Worth International Airport';
-                  depIata = 'DFW';
-                  depIcao = 'KDFW';
-                  arrAirport = 'Miami International Airport';
-                  arrIata = 'MIA';
-                  arrIcao = 'KMIA';
-                  flightNumber = '456';
-                  flightIata = 'AA456';
-                  break;
-                case 'DAL789':
-                  airlineName = 'Delta Air Lines';
-                  airlineIata = 'DL';
-                  airlineIcao = 'DAL';
-                  depAirport = 'Atlanta Hartsfield-Jackson International Airport';
-                  depIata = 'ATL';
-                  depIcao = 'KATL';
-                  arrAirport = 'Los Angeles International Airport';
-                  arrIata = 'LAX';
-                  arrIcao = 'KLAX';
-                  flightNumber = '789';
-                  flightIata = 'DL789';
-                  break;
-              }
-              
-              // Sample flight data structure matching AviationStack format
-              const mockData: AviationStackResponse = {
-                pagination: {
-                  limit: 100,
-                  offset: 0,
-                  count: 1,
-                  total: 1
-                },
-                data: [{
-                  flight_date: new Date().toISOString().split('T')[0],
-                  flight_status: 'active',
-                  departure: {
-                    airport: depAirport,
-                    timezone: 'America/New_York',
-                    iata: depIata,
-                    icao: depIcao,
-                    terminal: 'B',
-                    gate: '22',
-                    delay: 0,
-                    scheduled: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-                    estimated: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                    actual: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                    estimated_runway: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                    actual_runway: null
-                  },
-                  arrival: {
-                    airport: arrAirport,
-                    timezone: 'America/Chicago',
-                    iata: arrIata,
-                    icao: arrIcao,
-                    terminal: '3',
-                    gate: 'G8',
-                    delay: 0,
-                    scheduled: new Date(Date.now() + 1000 * 60 * 30).toISOString(), // 30 minutes from now
-                    estimated: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
-                    actual: null,
-                    estimated_runway: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
-                    actual_runway: null
-                  },
-                  airline: {
-                    name: airlineName,
-                    iata: airlineIata,
-                    icao: airlineIcao
-                  },
-                  flight: {
-                    number: flightNumber,
-                    iata: flightIata,
-                    icao: localConfig.flightNumber
-                  },
-                  aircraft: {
-                    registration: 'N915FJ',
-                    iata: 'E75L',
-                    icao: 'E75L',
-                    icao24: 'A1B2C3'
-                  },
-                  live: {
-                    updated: new Date().toISOString(),
-                    latitude: 41.2619,
-                    longitude: -84.3436,
-                    altitude: 31000,
-                    direction: 270,
-                    speed_horizontal: 450,
-                    speed_vertical: 0,
-                    is_ground: false
-                  }
-                }]
-              };
-              
-              // Make sure data exists before accessing it
-              if (mockData.data && mockData.data.length > 0) {
-                setFlightData(mockData.data[0]);
-                setError(null);
-              }
-              return;
-            }
-            
-            const response = await fetch(apiUrl, {
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              // Add cache control to avoid stale responses
-              cache: 'no-cache'
-            });
-            
-            if (!response.ok) {
-              if (response.status === 429) {
-                // Rate limit exceeded
-                throw new Error("API rate limit exceeded. Please try again later.");
-              }
-              
-              if (response.status === 401) {
-                // Unauthorized - bad API key
-                throw new Error("Invalid API key. Please check your API access key.");
-              }
-              
-              // Get more detailed error information
-              let errorInfo = '';
-              try {
-                const errorData = await response.json();
-                errorInfo = JSON.stringify(errorData);
-                console.error('API error details:', errorData);
-              } catch (e) {
-                errorInfo = response.statusText;
-              }
-              throw new Error(`API error: ${response.status} - ${errorInfo}`);
-            }
-            
-            const data: AviationStackResponse = await response.json();
-            console.log('Received flight data:', data);
-            
-            // Check for API error messages in the response
-            if (data.error) {
-              throw new Error(`API error: ${data.error.type} - ${data.error.info}`);
-            }
-
-            if (data.data && data.data.length > 0) {
-              setFlightData(data.data[0]);
-              setError(null);
-            } else {
-              // No data found - log this and provide a more helpful error message
-              console.log('No flight data found in response:', data);
-              setError("No flight data found. Try a different flight number or date.");
-              setFlightData(null);
-            }
-          } catch (err) {
-            // Handle retry logic
-            console.error('Fetch attempt failed:', err);
-            
-            if (retries <= 0) {
-              // No more retries, propagate the error
-              throw err;
-            }
-            
-            // Wait with exponential backoff before retry
-            await new Promise(resolve => setTimeout(resolve, backoff));
-            
-            // Retry with one fewer retry and increased backoff
-            return fetchWithRetry(retries - 1, backoff * 2);
+        // Array of demo flight codes that will use fallback data
+        const demoFlights = ['ASH6040', 'UAL123', 'AAL456', 'DAL789'];
+        
+        // Check if the current flight number is a demo flight
+        if (useFallback && localConfig.flightNumber && demoFlights.includes(localConfig.flightNumber)) {
+          // Create mock data for demo flights
+          console.log(`Using fallback data for ${localConfig.flightNumber}`);
+          
+          // Wait a bit to simulate API call
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Get the airline info based on flight code
+          let airlineName = 'Unknown Airline';
+          let airlineIata = 'XX';
+          let airlineIcao = 'XXX';
+          let depAirport = 'New York JFK International Airport';
+          let depIata = 'JFK';
+          let depIcao = 'KJFK';
+          let arrAirport = 'Chicago O\'Hare International Airport';
+          let arrIata = 'ORD';
+          let arrIcao = 'KORD';
+          let flightIata = '';
+          let flightNumber = '';
+          
+          // Set airline-specific details based on flight code
+          switch(localConfig.flightNumber) {
+            case 'ASH6040':
+              airlineName = 'Air Shuttle (Mesa Airlines)';
+              airlineIata = 'ZV';
+              airlineIcao = 'ASH';
+              flightNumber = '6040';
+              flightIata = 'ZV6040';
+              break;
+            case 'UAL123':
+              airlineName = 'United Airlines';
+              airlineIata = 'UA';
+              airlineIcao = 'UAL';
+              depAirport = 'San Francisco International Airport';
+              depIata = 'SFO';
+              depIcao = 'KSFO';
+              arrAirport = 'Denver International Airport';
+              arrIata = 'DEN';
+              arrIcao = 'KDEN';
+              flightNumber = '123';
+              flightIata = 'UA123';
+              break;
+            case 'AAL456':
+              airlineName = 'American Airlines';
+              airlineIata = 'AA';
+              airlineIcao = 'AAL';
+              depAirport = 'Dallas/Fort Worth International Airport';
+              depIata = 'DFW';
+              depIcao = 'KDFW';
+              arrAirport = 'Miami International Airport';
+              arrIata = 'MIA';
+              arrIcao = 'KMIA';
+              flightNumber = '456';
+              flightIata = 'AA456';
+              break;
+            case 'DAL789':
+              airlineName = 'Delta Air Lines';
+              airlineIata = 'DL';
+              airlineIcao = 'DAL';
+              depAirport = 'Atlanta Hartsfield-Jackson International Airport';
+              depIata = 'ATL';
+              depIcao = 'KATL';
+              arrAirport = 'Los Angeles International Airport';
+              arrIata = 'LAX';
+              arrIcao = 'KLAX';
+              flightNumber = '789';
+              flightIata = 'DL789';
+              break;
           }
-        };
+          
+          // Sample flight data structure matching AviationStack format
+          const mockData: AviationStackResponse = {
+            pagination: {
+              limit: 100,
+              offset: 0,
+              count: 1,
+              total: 1
+            },
+            data: [{
+              flight_date: new Date().toISOString().split('T')[0],
+              flight_status: 'active',
+              departure: {
+                airport: depAirport,
+                timezone: 'America/New_York',
+                iata: depIata,
+                icao: depIcao,
+                terminal: 'B',
+                gate: '22',
+                delay: 0,
+                scheduled: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+                estimated: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+                actual: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+                estimated_runway: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+                actual_runway: null
+              },
+              arrival: {
+                airport: arrAirport,
+                timezone: 'America/Chicago',
+                iata: arrIata,
+                icao: arrIcao,
+                terminal: '3',
+                gate: 'G8',
+                delay: 0,
+                scheduled: new Date(Date.now() + 1000 * 60 * 30).toISOString(), // 30 minutes from now
+                estimated: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+                actual: null,
+                estimated_runway: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+                actual_runway: null
+              },
+              airline: {
+                name: airlineName,
+                iata: airlineIata,
+                icao: airlineIcao
+              },
+              flight: {
+                number: flightNumber,
+                iata: flightIata,
+                icao: localConfig.flightNumber
+              },
+              aircraft: {
+                registration: 'N915FJ',
+                iata: 'E75L',
+                icao: 'E75L',
+                icao24: 'A1B2C3'
+              },
+              live: {
+                updated: new Date().toISOString(),
+                latitude: 41.2619,
+                longitude: -84.3436,
+                altitude: 31000,
+                direction: 270,
+                speed_horizontal: 450,
+                speed_vertical: 0,
+                is_ground: false
+              }
+            }]
+          };
+          
+          // Make sure data exists before accessing it
+          if (mockData.data && mockData.data.length > 0) {
+            setFlightData(mockData.data[0]);
+            setError(null);
+          }
+          return;
+        }
         
-        // Start the fetch with retry process
-        await fetchWithRetry();
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          // Add cache control to avoid stale responses
+          cache: 'no-cache'
+        });
         
+        if (!response.ok) {
+          if (response.status === 429) {
+            // Rate limit exceeded
+            throw new Error("API rate limit exceeded. Please try again later.");
+          }
+          
+          if (response.status === 401) {
+            // Unauthorized - bad API key
+            throw new Error("Invalid API key. Please check your API access key.");
+          }
+          
+          // Get more detailed error information
+          let errorInfo = '';
+          try {
+            const errorData = await response.json();
+            errorInfo = JSON.stringify(errorData);
+            console.error('API error details:', errorData);
+          } catch {
+            errorInfo = response.statusText;
+          }
+          throw new Error(`API error: ${response.status} - ${errorInfo}`);
+        }
+        
+        const data: AviationStackResponse = await response.json();
+        console.log('Received flight data:', data);
+        
+        // Check for API error messages in the response
+        if (data.error) {
+          throw new Error(`API error: ${data.error.type} - ${data.error.info}`);
+        }
+
+        if (data.data && data.data.length > 0) {
+          setFlightData(data.data[0]);
+          setError(null);
+        } else {
+          // No data found - log this and provide a more helpful error message
+          console.log('No flight data found in response:', data);
+          setError("No flight data found. Try a different flight number or date.");
+          setFlightData(null);
+        }
       } catch (err) {
         console.error('Error fetching flight data:', err);
         
@@ -1013,8 +993,6 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
       return today.toISOString().split('T')[0];
     };
 
-    const [activeTab, setActiveTab] = useState<string>('flight');
-
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
@@ -1025,7 +1003,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
             </DialogTitle>
           </DialogHeader>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeSettingsTab} onValueChange={setActiveSettingsTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="flight">
                 Flight Info
