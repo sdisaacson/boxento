@@ -89,13 +89,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   const [isGoogleConnected, setIsGoogleConnected] = useState<boolean>(false)
   
   // Google OAuth configuration
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID';
-  // Use current URL as redirect URI (without query parameters)
-  const GOOGLE_REDIRECT_URI = typeof window !== 'undefined' ? window.location.href.split('?')[0] : '';
-  const GOOGLE_SCOPES = [
+  const GOOGLE_CLIENT_ID = React.useMemo(() => 
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID'
+  , []);
+  
+  const GOOGLE_REDIRECT_URI = React.useMemo(() => 
+    typeof window !== 'undefined' ? window.location.href.split('?')[0] : ''
+  , []);
+  
+  const GOOGLE_SCOPES = React.useMemo(() => [
     'https://www.googleapis.com/auth/calendar.readonly',
     'https://www.googleapis.com/auth/calendar.events.readonly'
-  ];
+  ], []);
   
   /**
    * Generates a random state string for OAuth security
@@ -165,7 +170,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   /**
    * Refreshes the access token when it expires
    */
-  const refreshAccessToken = async () => {
+  const refreshAccessToken = React.useCallback(async () => {
     try {
       const { refreshTokenKey, accessTokenKey, tokenExpiryKey } = getTokenKeys();
       const refreshToken = localStorage.getItem(refreshTokenKey);
@@ -203,7 +208,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       disconnectGoogleCalendar();
       throw err;
     }
-  };
+  }, [getTokenKeys, GOOGLE_CLIENT_ID, disconnectGoogleCalendar]);
   
   /**
    * Gets a valid access token, refreshing if necessary
@@ -642,13 +647,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   useEffect(() => {
     if (!isGoogleConnected) return;
     
+    // Initial fetch when connection state changes
+    fetchEvents(true);
+    
     const refreshTimer = setInterval(() => {
       // Use silent mode for background refreshes to reduce console noise
       fetchEvents(true);
     }, 300000); // Refresh every 5 minutes
     
     return () => clearInterval(refreshTimer);
-  }, [isGoogleConnected, fetchEvents, localConfig]);
+  }, [isGoogleConnected, fetchEvents]); // Remove localConfig as it's already a dependency of fetchEvents
 
   /**
    * Get the number of days in a month
@@ -1506,7 +1514,5 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   )
 }
 
-export default CalendarWidget
-
-// Export types for use in other files
-export * from './types'
+export type { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types';
+export default CalendarWidget;
