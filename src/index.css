@@ -309,33 +309,66 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
  * =================================
  */
 
-/* Grid Placeholder - enhanced for better positioning feedback */
+/* Grid Placeholder - Apple-inspired design with React Grid Layout compatibility */
 .react-grid-placeholder,
 .react-grid-item.react-grid-placeholder,
 .react-draggable-dragging.react-grid-placeholder,
 .react-grid-item.dropping {
   border-radius: var(--border-radius-standard) !important;
   z-index: 2;
-  background: linear-gradient(135deg, rgba(22, 78, 99, 0.04), rgba(76, 110, 245, 0.08)) !important;
-  @apply border border-blue-100/60 shadow-md;
-  box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.15), 0 4px 14px rgba(76, 110, 245, 0.1) !important;
-  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.0) !important;
-  @apply dark:bg-gradient-to-br dark:from-blue-900/15 dark:to-indigo-900/20 dark:border-blue-700/30;
-  box-shadow: inset 0 0 0 1px rgba(76, 130, 245, 0.2), 0 4px 14px rgba(30, 64, 175, 0.15) !important;
-  opacity: 0.75 !important;
-  animation: placeholderPulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  /* Almost invisible background with extremely subtle gradient */
+  background: linear-gradient(to bottom, rgba(250, 250, 252, 0.3), rgba(248, 248, 250, 0.3)) !important;
+  /* Nearly invisible hairline border */
+  border: 0.5px solid rgba(0, 0, 0, 0.03) !important;
+  /* Extremely subtle shadow */
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 2px 6px rgba(0, 0, 0, 0.01) !important;
+  /* Remove the outline that was too visible */
+  outline: none;
+  /* Refined transitions */
+  transition: 
+    opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+    background 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+  /* Very low opacity - barely visible */
+  opacity: 0.25 !important;
+  
+  /* Dark mode - extremely subtle */
+  @apply dark:border-white/5;
+  
+  /* Dark mode gradient - much more subtle */
+  @apply dark:bg-none;
+  background-image: linear-gradient(to bottom, rgba(60, 60, 67, 0.2), rgba(50, 50, 57, 0.2)) !important;
 }
 
-/* Subtle animation for the placeholder */
-@keyframes placeholderPulse {
-  0% { 
-    box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.1), 0 4px 10px rgba(76, 110, 245, 0.1); 
-    opacity: 0.7;
-  }
-  100% { 
-    box-shadow: inset 0 0 0 1px rgba(76, 110, 245, 0.2), 0 6px 16px rgba(76, 110, 245, 0.2); 
-    opacity: 0.8;
-  }
+/* Dark mode specific adjustments */
+.dark .react-grid-placeholder,
+.dark .react-grid-item.react-grid-placeholder,
+.dark .react-draggable-dragging.react-grid-placeholder,
+.dark .react-grid-item.dropping {
+  /* Very subtle shadows for dark mode */
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 2px 5px rgba(0, 0, 0, 0.03) !important;
+  /* No more visible outline */
+  outline: none;
+  /* Adjust opacity for visibility in dark mode */
+  opacity: 0.3 !important;
+}
+
+/* Active state - when dragging or about to drop - slightly more visible but still subtle */
+.react-grid-item.react-draggable-dragging.react-grid-placeholder,
+.react-grid-item.dropping {
+  /* Slightly increased opacity when active - but still subtle */
+  opacity: 0.4 !important;
+  /* Enhanced but still subtle shadow */
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.02) !important;
+  /* Slightly more visible border when active */
+  border: 0.5px solid rgba(0, 0, 0, 0.05) !important;
+  @apply dark:border-white/10;
 }
 
 /* Ensure border radius is maintained during CSS transforms */
