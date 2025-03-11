@@ -9,10 +9,12 @@ import {
   DialogFooter
 } from '../../ui/dialog'
 import { Input } from '@/components/ui/input'
-import { QuickLinksWidgetProps, LinkItem, QuickLinksWidgetConfig } from './types'
+import { QuickLinksWidgetProps, LinkItem } from './types'
 import './styles.css'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
+import { Switch } from '@/components/ui/switch'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 /**
  * Fetches metadata from a URL including title and favicon
@@ -68,7 +70,7 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
         title: urlObj.hostname,
         favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
       };
-    } catch (e) {
+    } catch {
       // If URL parsing fails, return the raw URL
       return {
         title: url,
@@ -89,21 +91,34 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
  * @param {QuickLinksWidgetProps} props - Component props
  * @returns {JSX.Element} QuickLinks widget component
  */
-const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, config }) => {
+const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
   const [links, setLinks] = useState<LinkItem[]>(config?.links || []);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [newLinkUrl, setNewLinkUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading] = useState<boolean>(false);
   const newLinkInputRef = useRef<HTMLInputElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const [loadingLinkIds, setLoadingLinkIds] = useState<number[]>([]);
+
+  // Widget settings state
+  const [displayMode, setDisplayMode] = useState<'regular' | 'compact'>(config?.displayMode || 'regular');
+  const [showFavicons, setShowFavicons] = useState<boolean>(config?.showFavicons !== false);
+  const [customTitle, setCustomTitle] = useState<string>(config?.customTitle || 'Quick Links');
 
   // Check if there are any links in the configuration
   React.useEffect(() => {
     if (config?.links) {
       setLinks(config.links);
+    }
+    if (config?.displayMode) {
+      setDisplayMode(config.displayMode);
+    }
+    if (config?.customTitle) {
+      setCustomTitle(config.customTitle);
+    }
+    if (config?.showFavicons !== undefined) {
+      setShowFavicons(config.showFavicons);
     }
   }, [config]);
   
@@ -169,7 +184,23 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
    * @param {LinkItem | null} link - The link to edit, or null to create a new one
    */
   const startEdit = (link: LinkItem | null = null) => {
-    setEditingLink(link || { id: 0, title: '', url: '', favicon: '' }) // Use a blue color that works in both light/dark modes
+    setEditingLink(link || { id: 0, title: '', url: '', favicon: '' })
+  }
+
+  /**
+   * Updates widget settings and saves them
+   */
+  const saveSettings = () => {
+    if (config?.onUpdate) {
+      config.onUpdate({
+        ...config,
+        links,
+        displayMode,
+        showFavicons,
+        customTitle
+      });
+    }
+    setShowSettings(false);
   }
 
   /**
@@ -275,7 +306,65 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <p>No links yet. Add one below!</p>
             </div>
+          ) : displayMode === 'compact' ? (
+            // Compact view - slim single-column layout with smaller elements
+            <div className="space-y-1 pr-1">
+              {links.map(link => (
+                <a 
+                  key={link.id}
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-all relative text-gray-800 dark:text-gray-100 group ${
+                    loadingLinkIds.includes(link.id) ? 'opacity-50' : ''
+                  }`}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  aria-label={`Visit ${link.title} at ${link.url}`}
+                >
+                  {showFavicons && (
+                    <img 
+                      src={link.favicon}
+                      alt=""
+                      className={`w-3 h-3 mr-1.5 ${
+                        loadingLinkIds.includes(link.id) ? 'animate-pulse' : ''
+                      }`}
+                      loading="lazy"
+                    />
+                  )}
+                  <span className="text-xs font-medium flex-grow truncate">
+                    {loadingLinkIds.includes(link.id) ? 'Loading...' : link.title}
+                  </span>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                    <button 
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startEdit(link);
+                      }}
+                      className="p-0.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      aria-label={`Edit ${link.title} link`}
+                      disabled={loadingLinkIds.includes(link.id)}
+                    >
+                      <Edit size={10} />
+                    </button>
+                    <button 
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        removeLink(link.id);
+                      }}
+                      className="p-0.5 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                      aria-label={`Remove ${link.title} link`}
+                      disabled={loadingLinkIds.includes(link.id)}
+                    >
+                      <Trash size={10} />
+                    </button>
+                  </div>
+                </a>
+              ))}
+            </div>
           ) : (
+            // Regular view - standard list with normal spacing
             <div className="space-y-2 pr-1">
               {links.map(link => (
                 <a 
@@ -289,14 +378,16 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   aria-label={`Visit ${link.title} at ${link.url}`}
                 >
-                  <img 
-                    src={link.favicon}
-                    alt=""
-                    className={`w-4 h-4 mr-2.5 ${
-                      loadingLinkIds.includes(link.id) ? 'animate-pulse' : ''
-                    }`}
-                    loading="lazy"
-                  />
+                  {showFavicons && (
+                    <img 
+                      src={link.favicon}
+                      alt=""
+                      className={`w-4 h-4 mr-2.5 ${
+                        loadingLinkIds.includes(link.id) ? 'animate-pulse' : ''
+                      }`}
+                      loading="lazy"
+                    />
+                  )}
                   <span className="font-medium flex-grow truncate">
                     {loadingLinkIds.includes(link.id) ? 'Loading...' : link.title}
                   </span>
@@ -368,7 +459,8 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       className="widget-container quicklinks-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
     >
       <WidgetHeader 
-        title="Quick Links" 
+        title={customTitle}
+        onSettingsClick={() => setShowSettings(true)}
       />
       <div className="flex-1 overflow-hidden p-3">
         {renderContent()}
@@ -388,6 +480,49 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             <DialogHeader>
               <DialogTitle>Widget Settings</DialogTitle>
             </DialogHeader>
+            
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="widget-title">Widget Title</Label>
+                <Input 
+                  id="widget-title"
+                  value={customTitle} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTitle(e.target.value)}
+                  placeholder="Quick Links"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Display Mode</Label>
+                <RadioGroup value={displayMode} onValueChange={(val: string) => setDisplayMode(val as 'regular' | 'compact')}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="regular" id="regular-view" />
+                    <Label htmlFor="regular-view" className="flex items-center">
+                      Regular View
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="compact" id="compact-view" />
+                    <Label htmlFor="compact-view" className="flex items-center">
+                      Compact View
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Show Favicons</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={showFavicons}
+                    onCheckedChange={setShowFavicons}
+                    id="show-favicons"
+                  />
+                  <Label htmlFor="show-favicons">Show website icons</Label>
+                </div>
+              </div>
+            </div>
+            
             <DialogFooter>
               <div className="flex justify-between w-full pt-6 border-t border-gray-100 dark:border-gray-800">
                 <div>
@@ -405,10 +540,10 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
                   )}
                 </div>
                 <Button
-                  variant="outline"
-                  onClick={() => setShowSettings(false)}
+                  variant="default"
+                  onClick={saveSettings}
                 >
-                  Close
+                  Save Changes
                 </Button>
               </div>
             </DialogFooter>
@@ -508,7 +643,4 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   )
 }
 
-export default QuickLinksWidget
-
-// Export types for use in other files
-export * from './types' 
+export default QuickLinksWidget 

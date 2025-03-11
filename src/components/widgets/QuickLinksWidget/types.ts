@@ -22,12 +22,18 @@ export interface LinkItem {
  * @interface QuickLinksWidgetConfig
  * @property {string} [id] - Unique identifier for the widget instance
  * @property {LinkItem[]} [links] - Array of link items
+ * @property {string} [customTitle] - Custom title for the widget
+ * @property {'regular' | 'compact'} [displayMode] - Display mode for the links
+ * @property {boolean} [showFavicons] - Whether to show favicons for links
  * @property {() => void} [onDelete] - Callback to delete the widget
  * @property {(config: QuickLinksWidgetConfig) => void} [onUpdate] - Callback to update widget configuration
  */
 export interface QuickLinksWidgetConfig {
   id?: string;
   links: LinkItem[];
+  customTitle?: string;
+  displayMode?: 'regular' | 'compact';
+  showFavicons?: boolean;
   onDelete?: () => void;
   onUpdate?: (config: QuickLinksWidgetConfig) => void;
 }
