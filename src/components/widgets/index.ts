@@ -229,7 +229,7 @@ export const WIDGET_CATEGORIES = [
 /**
  * Get widget component by type
  */
-export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<any>> | null => {
+export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<Record<string, unknown>>> | null => {
   switch (type) {
     case 'calendar':
       return CalendarWidget;

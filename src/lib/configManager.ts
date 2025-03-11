@@ -11,7 +11,7 @@ import { encryptionUtils } from './encryption';
  * Interface for the widget configuration store
  */
 export interface WidgetConfigStore {
-  [widgetId: string]: any;
+  [widgetId: string]: Record<string, unknown>;
 }
 
 /**
@@ -31,7 +31,7 @@ export const configManager = {
    * @param config - Configuration object to save
    * @param sensitiveFields - Optional array of field names that should be encrypted
    */
-  saveWidgetConfig: (widgetId: string, config: any, sensitiveFields = DEFAULT_SENSITIVE_FIELDS): void => {
+  saveWidgetConfig: (widgetId: string, config: Record<string, unknown>, sensitiveFields = DEFAULT_SENSITIVE_FIELDS): void => {
     const configs = configManager.getConfigs();
     
     // Process sensitive fields (like API keys) for encryption
@@ -49,7 +49,7 @@ export const configManager = {
    * @param sensitiveFields - Optional array of field names that should be decrypted
    * @returns The widget's configuration or null if not found
    */
-  getWidgetConfig: (widgetId: string, sensitiveFields = DEFAULT_SENSITIVE_FIELDS): any => {
+  getWidgetConfig: (widgetId: string, sensitiveFields = DEFAULT_SENSITIVE_FIELDS): Record<string, unknown> | null => {
     const configs = configManager.getConfigs();
     const config = configs[widgetId] || null;
     

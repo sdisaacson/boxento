@@ -48,7 +48,7 @@ export const encryptionUtils = {
    * @param sensitiveFields - Array of field names that should be encrypted
    * @returns Processed object with encrypted sensitive fields
    */
-  processObjectForStorage: (obj: any, sensitiveFields: string[] = ['apiKey', 'token', 'secret']): any => {
+  processObjectForStorage: (obj: Record<string, unknown>, sensitiveFields: string[] = ['apiKey', 'token', 'secret']): Record<string, unknown> => {
     if (!obj || typeof obj !== 'object') return obj;
     
     const result = { ...obj };
@@ -69,7 +69,7 @@ export const encryptionUtils = {
    * @param sensitiveFields - Array of field names that should be decrypted
    * @returns Processed object with decrypted sensitive fields
    */
-  processObjectFromStorage: (obj: any, sensitiveFields: string[] = ['apiKey', 'token', 'secret']): any => {
+  processObjectFromStorage: (obj: Record<string, unknown>, sensitiveFields: string[] = ['apiKey', 'token', 'secret']): Record<string, unknown> => {
     if (!obj || typeof obj !== 'object') return obj;
     
     const result = { ...obj };

@@ -13,11 +13,8 @@ import {
   TwitterAuthProvider,
   FacebookAuthProvider,
   OAuthProvider,
-  PhoneAuthProvider,
-  RecaptchaVerifier,
   confirmPasswordReset,
-  updateProfile,
-  linkWithPhoneNumber
+  updateProfile
 } from 'firebase/auth';
 import { auth } from './firebase';
 
