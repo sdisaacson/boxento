@@ -19,13 +19,13 @@ interface WidgetSelectorProps {
  * @param {WidgetSelectorProps} props - Component props
  * @returns {JSX.Element | null} Widget selector modal or null if closed
  */
-const WidgetSelector: React.FC<WidgetSelectorProps> = ({ 
+const WidgetSelector = ({ 
   isOpen, 
   onClose, 
   onAddWidget, 
   widgetRegistry,
   widgetCategories
-}) => {
+}: WidgetSelectorProps): JSX.Element | null => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
