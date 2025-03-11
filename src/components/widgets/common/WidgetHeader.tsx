@@ -19,7 +19,7 @@ const WidgetHeader = ({
   icon, 
   onSettingsClick, 
   children 
-}: WidgetHeaderProps): JSX.Element => {
+}: WidgetHeaderProps): React.ReactElement => {
   return (
     <div className="flex justify-between items-center p-2 md:p-2 cursor-move widget-drag-handle">
       <div className="flex items-center space-x-1 md:space-x-2">

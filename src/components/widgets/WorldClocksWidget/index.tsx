@@ -205,9 +205,9 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * @param {string} timezone - IANA timezone identifier
    * @param {number} [size=80] - Size of the clock in pixels
    * @param {boolean} [isDarkMode=false] - Whether to use dark mode colors
-   * @returns {JSX.Element} Analog clock SVG
+   * @returns {React.ReactElement} Analog clock SVG
    */
-  const renderClock = (timezone: string, size: number = 80, isDarkMode: boolean = false): JSX.Element => {
+  const renderClock = (timezone: string, size: number = 80, isDarkMode: boolean = false): React.ReactElement => {
     try {
       // Get the current time in the specified timezone
       const date = new Date(currentTime.toLocaleString('en-US', { timeZone: timezone }));
@@ -345,18 +345,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   }
 
   /**
-   * Renders a compact view for the smallest widget size (1x1)
+   * Renders the compact view optimized for 1x1 grid size
    * 
-   * This view displays:
-   * - Single timezone's time (the first timezone in the list)
-   * - City name
-   * - AM/PM indicator
-   * 
-   * Optimized for minimal space while maintaining readability.
-   * 
-   * @returns {JSX.Element} Compact view optimized for 1x1 grid size
+   * @returns {React.ReactElement} Compact view optimized for 1x1 grid size
    */
-  const renderCompactView = (): JSX.Element => {
+  const renderCompactView = (): React.ReactElement => {
     const mainTimezone = timezones[0] || { id: 0, name: 'Local', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
     const timeString = formatTime(currentTime, mainTimezone.timezone).split(':').slice(0, 2).join(':');
     const period = formatTime(currentTime, mainTimezone.timezone).split(' ')[1];
@@ -377,20 +370,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the default view for standard widget size (2x2)
+   * Renders the default view optimized for 2x2 grid size
    * 
-   * This view adapts based on the number of timezones:
-   * - For 1-2 timezones: Displays a clean layout with larger time display
-   * - For 3+ timezones: Uses a compact scrollable list to show all timezones
-   * 
-   * Each timezone display includes:
-   * - City name
-   * - Time difference from local time
-   * - Current time in hours and minutes
-   * 
-   * @returns {JSX.Element} Default view optimized for 2x2 grid size
+   * @returns {React.ReactElement} Default view optimized for 2x2 grid size
    */
-  const renderDefaultView = (): JSX.Element => {
+  const renderDefaultView = (): React.ReactElement => {
     // For small number of timezones, use a cleaner layout
     if (timezones.length <= 2) {
       return (
@@ -437,21 +421,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders a medium-sized view with multiple timezones
+   * Renders the medium view optimized for 2x2 grid size with multiple timezones
    * 
-   * This view intelligently adapts based on number of timezones:
-   * - For 3 timezones: Shows one primary timezone at the top and two below
-   * - For 4 timezones: Uses a perfect 2x2 grid with equal sizing
-   * - For 5+ timezones: Implements a scrollable grid with compact display
-   * 
-   * Each timezone display includes:
-   * - Time in hours and minutes
-   * - City name
-   * - Time difference from local time
-   * 
-   * @returns {JSX.Element} Medium view optimized for 2x2 grid size with multiple timezones
+   * @returns {React.ReactElement} Medium view optimized for 2x2 grid size with multiple timezones
    */
-  const renderMediumView = (): JSX.Element => {
+  const renderMediumView = (): React.ReactElement => {
     return (
       <div className="grid grid-cols-2 gap-1 p-1 h-full overflow-y-auto">
         {timezones.map(tz => (
@@ -468,16 +442,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders a wider view with analog or digital clocks based on number of timezones
+   * Renders the wide view optimized for 3x2 grid size
    * 
-   * This view adapts based on the number of timezones:
-   * - For 1-3 timezones: Displays analog clocks for visual appeal
-   * - For 4-6 timezones: Shows digital clocks in a 3x2 grid
-   * - For 7+ timezones: Implements a compact scrollable grid
-   * 
-   * @returns {JSX.Element} Wide view optimized for 3x2 grid size
+   * @returns {React.ReactElement} Wide view optimized for 3x2 grid size
    */
-  const renderWideView = (): JSX.Element => {
+  const renderWideView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-3 timezones, show analog clocks
@@ -543,15 +512,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders a taller view with more timezones and details
+   * Renders the tall view optimized for 2x3+ grid sizes
    * 
-   * This view adapts based on the number of timezones:
-   * - For 1-4 timezones: Displays vertical layout with analog clocks
-   * - For 5+ timezones: Uses horizontal layout with smaller clocks and more information
-   * 
-   * @returns {JSX.Element} Tall view optimized for 2x3+ grid sizes
+   * @returns {React.ReactElement} Tall view optimized for 2x3+ grid sizes
    */
-  const renderTallView = (): JSX.Element => {
+  const renderTallView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-4 timezones, show larger clocks with more details
@@ -600,18 +565,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the full-size view with all timezones and maximum details
+   * Renders the full view optimized for 4x4+ grid sizes
    * 
-   * This view provides the most comprehensive display:
-   * - Larger analog clocks
-   * - Digital time with AM/PM
-   * - City name
-   * - Time difference
-   * - Relative date information (Today, Tomorrow, etc.)
-   * 
-   * @returns {JSX.Element} Full view optimized for 4x4+ grid sizes
+   * @returns {React.ReactElement} Full view optimized for 4x4+ grid sizes
    */
-  const renderFullView = (): JSX.Element => {
+  const renderFullView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     return (
@@ -641,16 +599,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders an extra-wide view optimized for layouts with 6+ columns width
+   * Renders the extra-wide view optimized for 6×2 or wider layouts
    * 
-   * This view maximizes horizontal space usage with elegant minimalism:
-   * - For 1-6 timezones: Displays in a single row with refined analog clocks
-   * - For 7-12 timezones: Shows a 6×2 grid of clocks with elegant typography
-   * - For 13+ timezones: Provides a scrollable grid with consistent design
-   * 
-   * @returns {JSX.Element} Extra-wide view optimized for 6×2 or wider layouts
+   * @returns {React.ReactElement} Extra-wide view optimized for 6×2 or wider layouts
    */
-  const renderExtraWideView = (): JSX.Element => {
+  const renderExtraWideView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     // For 1-6 timezones, show in a single row with larger analog clocks
@@ -722,16 +675,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders a specialized view for widgets that are both tall and wide (3-4 rows × 2 columns)
+   * Renders the tall-wide view optimized for 2×3 or 2×4 grid sizes
    * 
-   * This view provides an elegant layout for the 2-wide by 3-4-tall dimensions:
-   * - Displays all timezones in a 2-column layout
-   * - Shows larger analog clocks with digital time below
-   * - Provides additional details while maintaining visual elegance
-   * 
-   * @returns {JSX.Element} Tall-wide view optimized for 2×3 or 2×4 grid sizes
+   * @returns {React.ReactElement} Tall-wide view optimized for 2×3 or 2×4 grid sizes
    */
-  const renderTallWideView = (): JSX.Element => {
+  const renderTallWideView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
     
     return (
@@ -763,25 +711,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Determines which view to render based on widget dimensions and number of timezones
+   * Renders the appropriate view for the current dimensions and timezone count
    * 
-   * Selection logic:
-   * - 1x1: Compact view with single timezone
-   * - 2x2 with ≤2 timezones: Clean default view
-   * - 2x2 with 3-4 timezones: Grid medium view
-   * - 2x2 with 5+ timezones: Scrollable default view
-   * - 2x3-2x4: Tall-wide view with optimized layout for these proportions
-   * - 2x5+: Tall view with analog clocks or compact list
-   * - 3x2-5x2: Wide view with analog or digital clocks
-   * - 6x2+: Extra-wide view with optimized layout
-   * - 3x3+: Tall view with detailed information
-   * - 4x4+: Full view with maximum details
-   * 
-   * For irregular sizes, selects based on aspect ratio.
-   * 
-   * @returns {JSX.Element} The appropriate view for the current dimensions and timezone count
+   * @returns {React.ReactElement} The appropriate view for the current dimensions and timezone count
    */
-  const renderContent = (): JSX.Element => {
+  const renderContent = (): React.ReactElement => {
     if (timezones.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -858,11 +792,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the settings content for the modal
+   * Renders the settings content
    * 
-   * @returns Settings content
+   * @returns {React.ReactElement} Settings content
    */
-  const renderSettingsContent = (): JSX.Element => {
+  const renderSettingsContent = (): React.ReactElement => {
     // Common timezones for easy selection
     const commonTimezones: Array<{ name: string; timezone: string }> = [
       { name: 'New York', timezone: 'America/New_York' },
@@ -967,11 +901,11 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders the settings footer for the modal
+   * Renders the settings footer
    * 
-   * @returns Settings footer
+   * @returns {React.ReactElement} Settings footer
    */
-  const renderSettingsFooter = (): JSX.Element => {
+  const renderSettingsFooter = (): React.ReactElement => {
     return (
       <div className="flex justify-between w-full">
         {config?.onDelete && (

@@ -278,13 +278,13 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   };
 
   /**
-   * Get weather icon component based on condition
+   * Helper function to get the appropriate weather icon
    * 
-   * @param {string} condition - Weather condition
-   * @param {string} [icon] - Icon code or WMO weather code
-   * @returns {JSX.Element} Weather icon component
+   * @param {string} condition - Weather condition (clear, rain, cloudy, etc.)
+   * @param {string} [icon] - Optional icon code from the API
+   * @returns {React.ReactElement} Weather icon component
    */
-  const getWeatherIcon = (condition: string, icon?: string): JSX.Element => {
+  const getWeatherIcon = (condition: string, icon?: string): React.ReactElement => {
     // Default size and style
     const defaultSize = 24;
     const className = "text-gray-700 dark:text-gray-300";
