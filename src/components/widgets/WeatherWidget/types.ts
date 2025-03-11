@@ -70,11 +70,10 @@ export interface WeatherData {
 export interface WeatherWidgetConfig {
   id?: string;
   location?: string;
-  unit?: 'celsius' | 'fahrenheit';
-  units?: string;
-  weatherData?: WeatherData;
-  onDelete?: () => void;
+  units?: 'metric' | 'imperial';
   onUpdate?: (config: WeatherWidgetConfig) => void;
+  onDelete?: () => void;
+  [key: string]: unknown; // Add index signature to satisfy Record<string, unknown>
 }
 
 /**
@@ -82,4 +81,9 @@ export interface WeatherWidgetConfig {
  * 
  * @type WeatherWidgetProps
  */
-export type WeatherWidgetProps = WidgetProps<WeatherWidgetConfig>; 
+export interface WeatherWidgetProps extends WidgetProps<WeatherWidgetConfig> {
+  width: number;
+  height: number;
+  refreshInterval?: number; // Time in minutes between weather updates
+  [key: string]: unknown; // Add index signature
+} 

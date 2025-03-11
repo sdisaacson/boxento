@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FC, useCallback } from 'react';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info } from 'lucide-react';
 import {
   Dialog,
@@ -29,7 +29,7 @@ import { Input } from '../../ui/input';
  * @param {WeatherWidgetProps} props - Component props
  * @returns {JSX.Element} Weather widget component
  */
-const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) => {
+const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshInterval = 15 }) => {
   // State for weather data and UI
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -156,10 +156,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
     return 'Unknown weather condition';
   };
 
-  /**
-   * Fetches weather data from the Open-Meteo API or uses mock data
-   */
-  const fetchWeather = async () => {
+  // Memoize the fetchWeather function to prevent unnecessary re-renders
+  const fetchWeather = useCallback(async () => {
     setLoading(true);
     
     try {
@@ -213,7 +211,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
           },
           condition: mapWeatherCodeToCondition(weatherCode),
           description: mapWeatherCodeToDescription(weatherCode),
-          icon: `${weatherCode}` // We'll use the weather code as the icon
+          icon: `${weatherCode}`
         };
       });
       
@@ -230,8 +228,8 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         humidity: weatherData.current.relative_humidity_2m,
         windSpeed: weatherData.current.wind_speed_10m,
         windDirection: weatherData.current.wind_direction_10m,
-        sunrise: Date.parse(weatherData.daily.sunrise[0]) / 1000, // Convert to UNIX timestamp
-        sunset: Date.parse(weatherData.daily.sunset[0]) / 1000, // Convert to UNIX timestamp
+        sunrise: Date.parse(weatherData.daily.sunrise[0]) / 1000,
+        sunset: Date.parse(weatherData.daily.sunset[0]) / 1000,
         forecast
       });
       
@@ -249,27 +247,24 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
         setLoading(false);
       }
     }
-  };
+  }, [localConfig.location, localConfig.units]); // Only depend on location and units
 
+  // Combine both useEffects into one
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchWeather();
-    };
+    // Initial fetch
+    fetchWeather();
     
-    fetchData();
-  }, [localConfig.location, localConfig.units]);
+    // Set up refresh interval if specified
+    if (refreshInterval > 0) {
+      const interval = setInterval(fetchWeather, refreshInterval * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchWeather, refreshInterval]); // Only depend on memoized fetchWeather and refreshInterval
 
-  // Add fetchWeather to useEffect dependencies
-  useEffect(() => {
-    fetchData();
-    
-    // Set up refresh interval
-    const interval = setInterval(() => {
-      fetchData();
-    }, refreshInterval * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [refreshInterval, fetchWeather]); // Add fetchWeather to dependencies
+  // Fix the radio group value change handler
+  const handleUnitsChange = useCallback((value: 'metric' | 'imperial') => {
+    setLocalConfig(prev => ({...prev, units: value}));
+  }, []);
 
   /**
    * Format temperature with unit
@@ -715,15 +710,15 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
             type="text"
             placeholder="Enter city name"
             value={localConfig.location || ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, location: e.target.value})}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig(prev => ({...prev, location: e.target.value}))}
           />
         </div>
         
         <div className="space-y-2">
           <Label>Temperature Units</Label>
           <RadioGroup
-            value={localConfig.units === 'imperial' ? 'imperial' : 'metric'}
-            onValueChange={(value: string) => setLocalConfig({...localConfig, units: value})}
+            value={localConfig.units || 'metric'}
+            onValueChange={handleUnitsChange}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="metric" id="metric" />
@@ -735,8 +730,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
             </div>
           </RadioGroup>
         </div>
-        
-    
       </div>
     );
   };
@@ -825,6 +818,3 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ width, height, config }) 
 // Fix export issue by explicitly exporting the component
 export { WeatherWidget };
 export default WeatherWidget;
-
-// Export types for use in other files
-export * from './types'; 
