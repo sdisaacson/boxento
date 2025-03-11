@@ -25,29 +25,6 @@ import {
   SelectValue,
 } from '../../ui/select';
 
-type TodoWidgetConfigValue = string | boolean | TodoItem[] | 'created' | 'alphabetical' | 'completed';
-
-interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-}
-
-interface TodoWidgetConfig {
-  title?: string;
-  items?: TodoItem[];
-  backgroundColor?: string;
-  showCompletedItems?: boolean;
-  sortOrder?: 'created' | 'alphabetical' | 'completed';
-}
-
-interface TodoWidgetProps {
-  width: number;
-  height: number;
-  config?: TodoWidgetConfig;
-}
-
 /**
  * Todo Widget Component
  * 
@@ -482,7 +459,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               <Label htmlFor="sort-order-select">Sort Order</Label>
               <Select
                 value={localConfig.sortOrder || 'created'}
-                onValueChange={(value) => handleSortOrderChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
+                onValueChange={(value: 'created' | 'alphabetical' | 'completed') => handleSortOrderChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
               >
                 <SelectTrigger id="sort-order-select">
                   <SelectValue placeholder="Select sort order" />

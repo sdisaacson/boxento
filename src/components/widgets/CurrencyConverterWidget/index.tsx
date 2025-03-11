@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,22 +6,17 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog';
+import { Input } from '@/components/ui/input';
 import WidgetHeader from '../common/WidgetHeader';
-import { CurrencyConverterWidgetProps, CurrencyConverterWidgetConfig } from './types';
+import { CurrencyConverterWidgetProps } from './types';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { CurrencyConverterWidgetConfig } from './types';
 import { useSharedCredential } from '@/lib/sharedCredentials';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "../../ui/switch";
 import { Checkbox } from "../../ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/AuthContext";
 import { Auth, RecaptchaVerifier } from "firebase/auth";
@@ -208,11 +203,12 @@ const POPULAR_CURRENCIES = [
 
 // Type for conversion result
 interface ConversionResult {
-  code: string;
-  name: string;
-  symbol: string;
+  amount: number;
+  from: string;
+  to: string;
   rate: number;
-  value: string;
+  result: number;
+  timestamp: number;
 }
 
 // Custom hook for fetching exchange rates
@@ -376,27 +372,6 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
   // Access shared credentials first to ensure it's available before other hooks
   const { credential: sharedApiKey, updateCredential: updateSharedApiKey, hasCredential: hasSharedApiKey } = useSharedCredential('openexchangerates-api');
   
-  // Ref for the widget container
-  const widgetRef = useRef<HTMLDivElement | null>(null);
-  
-  // Update local config when props config changes
-  useEffect(() => {
-    setLocalConfig((prevConfig) => ({
-      ...prevConfig,
-      ...config,
-    }));
-  }, [config]);
-  
-  // Determine which API key to use
-  // Add console log to debug the API key situation
-  console.log('[CurrencyConverter] API Key Debug:', {
-    useShared: localConfig.useSharedCredential,
-    sharedApiKey: sharedApiKey,
-    localApiKey: localConfig.apiKey,
-    hasSharedApiKey: hasSharedApiKey
-  });
-  const apiKey = localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey;
-  
   // Fetch exchange rates
   const { 
     rates, 
@@ -405,7 +380,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     lastUpdated, 
     refetch 
   } = useExchangeRates(
-    apiKey as string | undefined, // Explicit type assertion to handle null
+    localConfig.apiKey,
     localConfig.baseCurrency,
     localConfig.autoRefresh,
     localConfig.refreshInterval
@@ -981,9 +956,9 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 <Label htmlFor="base-currency-select">Base Currency</Label>
                 <Select
                   value={localConfig.baseCurrency || 'USD'}
-                  onValueChange={(value) => handleValueChange('baseCurrency', value)}
+                  onValueChange={(value: string) => handleValueChange('baseCurrency', value)}
                 >
-                  <SelectTrigger id="base-currency-select">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select base currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1165,7 +1140,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
 
   // Main render
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div className="widget-container h-full flex flex-col">
       <WidgetHeader 
         title={localConfig.title || defaultConfig.title} 
         onSettingsClick={() => setShowSettings(true)}

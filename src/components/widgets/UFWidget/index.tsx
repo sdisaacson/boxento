@@ -81,14 +81,14 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     ]
   };
 
-  // If using fallback data, set it immediately when component mounts
+  // First useEffect - fallback data
   useEffect(() => {
     if (useFallbackData && !ufData) {
       setUfData(fallbackUfData);
       setLastUpdated(new Date());
       setLoading(false);
     }
-  }, [useFallbackData]);
+  }, [useFallbackData, ufData, fallbackUfData]);
 
   // Update local config when props config changes
   useEffect(() => {
@@ -129,7 +129,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     }
   };
   
-  // Setup data fetching and refresh timer
+  // Second useEffect - data fetching and refresh timer
   useEffect(() => {
     // Create abort controller for cleanup
     const abortController = new AbortController();
@@ -138,10 +138,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     fetchUfData().catch(console.error);
     
     // Setup refresh timer with fallback default
-    const refreshIntervalMinutes = localConfig.refreshInterval !== undefined 
-      ? localConfig.refreshInterval 
-      : defaultConfig.refreshInterval || 60;
-    
+    const refreshIntervalMinutes = localConfig.refreshInterval ?? defaultConfig.refreshInterval ?? 60;
     const refreshIntervalMs = refreshIntervalMinutes * 60 * 1000;
     
     // Clear any existing timer
@@ -165,7 +162,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         clearInterval(refreshTimerRef.current);
       }
     };
-  }, [localConfig.refreshInterval]);
+  }, [localConfig.refreshInterval, fetchUfData, defaultConfig.refreshInterval]);
   
   /**
    * Determines the appropriate size category based on width and height

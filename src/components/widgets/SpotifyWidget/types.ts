@@ -4,8 +4,8 @@ import { WidgetProps } from '@/types';
 export interface WebPlaybackSDK {
   connect(): Promise<boolean>;
   disconnect(): void;
-  addListener(event: string, callback: (...args: any[]) => void): boolean;
-  removeListener(event: string, callback?: (...args: any[]) => void): boolean;
+  addListener(event: string, callback: (state: WebPlaybackState | null) => void): boolean;
+  removeListener(event: string, callback?: (state: WebPlaybackState | null) => void): boolean;
   getCurrentState(): Promise<WebPlaybackState | null>;
   setName(name: string): Promise<void>;
   getVolume(): Promise<number>;

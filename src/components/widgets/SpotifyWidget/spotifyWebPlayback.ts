@@ -1,104 +1,109 @@
-import { WebPlaybackSDK, SpotifyTrack, WebPlaybackTrack } from './types';
+import { WebPlaybackSDK, WebPlaybackState, SpotifyTrack, WebPlaybackTrack } from './types';
 
-// Web Playback SDK script URL
-const SPOTIFY_PLAYER_SDK_URL = 'https://sdk.scdn.co/spotify-player.js';
+declare global {
+  interface Window {
+    Spotify: {
+      Player: new (options: SpotifyPlayerOptions) => SpotifyPlayer;
+    };
+    onSpotifyWebPlaybackSDKReady?: () => void;
+  }
+}
 
-// Type definition for the Spotify Player SDK loader
-interface Window {
-  onSpotifyWebPlaybackSDKReady?: () => void;
-  Spotify?: {
-    Player: new (options: {
-      name: string;
-      getOAuthToken: (callback: (token: string) => void) => void;
-      volume?: number;
-    }) => WebPlaybackSDK;
-  };
+interface SpotifyPlayerOptions {
+  name: string;
+  getOAuthToken: (callback: (token: string) => void) => void;
+  volume?: number;
+}
+
+interface SpotifyPlayerCallback {
+  device_id: string;
+}
+
+interface SpotifyPlayerError {
+  message: string;
+}
+
+// Extend WebPlaybackSDK to include the actual event listeners we need
+interface SpotifyPlayer extends WebPlaybackSDK {
+  addListener(event: 'ready' | 'not_ready', callback: (state: SpotifyPlayerCallback) => void): boolean;
+  addListener(event: 'initialization_error' | 'authentication_error' | 'account_error' | 'playback_error', callback: (state: SpotifyPlayerError) => void): boolean;
+  addListener(event: 'player_state_changed', callback: (state: WebPlaybackState | null) => void): boolean;
 }
 
 // Load the Spotify Web Playback SDK script
-export const loadSpotifyWebPlaybackSDK = (): Promise<void> => {
+function loadSpotifyScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Check if script is already loaded
-    if (document.getElementById('spotify-player')) {
-      resolve();
-      return;
-    }
-
-    // Create script element
     const script = document.createElement('script');
-    script.id = 'spotify-player';
-    script.src = SPOTIFY_PLAYER_SDK_URL;
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
     script.async = true;
 
-    // Set up callback for when SDK is ready
-    (window as any).onSpotifyWebPlaybackSDKReady = () => {
-      resolve();
+    script.onload = () => {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        resolve();
+      };
     };
 
-    // Handle errors
     script.onerror = () => {
       reject(new Error('Failed to load Spotify Web Playback SDK'));
     };
 
-    // Add script to document
     document.body.appendChild(script);
   });
-};
+}
 
 // Create a new Spotify Web Playback SDK player
-export const createSpotifyPlayer = (
+export async function initializeSpotifyPlayer(
   name: string,
-  accessToken: string
-): Promise<WebPlaybackSDK> => {
-  return new Promise((resolve, reject) => {
-    if (!(window as any).Spotify) {
-      reject(new Error('Spotify Web Playback SDK not loaded'));
-      return;
-    }
+  getOAuthToken: (callback: (token: string) => void) => void,
+  volume = 1
+): Promise<WebPlaybackSDK> {
+  // Load the Spotify Web Playback SDK script if not already loaded
+  if (!window.Spotify) {
+    await loadSpotifyScript();
+  }
 
-    const player = new (window as any).Spotify.Player({
+  return new Promise((resolve, reject) => {
+    const player = new window.Spotify.Player({
       name,
-      getOAuthToken: (callback: (token: string) => void) => {
-        callback(accessToken);
-      },
-      volume: 0.5
+      getOAuthToken,
+      volume
     });
 
     // Error handling
-    player.addListener('initialization_error', ({ message }: { message: string }) => {
-      console.error('Spotify Player initialization error:', message);
-      reject(new Error(`Spotify Player initialization error: ${message}`));
+    player.addListener('initialization_error', ({ message }: SpotifyPlayerError) => {
+      console.error('Failed to initialize Spotify player:', message);
+      reject(new Error(message));
     });
 
-    player.addListener('authentication_error', ({ message }: { message: string }) => {
-      console.error('Spotify Player authentication error:', message);
-      reject(new Error(`Spotify Player authentication error: ${message}`));
+    player.addListener('authentication_error', ({ message }: SpotifyPlayerError) => {
+      console.error('Failed to authenticate Spotify player:', message);
+      reject(new Error(message));
     });
 
-    player.addListener('account_error', ({ message }: { message: string }) => {
-      console.error('Spotify Player account error:', message);
-      reject(new Error(`Spotify Player account error: ${message}`));
+    player.addListener('account_error', ({ message }: SpotifyPlayerError) => {
+      console.error('Failed to validate Spotify account:', message);
+      reject(new Error(message));
     });
 
-    player.addListener('playback_error', ({ message }: { message: string }) => {
-      console.error('Spotify Player playback error:', message);
+    player.addListener('playback_error', ({ message }: SpotifyPlayerError) => {
+      console.error('Failed to perform playback:', message);
     });
 
-    // Ready event
-    player.addListener('ready', ({ device_id }: { device_id: string }) => {
-      console.log('Spotify Player ready with device ID:', device_id);
+    // Ready handling
+    player.addListener('ready', ({ device_id }: SpotifyPlayerCallback) => {
+      console.log('Spotify player ready with device ID:', device_id);
       resolve(player);
     });
 
-    // Not ready event
-    player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-      console.log('Spotify Player device ID has gone offline:', device_id);
+    // Not ready handling
+    player.addListener('not_ready', ({ device_id }: SpotifyPlayerCallback) => {
+      console.warn('Device has gone offline:', device_id);
     });
 
-    // Connect to the player
+    // Connect the player
     player.connect();
   });
-};
+}
 
 // Convert Web Playback track to our internal SpotifyTrack format
 export const convertWebPlaybackTrack = (track: WebPlaybackTrack): SpotifyTrack => {
