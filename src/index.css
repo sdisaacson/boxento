@@ -4,6 +4,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* 
+ * =================================
+ * 1. THEME & COLORS
+ * =================================
+ */
+
+/* Light mode theme colors */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -38,8 +45,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Layout variables */
+  --border-radius-standard: 1.9rem;
 }
 
+/* Dark mode theme colors */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -75,6 +86,7 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* Theme color mapping */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -114,36 +126,51 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Base layer styles */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-200;
+  }
+  
+  /* Explicitly set dark mode colors on body and html for better compatibility */
+  html.dark,
+  body.dark {
+    @apply bg-slate-900 text-white;
   }
 }
 
-/* Basic layout */
-:root {
-  --border-radius-standard: 1.9rem;
-}
+/* 
+ * =================================
+ * 2. GLOBAL BASE STYLES
+ * =================================
+ */
 
+/* Basic body styles */
 body {
   @apply m-0 antialiased;
   padding-bottom: 200px;
 }
 
-/* Global style to prevent any text selection when dragging/resizing occurs */
+/* Global style to prevent text selection during dragging/resizing */
 body.dragging-active {
   @apply select-none cursor-move;
   -webkit-touch-callout: none !important;
 }
 
-/* Global Widget Container Styles */
+/* 
+ * =================================
+ * 3. WIDGET CONTAINER STYLES
+ * =================================
+ */
+
+/* Global Widget Container */
 .widget-container {
   border-radius: var(--border-radius-standard);
   @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words bg-white dark:bg-slate-800;
-  /* Prevent text selection during any interaction */
+  /* Prevent text selection during interaction */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -152,7 +179,7 @@ body.dragging-active {
   user-select: none;
 }
 
-/* Global Widget Interaction Styles */
+/* Widget Interaction Styles */
 .widget-drag-handle {
   @apply cursor-move touch-none select-none;
 }
@@ -161,7 +188,7 @@ body.dragging-active {
   @apply cursor-default pointer-events-auto;
 }
 
-/* Global Widget Interactive Elements */
+/* Widget Interactive Elements */
 .widget-container a,
 .widget-container button:not(.settings-button) {
   @apply cursor-pointer pointer-events-auto relative z-10;
@@ -171,7 +198,7 @@ body.dragging-active {
   @apply pointer-events-auto;
 }
 
-/* Global Widget Settings Button */
+/* Widget Settings Button */
 .widget-container .settings-button {
   @apply cursor-pointer z-10 opacity-0 transition-opacity duration-200 ease-in-out pointer-events-auto;
   border-radius: var(--border-radius-standard);
@@ -186,11 +213,28 @@ body.dragging-active {
   @apply pointer-events-auto;
 }
 
-/* Grid Layout Styles */
+/* Override for widget buttons to ensure they're always clickable */
+.widget-container button {
+  @apply pointer-events-auto relative z-50;
+}
+
+/* When drag is complete, ensure buttons are REALLY clickable */
+body.drag-complete .widget-container button {
+  @apply pointer-events-auto relative z-[9999];
+}
+
+/* 
+ * =================================
+ * 4. GRID LAYOUT STYLES
+ * =================================
+ */
+
+/* Grid Container */
 .grid-item-container {
   @apply p-0 bg-transparent h-full w-full;
 }
 
+/* Grid Item */
 .react-grid-item {
   @apply transition-all duration-200 ease-in-out;
   -webkit-user-drag: none;
@@ -203,24 +247,27 @@ body.dragging-active {
   @apply select-none;
 }
 
-/* Specific styling for dragging state */
+/* Grid States */
 .react-grid-item.react-draggable-dragging {
   @apply z-[100] transition-none pointer-events-none;
 }
 
-/* Specific styling for resize state */
 .react-grid-item.resizing {
   @apply z-10 transition-none;
 }
 
-/* Comprehensive selection prevention for all interaction states */
 .react-grid-item,
 .react-grid-item.react-draggable-dragging,
 .react-grid-item.resizing {
   @apply touch-none select-none;
 }
 
-/* Apply to the entire grid */
+/* Temporarily disable dragging during the click window after drag/resize completes */
+body.drag-complete .react-grid-item {
+  @apply transition-transform duration-300 ease-in-out;
+}
+
+/* Grid Layout */
 .react-grid-layout {
   @apply relative;
   -webkit-user-drag: none;
@@ -237,7 +284,16 @@ body.dragging-active {
   cursor: inherit !important;
 }
 
-/* Ensure the placeholder is under the dragged widget */
+/* Dragging Global Styles */
+body.react-grid-layout--dragging .react-grid-item {
+  @apply opacity-75 transition-none;
+}
+
+body.react-grid-layout--resizing .react-grid-item {
+  @apply opacity-100 transition-none;
+}
+
+/* Grid Placeholder */
 .react-grid-item.react-grid-placeholder {
   border-radius: var(--border-radius-standard);
   z-index: -1;
@@ -246,7 +302,6 @@ body.dragging-active {
   border: 1px dotted rgba(180, 180, 180, 0.5) !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01), inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
   transition: all 0.2s ease-in-out !important;
-  /* Add a slight outline glow similar to bento.me's card effect */
   outline: 1px solid rgba(240, 240, 240, 0.8);
   outline-offset: -1px;
 }
@@ -260,7 +315,7 @@ body.dragging-active {
   outline-offset: -1px;
 }
 
-/* Curved corner resize handle with aggressive styling */
+/* Resize Handle */
 .react-resizable-handle,
 .react-resizable .react-resizable-handle,
 .react-grid-item .react-resizable-handle {
@@ -268,7 +323,6 @@ body.dragging-active {
          cursor-se-resize z-10 opacity-0 transition-opacity duration-300 ease-in-out;
 }
 
-/* Create a larger, more prominent curved corner effect */
 .react-resizable-handle::after,
 .react-resizable .react-resizable-handle::after,
 .react-grid-item .react-resizable-handle::after {
@@ -276,13 +330,17 @@ body.dragging-active {
   border-radius: 0 0 var(--border-radius-standard) 0;
 }
 
-/* Show resize handle on hover */
 .widget-container:hover .react-resizable-handle,
 .react-grid-item:hover .react-resizable-handle {
   @apply opacity-100;
 }
 
-/* App Header Styles */
+/* 
+ * =================================
+ * 5. HEADER STYLES
+ * =================================
+ */
+
 .app-header {
   @apply fixed top-0 left-0 right-0 p-3 sm:p-4 md:p-6 backdrop-blur-sm z-40 bg-transparent;
 }
@@ -326,7 +384,12 @@ body.dragging-active {
          focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
 
-/* Widget Selector Styles */
+/* 
+ * =================================
+ * 6. WIDGET SELECTOR STYLES
+ * =================================
+ */
+
 .widget-selector-overlay {
   @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4
          opacity-0 transition-opacity duration-300 ease-in-out;
@@ -426,6 +489,12 @@ body.dragging-active {
   @apply text-center py-8 text-gray-500 dark:text-gray-400 text-sm;
 }
 
+/* 
+ * =================================
+ * 7. DASHBOARD STYLES
+ * =================================
+ */
+
 .dashboard-container {
   @apply px-6 max-w-[1600px] mx-auto;
 }
@@ -458,102 +527,20 @@ body.dragging-active {
   @apply transform rotate-90;
 }
 
-/* Override for widget buttons to ensure they're always clickable */
-.widget-container button {
-  @apply pointer-events-auto relative z-50;
-}
+/* 
+ * =================================
+ * 8. RESPONSIVE LAYOUT STYLES
+ * =================================
+ */
 
-/* When drag is complete, ensure buttons are REALLY clickable */
-body.drag-complete .widget-container button {
-  @apply pointer-events-auto relative z-[9999];
-}
-
-/* Temporarily disable dragging during the click window after drag/resize completes */
-body.drag-complete .react-grid-item {
-  @apply transition-transform duration-300 ease-in-out;
-}
-
-/* This style was updated and moved below */
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground transition-colors duration-200;
-  }
-  
-  /* Explicitly set dark mode colors on body and html for better compatibility */
-  html.dark,
-  body.dark {
-    @apply bg-slate-900 text-white;
-  }
-}
-
-/* Complete overhaul for mobile layout */
+/* Mobile Layout */
 .mobile-layout {
   display: block;
   height: auto;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Standardized grid items for mobile */
 .mobile-layout .react-grid-item {
   position: relative;
   transform: none;
@@ -568,7 +555,6 @@ body.drag-complete .react-grid-item {
   z-index: 1;
 }
 
-/* Mobile widget container */
 .mobile-layout .widget-container {
   height: auto;
   min-height: 180px;
@@ -578,7 +564,6 @@ body.drag-complete .react-grid-item {
   position: relative;
 }
 
-/* Consolidated widget content visibility for mobile */
 .mobile-layout .widget-container > div:not(.widget-header),
 .mobile-widget .widget-container > div:not(.widget-header) {
   display: block;
@@ -590,7 +575,87 @@ body.drag-complete .react-grid-item {
   position: relative;
 }
 
-/* Mobile and tablet layouts - targeting specific breakpoints */
+/* Widget Header Styles */
+.mobile-layout .widget-header,
+.mobile-widget .widget-header {
+  padding: 4px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .mobile-widget-item .widget-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Widget List & Items */
+.mobile-widget-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+}
+
+.mobile-widget-item {
+  border-radius: var(--border-radius-standard);
+  overflow: hidden;
+  position: relative;
+}
+
+.dark .mobile-widget-item {
+  background: #1e293b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Mobile View */
+.mobile-view {
+  padding: 0 0 20px 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-view h2 {
+  text-align: center;
+  margin: 10px 0 16px;
+  font-size: 1.1rem;
+}
+
+/* Widget Type-specific Styles */
+.widget-wrapper {
+  @apply h-full w-full;
+}
+
+.tablet-widget .widget-container {
+  min-height: 150px;
+}
+
+.desktop-widget .widget-container {
+  min-height: 100px;
+}
+
+/* 
+ * =================================
+ * 9. MEDIA QUERIES
+ * =================================
+ */
+
+/* Mobile Devices (< 480px) */
+@media (max-width: 480px) {
+  .mobile-widget-list {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 16px;
+  }
+}
+
+/* Small Mobile Devices (< 375px) */
+@media (max-width: 375px) {
+  .mobile-widget-list {
+    padding: 8px;
+    gap: 12px;
+  }
+}
+
+/* Tablets and Small Devices (< 768px) */
 @media (max-width: 768px) {
   /* Layout container */
   .react-grid-layout {
@@ -622,14 +687,7 @@ body.drag-complete .react-grid-item {
     padding: 0 0 6px 0;
   }
   
-  /* Enable smooth scrolling on mobile */
-  .mobile-layout {
-    -webkit-overflow-scrolling: touch;
-    height: auto;
-    max-height: none;
-  }
-  
-  /* View containers - ONLY show mobile view at this breakpoint */
+  /* View containers */
   .mobile-view-container {
     display: block;
     width: 100%;
@@ -647,7 +705,7 @@ body.drag-complete .react-grid-item {
     @apply p-3;
   }
   
-  /* Ensure only ONE view is visible on tablet sizes - default to desktop view */
+  /* View containers */
   .mobile-view-container {
     display: none;
     width: 0;
@@ -665,7 +723,7 @@ body.drag-complete .react-grid-item {
     @apply p-4;
   }
   
-  /* ONLY show desktop view at large screens */
+  /* View containers */
   .mobile-view-container {
     display: none;
     width: 0;
@@ -675,88 +733,4 @@ body.drag-complete .react-grid-item {
     display: block;
     width: 100%;
   }
-}
-
-/* Widget header styles */
-.mobile-layout .widget-header,
-.mobile-widget .widget-header {
-  padding: 4px 0;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.dark .mobile-widget-item .widget-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Mobile widget list layout */
-.mobile-widget-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  padding: 16px;
-  width: 100%;
-}
-
-/* Mobile widget items */
-.mobile-widget-item {
-  border-radius: var(--border-radius-standard);
-  overflow: hidden;
-  position: relative;
-}
-
-.dark .mobile-widget-item {
-  background: #1e293b;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-/* Breakpoint-specific mobile widget list layouts */
-@media (max-width: 480px) {
-  .mobile-widget-list {
-    grid-template-columns: 1fr;
-    padding: 12px;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 375px) {
-  .mobile-widget-list {
-    padding: 8px;
-    gap: 12px;
-  }
-}
-
-/* Mobile view styles */
-.mobile-view {
-  padding: 0 0 20px 0;
-  transition: opacity 0.3s ease;
-}
-
-.mobile-view h2 {
-  text-align: center;
-  margin: 10px 0 16px;
-  font-size: 1.1rem;
-}
-
-/* Dragging/resizing styles */
-body.react-grid-layout--dragging .react-grid-item {
-  @apply opacity-75 transition-none;
-}
-
-/* Keep resize operations at full opacity */
-body.react-grid-layout--resizing .react-grid-item {
-  @apply opacity-100 transition-none;
-}
-
-/* Widget type-specific styles */
-.widget-wrapper {
-  @apply h-full w-full;
-}
-
-.tablet-widget .widget-container {
-  min-height: 150px;
-}
-
-.desktop-widget .widget-container {
-  min-height: 100px;
 }
