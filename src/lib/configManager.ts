@@ -77,7 +77,10 @@ export const configManager = {
       if (!config) return null;
       
       // Process and decrypt any sensitive fields
-      return encryptionUtils.processObjectFromStorage(config, sensitiveFields);
+      const decryptedConfig = encryptionUtils.processObjectFromStorage(config, sensitiveFields);
+      
+      // Restore Date objects for TodoWidget and other widgets
+      return configManager.restoreDates(decryptedConfig);
     } catch (e) {
       console.error('Error getting widget configuration', e);
       return null;
@@ -113,10 +116,13 @@ export const configManager = {
       const decryptedConfigs: WidgetConfigStore = {};
       
       Object.keys(configs).forEach(widgetId => {
-        decryptedConfigs[widgetId] = encryptionUtils.processObjectFromStorage(
+        const decryptedConfig = encryptionUtils.processObjectFromStorage(
           configs[widgetId], 
           DEFAULT_SENSITIVE_FIELDS
         );
+        
+        // Restore Date objects
+        decryptedConfigs[widgetId] = configManager.restoreDates(decryptedConfig);
       });
       
       return decryptedConfigs;
@@ -180,5 +186,61 @@ export const configManager = {
     } catch (e) {
       console.error('Error clearing all widget configurations', e);
     }
+  },
+  
+  /**
+   * Helper method to restore Date objects in a configuration object
+   * Looks for objects with date-like string properties and converts them to Date objects
+   * 
+   * @param config - Configuration object to process
+   * @returns Processed configuration with restored Date objects
+   */
+  restoreDates: (config: Record<string, unknown>): Record<string, unknown> => {
+    // Helper function to check if a string is a valid ISO date format
+    const isISODateString = (str: string): boolean => {
+      const isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{3})?Z$/;
+      return isoDatePattern.test(str);
+    };
+    
+    // Helper function to recursively process objects
+    const processObject = (obj: unknown): unknown => {
+      if (obj === null || obj === undefined) {
+        return obj;
+      }
+      
+      if (Array.isArray(obj)) {
+        return obj.map(item => processObject(item));
+      }
+      
+      if (typeof obj === 'object') {
+        // Type guard to ensure obj is a Record<string, unknown>
+        const objRecord = obj as Record<string, unknown>;
+        
+        // Handle objects with special date properties
+        if (
+          objRecord.createdAt && 
+          typeof objRecord.createdAt === 'string' && 
+          isISODateString(objRecord.createdAt)
+        ) {
+          return {
+            ...objRecord,
+            createdAt: new Date(objRecord.createdAt)
+          };
+        }
+        
+        // Process all properties of the object
+        const result: Record<string, unknown> = {};
+        for (const key in objRecord) {
+          if (Object.prototype.hasOwnProperty.call(objRecord, key)) {
+            result[key] = processObject(objRecord[key]);
+          }
+        }
+        return result;
+      }
+      
+      return obj;
+    };
+    
+    return processObject(config) as Record<string, unknown>;
   }
 };
