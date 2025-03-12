@@ -211,6 +211,23 @@ function App() {
           configManager.saveWidgetConfig(widget.id, configToSave);
         }
       });
+      
+      // Save widgets to Firestore when user is logged in
+      if (auth.currentUser) {
+        // Use a debounce pattern to prevent too many Firestore writes
+        if (layoutUpdateTimeout.current !== null) {
+          clearTimeout(layoutUpdateTimeout.current);
+        }
+        
+        layoutUpdateTimeout.current = window.setTimeout(async () => {
+          try {
+            await userDashboardService.saveWidgets(widgets);
+            console.log('Saved widgets to Firestore');
+          } catch (error) {
+            console.error('Error saving widgets to Firestore:', error);
+          }
+        }, 500); // 500ms debounce for Firestore updates
+      }
     }
   }, [widgets])
   
@@ -347,6 +364,20 @@ function App() {
     
     // Update layout state
     setLayouts(updatedLayouts);
+    
+    // If user is logged in, save widgets and layouts to Firestore
+    if (auth.currentUser) {
+      (async () => {
+        try {
+          // Save the updated widget list to Firestore
+          await userDashboardService.saveWidgets(updatedWidgets);
+          await userDashboardService.saveLayouts(updatedLayouts);
+          console.log('Saved new widget to Firestore:', widgetId);
+        } catch (error) {
+          console.error('Error saving new widget to Firestore:', error);
+        }
+      })();
+    }
     
     // Close the widget selector if it's open
     if (widgetSelectorOpen) {
