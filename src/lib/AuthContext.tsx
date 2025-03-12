@@ -17,6 +17,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth } from './firebase';
+import { configManager } from './configManager';
 
 export interface AuthContextType {
   currentUser: User | null;
@@ -76,7 +77,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   function logout() {
-    return signOut(auth);
+    // Function to clear all localStorage except theme
+    const clearAllStorage = () => {
+      // Save theme setting
+      const theme = localStorage.getItem('theme');
+      
+      // Clear ALL localStorage
+      localStorage.clear();
+      
+      // Restore theme if available
+      if (theme) {
+        localStorage.setItem('theme', theme);
+      }
+      
+      // Also clear sessionStorage just to be sure
+      sessionStorage.clear();
+    };
+    
+    // Return a promise to handle async operations
+    return new Promise<void>((resolve, reject) => {
+      try {
+        // Clear storage first to ensure widgets reset
+        clearAllStorage();
+        
+        // Attempt to clear Firestore only if user is logged in
+        if (auth.currentUser) {
+          // We don't await this because we don't want to delay logout if it fails
+          configManager.clearAllConfigs().catch(e => 
+            console.warn('Failed to clear Firestore configs, continuing logout', e)
+          );
+        }
+        
+        // Now sign out
+        signOut(auth)
+          .then(() => {
+            // Clear storage again after signout just to be absolutely sure
+            clearAllStorage();
+            
+            console.log('Logout successful, reloading page...');
+            
+            // Add a small delay before reload to ensure all operations complete
+            setTimeout(() => {
+              // Use location.href with cache buster to force a complete reload
+              window.location.href = window.location.origin + window.location.pathname + '?logout=' + Date.now();
+            }, 100);
+            
+            resolve();
+          })
+          .catch(error => {
+            console.error('Error during sign out:', error);
+            reject(error);
+          });
+      } catch (error) {
+        console.error('Error during logout process:', error);
+        reject(error);
+      }
+    });
   }
 
   function resetPassword(email: string) {
