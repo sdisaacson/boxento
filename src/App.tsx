@@ -501,7 +501,7 @@ function App() {
   const dragThreshold = 5; // Minimum mouse movement to determine direction
   
   // Update drag handlers to track direction
-  const handleDragStart = (layout: LayoutItem[], oldItem: LayoutItem, newItem: LayoutItem, placeholder: LayoutItem, event: MouseEvent): void => {
+  const handleDragStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem, _placeholder: LayoutItem, event: MouseEvent): void => {
     // Add a class to the body to indicate we're dragging
     document.body.classList.add('dragging');
     document.body.classList.add('react-grid-layout--dragging');
@@ -519,7 +519,7 @@ function App() {
     console.log('Drag started');
   };
   
-  const handleDrag = (layout: LayoutItem[], oldItem: LayoutItem, newItem: LayoutItem, placeholder: LayoutItem, event: MouseEvent): void => {
+  const handleDrag = (_layout: LayoutItem[], _oldItem: LayoutItem, _newItem: LayoutItem, _placeholder: LayoutItem, event: MouseEvent): void => {
     // Skip if no mouse position
     if (!lastMousePos.current) return;
     
