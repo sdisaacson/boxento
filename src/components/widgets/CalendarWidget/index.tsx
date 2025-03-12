@@ -90,7 +90,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   
   // Google OAuth configuration
   const GOOGLE_CLIENT_ID = React.useMemo(() => 
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID'
+    import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID'
   , []);
   
   const GOOGLE_REDIRECT_URI = React.useMemo(() => 
