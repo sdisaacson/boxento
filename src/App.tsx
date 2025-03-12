@@ -221,8 +221,11 @@ function App() {
         
         layoutUpdateTimeout.current = window.setTimeout(async () => {
           try {
+            // Save widget metadata to Firestore (without configs)
             await userDashboardService.saveWidgets(widgets);
-            console.log('Saved widgets to Firestore');
+            console.log('Saved widget metadata to Firestore');
+            
+            // Config is saved individually above using configManager.saveWidgetConfig
           } catch (error) {
             console.error('Error saving widgets to Firestore:', error);
           }
@@ -972,22 +975,26 @@ function App() {
       
       // Load widgets
       try {
+        // 1. Load widget metadata first (without configs)
         const firestoreWidgets = await userDashboardService.loadWidgets();
-        // Important: If the user has saved widgets (even if it's an empty array),
-        // we should use that instead of falling back to default widgets
+        
         if (firestoreWidgets !== null && firestoreWidgets !== undefined) {
-          console.log('Loaded widgets from Firestore:', firestoreWidgets);
-          // Convert to Widget type before setting
+          console.log('Loaded widget metadata from Firestore:', firestoreWidgets);
+          
+          // 2. Load all widget configurations
+          const allConfigs = await configManager.getConfigs(true);
+          
+          // 3. Merge the widget metadata with their respective configurations
           const typedWidgets = Array.isArray(firestoreWidgets) ? firestoreWidgets.map(widget => {
+            const widgetId = widget.id as string;
             return {
-              id: widget.id as string || '',
+              id: widgetId || '',
               type: widget.type as string || '',
-              config: widget.config as Record<string, unknown> || {}
+              config: widgetId ? (allConfigs[widgetId] || {}) : {}
             } as Widget;
           }) : [];
           
-          // If we have an explicit empty array from Firestore, respect that
-          // This means the user has cleared all their widgets
+          // 4. Set the merged widgets in state
           setWidgets(typedWidgets);
           userHasFirestoreData = true;
           
@@ -998,9 +1005,19 @@ function App() {
           const localWidgets = loadLocalWidgets();
           if (localWidgets && localWidgets.length > 0) {
             setWidgets(localWidgets);
-            // Migrate to Firestore
+            // Migrate to Firestore - with new separation of concerns
             try {
               await userDashboardService.saveWidgets(localWidgets);
+              
+              // Also save each widget's configuration separately
+              for (const widget of localWidgets) {
+                if (widget.id && widget.config) {
+                  const { ...configToSave } = widget.config as Record<string, unknown>;
+                  delete configToSave.onDelete;
+                  delete configToSave.onUpdate;
+                  await configManager.saveWidgetConfig(widget.id, configToSave);
+                }
+              }
             } catch (migrationError) {
               console.error('Error migrating widgets to Firestore:', migrationError);
               // Continue with local data even if migration fails

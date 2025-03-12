@@ -143,9 +143,18 @@ export const userDashboardService = {
     if (!userId) throw new Error('User not authenticated');
     
     try {
+      // Strip out configuration data to avoid redundancy
+      const essentialWidgetData = widgets.map(widget => {
+        // Extract only the essential fields
+        return {
+          id: widget.id,
+          type: widget.type,
+          // Add any other essential metadata fields here (but NOT config)
+        };
+      });
+      
       // Sanitize the widgets array to remove undefined values
-      // Firestore doesn't accept undefined values
-      const sanitizedWidgets = JSON.parse(JSON.stringify(widgets));
+      const sanitizedWidgets = JSON.parse(JSON.stringify(essentialWidgetData));
       
       await setDoc(
         doc(db, 'users', userId, 'dashboard', 'widget-list'),
