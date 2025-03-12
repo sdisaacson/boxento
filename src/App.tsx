@@ -527,17 +527,41 @@ function App() {
       );
     }
     
+    // Check if we're in the middle of layout initialization
+    if (!isLayoutReady && layouts && Object.keys(layouts).length > 0) {
+      // If layouts are still initializing, use a temporary rendering with default dimensions
+      return (
+        <WidgetErrorBoundary children={
+          <WidgetComponent
+            width={isMobileView ? 2 : 3}
+            height={isMobileView ? 2 : 3}
+            config={{
+              ...widget.config,
+              onDelete: () => deleteWidget(widget.id),
+              onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
+            }}
+          />
+        } />
+      );
+    }
+    
     // Find layout item for this widget
     const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
     
     if (!layoutItem) {
-      console.warn(`Layout item not found for widget ${widget.id}`);
-      // Return widget with default dimensions if layout item not found
+      // Silently create a temporary layout item for this widget
+      // This prevents the warning while still ensuring proper display
+      
+      // Create a default layout item based on the current breakpoint
+      const defaultWidth = isMobileView ? 2 : 3;
+      const defaultHeight = isMobileView ? 2 : 3;
+      
+      // Return widget with these default dimensions
       return (
         <WidgetErrorBoundary children={
           <WidgetComponent
-            width={2}
-            height={2}
+            width={defaultWidth}
+            height={defaultHeight}
             config={{
               ...widget.config,
               onDelete: () => deleteWidget(widget.id),
@@ -552,8 +576,8 @@ function App() {
     return (
       <WidgetErrorBoundary children={
         <WidgetComponent
-          width={isMobileView ? 2 : layoutItem.w} // On mobile, always 2
-          height={isMobileView ? 2 : layoutItem.h} // On mobile, always 2
+          width={isMobileView ? 2 : layoutItem.w}
+          height={isMobileView ? 2 : layoutItem.h}
           config={{
             ...widget.config,
             onDelete: () => deleteWidget(widget.id),
@@ -805,15 +829,20 @@ function App() {
       // Always provide explicit positioning values
       const isMobile = currentBreakpoint === 'xs' || currentBreakpoint === 'xxs';
       
+      // If no layout item is found, create a temporary one with default values
+      // This prevents console warnings and ensures consistent rendering
+      const defaultWidth = isMobile ? 2 : 3;
+      const defaultHeight = isMobile ? 2 : 3;
+      
       // For mobile, ensure widgets have appropriate height
       const dataGrid = {
         i: widget.id,
         x: layoutItem?.x ?? 0,
         y: layoutItem?.y ?? 0,
-        w: layoutItem?.w ?? 2,
-        h: isMobile ? 5 : (layoutItem?.h ?? 2), // Taller for mobile
+        w: layoutItem?.w ?? defaultWidth,
+        h: isMobile ? 5 : (layoutItem?.h ?? defaultHeight),
         minW: layoutItem?.minW ?? 2,
-        minH: isMobile ? 3 : (layoutItem?.minH ?? 2) // Minimum height higher for mobile
+        minH: isMobile ? 3 : (layoutItem?.minH ?? 2)
       };
       
       // Add different classes based on screen size
@@ -915,14 +944,32 @@ function App() {
   useEffect(() => {
     // Only show the grid once we have layouts and we're sure the measurements are done
     if (layouts && Object.keys(layouts).length > 0 && widgets.length > 0) {
+      // Check if all widgets have layout items before marking layout as ready
+      let allWidgetsHaveLayouts = true;
+      
+      // Check if all widgets have layout items for the current breakpoint
+      if (currentBreakpoint) {
+        for (const widget of widgets) {
+          if (!layouts[currentBreakpoint]?.some(item => item.i === widget.id)) {
+            allWidgetsHaveLayouts = false;
+            console.log(`Widget ${widget.id} is missing a layout item for breakpoint ${currentBreakpoint}`);
+            break;
+          }
+        }
+      }
+      
+      // Add a longer delay if not all widgets have layouts yet
+      const delay = allWidgetsHaveLayouts ? 300 : 500;
+      
       // Short delay to ensure the layout calculations are complete
       const timer = setTimeout(() => {
         setIsLayoutReady(true);
-      }, 300);
+        console.log('Layout is now ready for rendering');
+      }, delay);
       
       return () => clearTimeout(timer);
     }
-  }, [layouts, widgets]);
+  }, [layouts, widgets, currentBreakpoint]);
 
   // Add state for tracking user
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
@@ -956,27 +1003,7 @@ function App() {
       // Migrate any legacy layout data structure first
       await userDashboardService.migrateLayoutDataStructure();
       
-      // Load layouts
-      const firestoreLayouts = await userDashboardService.loadLayouts();
-      if (firestoreLayouts) {
-        setLayouts(firestoreLayouts);
-        userHasFirestoreData = true;
-      } else {
-        // No data in Firestore yet, try localStorage and migrate if needed
-        const localLayouts = loadLocalLayouts();
-        if (localLayouts && Object.keys(localLayouts).length > 0) {
-          setLayouts(localLayouts);
-          // Migrate to Firestore
-          try {
-            await userDashboardService.saveLayouts(localLayouts);
-          } catch (migrationError) {
-            console.error('Error migrating layouts to Firestore:', migrationError);
-            // Continue with local data even if migration fails
-          }
-        }
-      }
-      
-      // Load widgets
+      // Load widgets first - we'll use them to validate layouts
       try {
         // 1. Load widget metadata first (without configs)
         const firestoreWidgets = await userDashboardService.loadWidgets();
@@ -1001,13 +1028,32 @@ function App() {
           setWidgets(typedWidgets);
           userHasFirestoreData = true;
           
+          // 5. IMPORTANT: Before loading layouts, validate and fix them based on the widgets
+          // This ensures all widgets have layouts for all breakpoints
+          console.log('Validating layouts to ensure they match widgets...');
+          const validatedLayouts = await userDashboardService.validateAndFixLayouts(
+            typedWidgets.map(w => ({ id: w.id, type: w.type }))
+          );
+          
+          // 6. Set the validated layouts in state
+          setLayouts(validatedLayouts);
+          console.log('Set validated layouts:', validatedLayouts);
+          
           // Also update localStorage to match Firestore state
           localStorage.setItem('boxento-widgets', JSON.stringify(typedWidgets));
+          localStorage.setItem('boxento-layouts', JSON.stringify(validatedLayouts));
         } else if (!userHasFirestoreData) {
           // Only fall back to localStorage if we haven't found any Firestore data yet
           const localWidgets = loadLocalWidgets();
           if (localWidgets && localWidgets.length > 0) {
             setWidgets(localWidgets);
+            
+            // Load layouts for these widgets
+            const localLayouts = loadLocalLayouts();
+            if (localLayouts && Object.keys(localLayouts).length > 0) {
+              setLayouts(localLayouts);
+            }
+            
             // Migrate to Firestore - with new separation of concerns
             try {
               await userDashboardService.saveWidgets(localWidgets);
@@ -1033,6 +1079,9 @@ function App() {
         if (!userHasFirestoreData) {
           const localWidgets = loadLocalWidgets();
           if (localWidgets) setWidgets(localWidgets);
+          
+          const localLayouts = loadLocalLayouts();
+          if (localLayouts) setLayouts(localLayouts);
         }
       }
     } catch (error) {
