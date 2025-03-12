@@ -143,20 +143,18 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   };
 
   // Handle show completed items change
-  const handleShowCompletedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const showCompleted = e.target.checked;
+  const handleShowCompletedChange = (checked: boolean) => {
     setLocalConfig(prev => ({
       ...prev,
-      showCompletedItems: showCompleted
+      showCompletedItems: checked
     }));
   };
 
   // Handle sort order change
-  const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSortOrder = e.target.value as 'created' | 'alphabetical' | 'completed';
+  const handleSortOrderChange = (value: 'created' | 'alphabetical' | 'completed') => {
     setLocalConfig(prev => ({
       ...prev,
-      sortOrder: newSortOrder
+      sortOrder: value
     }));
   };
 
@@ -206,11 +204,11 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   };
 
   const renderTodoList = (items: TodoItem[]) => (
-    <ul className="space-y-2 pr-1">
+    <div className="space-y-2 pr-1">
       {items.map(item => (
         <li 
           key={item.id} 
-          className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg group"
+          className="flex items-center gap-3 p-2.5 hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 rounded-lg transition-all relative text-gray-800 dark:text-gray-100 group"
         >
           <button
             onClick={() => toggleTodo(item.id)}
@@ -225,30 +223,34 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </button>
           
           <span 
-            className={`flex-grow ${
-              item.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'
+            className={`flex-grow truncate ${
+              item.completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
             }`}
           >
             {item.text}
           </span>
           
-          <button
-            onClick={() => deleteTodo(item.id)}
-            className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Delete task"
-          >
-            <Trash2 size={14} />
-          </button>
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => deleteTodo(item.id)}
+              className="p-1 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+              aria-label="Delete task"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </li>
       ))}
-    </ul>
+    </div>
   );
 
   const renderAddTodoForm = () => (
     <form 
       onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        addTodo();
+        if (newTodoText.trim()) {
+          addTodo();
+        }
       }}
       className="flex items-center gap-2"
     >
@@ -257,7 +259,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
         type="text"
         value={newTodoText}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
-        placeholder="Add a task..."
+        placeholder="Add task..."
         className="flex-grow"
         aria-label="New task"
       />
@@ -279,7 +281,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
         <div className="flex-grow overflow-y-auto">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              <p>No tasks. Add one below!</p>
+              <p>No tasks</p>
             </div>
           ) : (
             renderTodoList(items)
@@ -295,42 +297,58 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const renderCompactView = () => {
     const items = getFilteredAndSortedItems();
     return (
-      <div className="h-full flex flex-col p-2">
+      <div className="h-full flex flex-col">
         <div className="flex-grow overflow-y-auto">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-xs text-gray-500 dark:text-gray-400">
               <p>No tasks</p>
             </div>
           ) : (
-            <ul className="space-y-1">
+            <div className="space-y-1 pr-1">
               {items.map(item => (
-                <li key={item.id} className="flex items-center gap-2 text-xs">
+                <li 
+                  key={item.id} 
+                  className="flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 transition-all relative text-gray-800 dark:text-gray-100 group"
+                >
                   <button
                     onClick={() => toggleTodo(item.id)}
-                    className={`flex-shrink-0 w-4 h-4 rounded-full border ${
+                    className={`flex-shrink-0 w-3 h-3 rounded-full border ${
                       item.completed 
                         ? 'bg-green-500 border-green-500 text-white' 
                         : 'border-gray-300 dark:border-gray-600'
-                    }`}
+                    } flex items-center justify-center mr-1.5`}
                     aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
                   >
                     {item.completed && <Check size={8} />}
                   </button>
-                  <span className={item.completed ? 'line-through text-gray-400' : ''}>
+                  <span className={`text-xs font-medium flex-grow truncate ${
+                    item.completed ? 'line-through text-gray-400' : ''
+                  }`}>
                     {item.text}
                   </span>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                    <button
+                      onClick={() => deleteTodo(item.id)}
+                      className="p-0.5 text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                      aria-label="Delete task"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
                 </li>
               ))}
-            </ul>
+            </div>
           )}
         </div>
-        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
           <form 
             onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
               e.preventDefault();
-              addTodo();
+              if (newTodoText.trim()) {
+                addTodo();
+              }
             }}
-            className="flex gap-1"
+            className="flex items-center gap-2"
           >
             <Input
               ref={newTodoInputRef}
@@ -338,12 +356,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               value={newTodoText}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
               placeholder="Add task..."
-              className="flex-grow text-xs h-6"
+              className="flex-grow text-xs"
             />
             <button
               type="submit"
               disabled={!newTodoText.trim()}
-              className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
             >
               <Plus size={14} />
             </button>
@@ -356,12 +374,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const renderWideView = () => {
     const items = getFilteredAndSortedItems();
     return (
-      <div className="h-full grid grid-cols-2 gap-4 p-4">
+      <div className="h-full grid grid-cols-2 gap-4">
         <div className="flex flex-col">
           <h3 className="text-sm font-medium mb-2">Tasks</h3>
           <div className="flex-grow overflow-y-auto">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <p>No tasks</p>
               </div>
             ) : (
@@ -370,7 +388,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </div>
         </div>
         <div className="flex flex-col">
-          <h3 className="text-sm font-medium mb-2">Add Task</h3>
           {renderAddTodoForm()}
         </div>
       </div>
@@ -380,10 +397,10 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const renderTallView = () => {
     const items = getFilteredAndSortedItems();
     return (
-      <div className="h-full flex flex-col p-4">
+      <div className="h-full flex flex-col">
         <div className="flex-grow overflow-y-auto">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
               <p>No tasks</p>
             </div>
           ) : (
@@ -391,7 +408,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           )}
         </div>
         <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2">Add Task</h3>
           {renderAddTodoForm()}
         </div>
       </div>
@@ -404,12 +420,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     const pendingItems = items.filter(item => !item.completed);
 
     return (
-      <div className="h-full grid grid-cols-2 gap-4 p-4">
+      <div className="h-full grid grid-cols-2 gap-4">
         <div className="flex flex-col">
           <h3 className="text-sm font-medium mb-2">Pending Tasks ({pendingItems.length})</h3>
           <div className="flex-grow overflow-y-auto">
             {pendingItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <p>No pending tasks</p>
               </div>
             ) : (
@@ -417,7 +433,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
             )}
           </div>
           <div className="mt-4">
-            <h3 className="text-sm font-medium mb-2">Add Task</h3>
             {renderAddTodoForm()}
           </div>
         </div>
@@ -425,7 +440,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           <h3 className="text-sm font-medium mb-2">Completed Tasks ({completedItems.length})</h3>
           <div className="flex-grow overflow-y-auto">
             {completedItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <p>No completed tasks</p>
               </div>
             ) : (
@@ -476,7 +491,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               <Label htmlFor="sort-order-select">Sort Order</Label>
               <Select
                 value={localConfig.sortOrder || 'created'}
-                onValueChange={(value: 'created' | 'alphabetical' | 'completed') => handleSortOrderChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
+                onValueChange={handleSortOrderChange}
               >
                 <SelectTrigger id="sort-order-select">
                   <SelectValue placeholder="Select sort order" />
@@ -494,13 +509,13 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               <Switch
                 id="show-completed-toggle"
                 checked={localConfig.showCompletedItems ?? true}
-                onCheckedChange={(checked: boolean) => handleShowCompletedChange({ target: { checked } } as React.ChangeEvent<HTMLInputElement>)}
+                onCheckedChange={handleShowCompletedChange}
               />
             </div>
           </div>
           
           <DialogFooter>
-            <div className="flex justify-between w-full">
+            <div className="flex justify-between w-full pt-6 border-t border-gray-100 dark:border-gray-800">
               {config?.onDelete && (
                 <Button
                   variant="destructive"
@@ -528,13 +543,16 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   };
 
   return (
-    <div ref={widgetRef} className="widget-container h-full flex flex-col">
+    <div 
+      ref={widgetRef} 
+      className="widget-container todo-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+    >
       <WidgetHeader 
         title={localConfig.title || defaultConfig.title} 
         onSettingsClick={() => setShowSettings(true)}
       />
       
-      <div className="flex-grow overflow-hidden">
+      <div className="flex-1 overflow-hidden p-3">
         {renderContent()}
       </div>
       
