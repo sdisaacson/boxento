@@ -9,6 +9,7 @@ import { WidgetProps } from '@/types';
  * @property {string} [username] - GitHub username to track contributions for
  * @property {boolean} [showContributionGraph] - Whether to display the contribution graph
  * @property {number} [daysToShow] - Number of past days to display in the graph
+ * @property {string} [personalAccessToken] - Optional GitHub personal access token for API authentication
  */
 export interface GitHubStreakWidgetConfig {
   id?: string;
@@ -16,6 +17,7 @@ export interface GitHubStreakWidgetConfig {
   username?: string;
   showContributionGraph?: boolean;
   daysToShow?: number;
+  personalAccessToken?: string;
   onUpdate?: (config: GitHubStreakWidgetConfig) => void;
   onDelete?: () => void;
   [key: string]: unknown; // Index signature to satisfy Record<string, unknown>

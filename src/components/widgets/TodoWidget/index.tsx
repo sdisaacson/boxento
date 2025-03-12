@@ -74,10 +74,21 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       createdAt: new Date()
     };
 
+    const updatedItems = [...(localConfig.items || []), newTodo];
+    
     setLocalConfig(prev => ({
       ...prev,
-      items: [...(prev.items || []), newTodo]
+      items: updatedItems
     }));
+    
+    // Save to parent config
+    if (config?.onUpdate) {
+      config.onUpdate({
+        ...localConfig,
+        items: updatedItems
+      });
+    }
+    
     setNewTodoText('');
   };
 
@@ -161,6 +172,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const getFilteredAndSortedItems = () => {
     let items = [...(localConfig.items || [])];
     
+    // Ensure createdAt is a Date object for each item
+    items = items.map(item => ({
+      ...item,
+      createdAt: item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt)
+    }));
+    
     // Filter out completed items if needed
     if (!localConfig.showCompletedItems) {
       items = items.filter(item => !item.completed);
@@ -174,14 +191,14 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       case 'completed':
         items.sort((a, b) => {
           if (a.completed === b.completed) {
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return a.createdAt.getTime() - b.createdAt.getTime();
           }
           return a.completed ? 1 : -1;
         });
         break;
       case 'created':
       default:
-        items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        items.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         break;
     }
     
