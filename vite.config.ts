@@ -21,21 +21,28 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
+          // Put ALL node_modules in a single vendor chunk
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react';
-            }
             return 'vendor';
           }
           
-          if (id.includes('components/') || 
-              id.includes('hooks/') || 
-              id.includes('context/')) {
-            return 'ui';
+          // App.tsx in its own chunk due to size
+          if (id.includes('/App.tsx')) {
+            return 'app';
+          }
+          
+          // Components in their own chunk
+          if (id.includes('/components/')) {
+            return 'ui-components';
+          }
+          
+          // Library files (including contexts) in their own chunk
+          if (id.includes('/lib/') || id.includes('/utils/')) {
+            return 'lib';
           }
         }
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 800, // Increased since vendor will be larger
   },
 })
