@@ -11,4 +11,31 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  css: {
+    postcss: {
+      plugins: [],
+    },
+  },
+  build: {
+    cssMinify: 'lightningcss',
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            return 'vendor';
+          }
+          
+          if (id.includes('components/') || 
+              id.includes('hooks/') || 
+              id.includes('context/')) {
+            return 'ui';
+          }
+        }
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
 })
