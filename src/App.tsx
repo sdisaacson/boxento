@@ -827,6 +827,22 @@ function App() {
     );
   };
 
+  // Add a loading state to control initial render
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
+  
+  // Add effect to handle initial layout loading
+  useEffect(() => {
+    // Only show the grid once we have layouts and we're sure the measurements are done
+    if (layouts && Object.keys(layouts).length > 0 && widgets.length > 0) {
+      // Short delay to ensure the layout calculations are complete
+      const timer = setTimeout(() => {
+        setIsLayoutReady(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [layouts, widgets]);
+
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       <div className="fixed top-0 z-50 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
@@ -873,42 +889,54 @@ function App() {
             </div>
             
             <div className="desktop-view-container">
-              <ResponsiveReactGridLayout
-                className="layout"
-                layouts={layouts}
-                breakpoints={breakpoints}
-                cols={cols}
-                rowHeight={rowHeight}
-                onLayoutChange={handleLayoutChange}
-                onBreakpointChange={(newBreakpoint: string, newCols: number) => {
-                  if (newBreakpoint !== currentBreakpoint) {
-                    console.log('Breakpoint changed:', newBreakpoint, newCols);
-                    setCurrentBreakpoint(newBreakpoint);
-                  }
-                }}
-                onDragStart={handleDragStart}
-                onDrag={handleDrag}
-                onDragStop={handleDragStop}
-                onResizeStart={handleResizeStart}
-                onResizeStop={handleResizeStop}
-                margin={[10, 10]}
-                containerPadding={[10, 10]}
-                draggableHandle=".widget-drag-handle"
-                draggableCancel=".settings-button"
-                useCSSTransforms={true}
-                measureBeforeMount={false}
-                compactType="vertical"
-                verticalCompact={true}
-                preventCollision={false}
-                isResizable={true}
-                isDraggable={true}
-                isBounded={false}
-                autoSize={true}
-                transformScale={1}
-                style={{ width: '100%', minHeight: '100%' }}
-              >
-                {renderWidgetItems()}
-              </ResponsiveReactGridLayout>
+              {/* Add a conditional rendering with opacity transition */}
+              <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
+                <ResponsiveReactGridLayout
+                  className="layout"
+                  layouts={layouts}
+                  breakpoints={breakpoints}
+                  cols={cols}
+                  rowHeight={rowHeight}
+                  onLayoutChange={handleLayoutChange}
+                  onBreakpointChange={(newBreakpoint: string, newCols: number) => {
+                    if (newBreakpoint !== currentBreakpoint) {
+                      console.log('Breakpoint changed:', newBreakpoint, newCols);
+                      setCurrentBreakpoint(newBreakpoint);
+                    }
+                  }}
+                  onDragStart={handleDragStart}
+                  onDrag={handleDrag}
+                  onDragStop={handleDragStop}
+                  onResizeStart={handleResizeStart}
+                  onResizeStop={handleResizeStop}
+                  margin={[10, 10]}
+                  containerPadding={[10, 10]}
+                  draggableHandle=".widget-drag-handle"
+                  draggableCancel=".settings-button"
+                  useCSSTransforms={true}
+                  measureBeforeMount={false}
+                  compactType="vertical"
+                  verticalCompact={true}
+                  preventCollision={false}
+                  isResizable={true}
+                  isDraggable={true}
+                  isBounded={false}
+                  autoSize={true}
+                  transformScale={1}
+                  style={{ width: '100%', minHeight: '100%' }}
+                >
+                  {renderWidgetItems()}
+                </ResponsiveReactGridLayout>
+              </div>
+              {/* Add a loading indicator that shows only during initial layout calculation */}
+              {!isLayoutReady && widgets.length > 0 && (
+                <div className="flex justify-center items-center py-10">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading dashboard...</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>
