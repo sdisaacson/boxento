@@ -87,8 +87,8 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         doc(db, 'users', currentUser.uid, 'dashboard', 'layouts'),
         (doc) => {
           if (doc.exists()) {
-            // Update localStorage as a fallback
-            localStorage.setItem('boxento-layouts', JSON.stringify(doc.data().layouts));
+            // Update localStorage as a fallback - store direct data, not wrapped in 'layouts'
+            localStorage.setItem('boxento-layouts', JSON.stringify(doc.data()));
             
             setLastSyncTime(new Date());
             setSyncStatus('success');

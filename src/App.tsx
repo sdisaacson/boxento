@@ -953,6 +953,9 @@ function App() {
     try {
       let userHasFirestoreData = false;
       
+      // Migrate any legacy layout data structure first
+      await userDashboardService.migrateLayoutDataStructure();
+      
       // Load layouts
       const firestoreLayouts = await userDashboardService.loadLayouts();
       if (firestoreLayouts) {

@@ -28,7 +28,8 @@ export const userDashboardService = {
       // Firestore doesn't accept undefined values
       const sanitizedLayouts = JSON.parse(JSON.stringify(layouts));
       
-      await setDoc(doc(db, 'users', userId, 'dashboard', 'layouts'), { layouts: sanitizedLayouts }, { merge: true });
+      // Store layouts directly without wrapping in another object
+      await setDoc(doc(db, 'users', userId, 'dashboard', 'layouts'), sanitizedLayouts, { merge: true });
     } catch (error) {
       console.error('Error saving layouts to Firestore:', error);
       throw error;
@@ -45,7 +46,8 @@ export const userDashboardService = {
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        return docSnap.data()?.layouts || null;
+        // Return the document data directly, not nested under 'layouts'
+        return docSnap.data() as { [key: string]: LayoutItem[] };
       }
       return null;
     } catch (error) {
@@ -195,6 +197,33 @@ export const userDashboardService = {
       await deleteDoc(doc(db, 'users', userId, 'dashboard', 'widget-configs', 'configs', widgetId));
     } catch (error) {
       console.error('Error deleting widget config from Firestore:', error);
+      throw error;
+    }
+  },
+
+  // Migrate legacy layout data structure
+  migrateLayoutDataStructure: async (): Promise<void> => {
+    const userId = getCurrentUserId();
+    if (!userId) throw new Error('User not authenticated');
+    
+    try {
+      const docRef = doc(db, 'users', userId, 'dashboard', 'layouts');
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        
+        // Check if layouts are nested under 'layouts' property (old format)
+        if (data.layouts && typeof data.layouts === 'object') {
+          console.log('Migrating legacy layout structure...');
+          
+          // Save layouts directly without the wrapper
+          await setDoc(docRef, data.layouts, { merge: true });
+          console.log('Layout data structure migration complete');
+        }
+      }
+    } catch (error) {
+      console.error('Error migrating layout data structure:', error);
       throw error;
     }
   },
