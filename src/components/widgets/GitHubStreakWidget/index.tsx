@@ -41,6 +41,63 @@ interface GitHubContributionData {
 }
 
 /**
+ * GitHub contribution day interface
+ */
+interface GitHubContributionDay {
+  contributionCount: number;
+  date: string;
+}
+
+/**
+ * GitHub contribution week interface
+ */
+interface GitHubContributionWeek {
+  contributionDays: GitHubContributionDay[];
+}
+
+/**
+ * GitHub contribution calendar interface
+ */
+interface GitHubContributionCalendar {
+  totalContributions: number;
+  weeks: GitHubContributionWeek[];
+}
+
+/**
+ * GitHub contributions collection interface
+ */
+interface GitHubContributionsCollection {
+  contributionCalendar: GitHubContributionCalendar;
+}
+
+/**
+ * GitHub user interface
+ */
+interface GitHubUser {
+  name: string;
+  contributionsCollection: GitHubContributionsCollection;
+}
+
+/**
+ * GitHub API error interface
+ */
+interface GitHubAPIError {
+  message: string;
+  type?: string;
+  path?: string[];
+}
+
+/**
+ * GitHub API response interface
+ */
+interface GitHubAPIResponse {
+  data?: {
+    user?: GitHubUser;
+  };
+  errors?: GitHubAPIError[];
+}
+
+/**
  * GitHubStreakWidget Component
  * 
  * A widget that displays a user's GitHub contribution streak and contribution graph
@@ -54,7 +111,8 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     title: 'GitHub Streak',
     username: '',
     showContributionGraph: true,
-    daysToShow: 30
+    daysToShow: 30,
+    personalAccessToken: '' // Default to no token
   };
 
   // Component state
@@ -96,27 +154,192 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
       setGithubData(prev => ({ ...prev, loading: true, error: null }));
       
       try {
-        // In a real implementation, this would make an API call to GitHub or a proxy service
-        // For now, we'll simulate a response with mock data
+        // GitHub contributions API using GitHub's GraphQL API
+        const username = localConfig.username;
         
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // GitHub GraphQL API requires authentication - check if token is provided
+        if (!localConfig.personalAccessToken) {
+          setGithubData(prev => ({
+            ...prev,
+            loading: false,
+            error: 'GitHub API requires a Personal Access Token. Please add one in widget settings.'
+          }));
+          return;
+        }
         
-        // Mock data for demonstration
-        const mockData = {
-          username: localConfig.username || 'octocat',
-          currentStreak: 5,
-          longestStreak: 15,
-          totalContributions: 1337,
-          contributionsByDay: Array(365).fill(0).map((_, i) => ({
-            date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-            count: Math.floor(Math.random() * 10)
-          })),
-          loading: false,
-          error: null
+        // Fetch contribution data for the last 365 days
+        // Using GitHub GraphQL API
+        const query = `
+          query {
+            user(login: "${username}") {
+              name
+              contributionsCollection {
+                contributionCalendar {
+                  totalContributions
+                  weeks {
+                    contributionDays {
+                      contributionCount
+                      date
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Authorization': `bearer ${localConfig.personalAccessToken}`
         };
         
-        setGithubData(mockData);
+        const response = await fetch('https://api.github.com/graphql', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ query })
+        });
+        
+        if (!response.ok) {
+          if (response.status === 403) {
+            throw new Error('GitHub API access forbidden. This could be due to rate limiting or an invalid token.');
+          } else if (response.status === 401) {
+            throw new Error('Invalid GitHub Personal Access Token. Please update it in widget settings.');
+          } else {
+            throw new Error(`GitHub API error: ${response.status}`);
+          }
+        }
+        
+        const result = await response.json() as GitHubAPIResponse;
+        
+        // Check for errors in the response
+        if (result.errors && result.errors.length > 0) {
+          throw new Error(result.errors[0].message || 'Error fetching GitHub data');
+        }
+        
+        if (!result.data || !result.data.user) {
+          throw new Error(`GitHub user "${username}" not found`);
+        }
+        
+        const userData = result.data.user;
+        const contributionData = userData.contributionsCollection.contributionCalendar;
+        
+        // Extract contribution days from weeks
+        const contributionDays: { date: string; count: number }[] = [];
+        contributionData.weeks.forEach((week: GitHubContributionWeek) => {
+          week.contributionDays.forEach((day: GitHubContributionDay) => {
+            contributionDays.push({
+              date: day.date,
+              count: day.contributionCount
+            });
+          });
+        });
+        
+        // Sort by date
+        contributionDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        // Calculate current streak
+        let currentStreak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Get yesterday's date for checking if the streak is still active
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        // Check if yesterday had contributions to maintain streak
+        const hasYesterdayContribution = contributionDays.some(
+          day => day.date === yesterdayStr && day.count > 0
+        );
+        
+        // If no contribution yesterday, streak is broken
+        if (!hasYesterdayContribution) {
+          // Check if there was a contribution today to start a new streak
+          const todayStr = today.toISOString().split('T')[0];
+          const hasTodayContribution = contributionDays.some(
+            day => day.date === todayStr && day.count > 0
+          );
+          
+          currentStreak = hasTodayContribution ? 1 : 0;
+        } else {
+          // Count consecutive days with contributions
+          // Start from the most recent day (excluding today)
+          for (let i = contributionDays.length - 1; i >= 0; i--) {
+            const dayData = contributionDays[i];
+            const dayDate = new Date(dayData.date);
+            
+            // Skip future days and today
+            if (dayDate > yesterday) continue;
+            
+            // If this day doesn't match the expected next day in streak, break
+            if (i < contributionDays.length - 1) {
+              const prevDate = new Date(contributionDays[i + 1].date);
+              const expectedDate = new Date(prevDate);
+              expectedDate.setDate(expectedDate.getDate() - 1);
+              
+              if (dayDate.toISOString().split('T')[0] !== expectedDate.toISOString().split('T')[0]) {
+                break;
+              }
+            }
+            
+            // Add to streak if there were contributions
+            if (dayData.count > 0) {
+              currentStreak++;
+            } else {
+              break;
+            }
+          }
+          
+          // Add today if there was a contribution
+          const todayStr = today.toISOString().split('T')[0];
+          const hasTodayContribution = contributionDays.some(
+            day => day.date === todayStr && day.count > 0
+          );
+          
+          if (hasTodayContribution) {
+            currentStreak++;
+          }
+        }
+        
+        // Calculate longest streak
+        let longestStreak = 0;
+        let currentLongestStreak = 0;
+        
+        for (let i = 0; i < contributionDays.length; i++) {
+          if (contributionDays[i].count > 0) {
+            currentLongestStreak++;
+            
+            if (i > 0) {
+              // Check if this day is consecutive to the previous one
+              const currentDate = new Date(contributionDays[i].date);
+              const prevDate = new Date(contributionDays[i - 1].date);
+              
+              const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              
+              // If days are not consecutive, reset streak
+              if (diffDays !== 1) {
+                currentLongestStreak = 1;
+              }
+            }
+            
+            longestStreak = Math.max(longestStreak, currentLongestStreak);
+          } else {
+            currentLongestStreak = 0;
+          }
+        }
+        
+        // Set the contribution data
+        setGithubData({
+          username,
+          currentStreak,
+          longestStreak,
+          totalContributions: contributionData.totalContributions,
+          contributionsByDay: contributionDays,
+          loading: false,
+          error: null
+        });
+        
       } catch (error) {
         console.error('Failed to fetch GitHub data:', error);
         setGithubData(prev => ({
@@ -128,7 +351,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     };
     
     fetchGitHubData();
-  }, [localConfig.username]);
+  }, [localConfig.username, localConfig.personalAccessToken]);
   
   /**
    * Determines the appropriate size category based on width and height
@@ -217,6 +440,19 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
         </div>
       );
     }
+
+    if (!localConfig.personalAccessToken) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center p-1">
+          <p className="text-amber-500 dark:text-amber-400 text-center text-xs mb-1 font-medium">
+            Personal Access Token Required
+          </p>
+          <p className="text-gray-500 dark:text-gray-400 text-center text-xs">
+            GitHub API requires authentication. Click settings to add a token.
+          </p>
+        </div>
+      );
+    }
     
     if (githubData.loading) {
       return (
@@ -228,8 +464,8 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     
     if (githubData.error) {
       return (
-        <div className="h-full flex flex-col items-center justify-center">
-          <p className="text-red-500 text-center text-sm">{githubData.error}</p>
+        <div className="h-full flex flex-col items-center justify-center p-1">
+          <p className="text-red-500 text-center text-xs">{githubData.error}</p>
         </div>
       );
     }
@@ -587,84 +823,83 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
   const renderSettings = () => {
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>GitHub Streak Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
-            {/* Title setting */}
-            <div className="space-y-2">
-              <label htmlFor="widget-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Widget Title
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="title" className="text-right text-sm">
+                Title
               </label>
               <input
-                type="text"
-                id="widget-title"
-                className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                id="title"
                 value={localConfig.title || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({
-                  ...localConfig, 
-                  title: e.target.value
-                })}
-                placeholder="Widget Title"
+                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                onChange={e => setLocalConfig(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
             
-            {/* GitHub username setting */}
-            <div className="space-y-2">
-              <label htmlFor="github-username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="username" className="text-right text-sm">
                 GitHub Username
               </label>
               <input
-                type="text"
-                id="github-username"
-                className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                id="username"
                 value={localConfig.username || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({
-                  ...localConfig, 
-                  username: e.target.value
-                })}
-                placeholder="e.g., octocat"
+                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                onChange={e => setLocalConfig(prev => ({ ...prev, username: e.target.value }))}
               />
             </div>
             
-            {/* Show contribution graph toggle */}
-            <div className="flex items-center">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="pat" className="text-right text-sm">
+                Personal Access Token
+                <span className="text-red-500 ml-0.5">*</span>
+              </label>
+              <div className="col-span-3">
+                <input
+                  id="pat"
+                  type="password"
+                  value={localConfig.personalAccessToken || ''}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
+                  placeholder="Required for GitHub API access"
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  <p>Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">github.com/settings/tokens</a></p>
+                  <p>Only needs <span className="font-medium">read-only</span> access to public repositories</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="daysToShow" className="text-right text-sm">
+                Days to Show
+              </label>
               <input
-                type="checkbox"
-                id="show-graph"
-                checked={localConfig.showContributionGraph !== false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({
-                  ...localConfig, 
-                  showContributionGraph: e.target.checked
-                })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                id="daysToShow"
+                type="number"
+                min="7"
+                max="365"
+                value={localConfig.daysToShow || 30}
+                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                onChange={e => setLocalConfig(prev => ({ ...prev, daysToShow: parseInt(e.target.value, 10) }))}
               />
-              <label htmlFor="show-graph" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                Show Contribution Graph
-              </label>
             </div>
             
-            {/* Days to show setting */}
-            <div className="space-y-2">
-              <label htmlFor="days-to-show" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Days to Show in Graph
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="showGraph" className="text-right text-sm">
+                Show Graph
               </label>
-              <select
-                id="days-to-show"
-                className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={localConfig.daysToShow || 30}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLocalConfig({
-                  ...localConfig, 
-                  daysToShow: parseInt(e.target.value, 10)
-                })}
-              >
-                <option value="14">14 days</option>
-                <option value="30">30 days</option>
-                <option value="60">60 days</option>
-                <option value="90">90 days</option>
-              </select>
+              <input
+                id="showGraph"
+                type="checkbox"
+                checked={!!localConfig.showContributionGraph}
+                className="col-span-3"
+                onChange={e => setLocalConfig(prev => ({ ...prev, showContributionGraph: e.target.checked }))}
+              />
             </div>
           </div>
           
@@ -683,12 +918,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
                   Delete Widget
                 </Button>
               )}
-              <Button
-                type="button"
-                onClick={saveSettings}
-              >
-                Save
-              </Button>
+              <Button onClick={saveSettings}>Save changes</Button>
             </div>
           </DialogFooter>
         </DialogContent>
