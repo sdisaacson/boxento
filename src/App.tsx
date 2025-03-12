@@ -128,8 +128,9 @@ function App() {
       const savedWidgets = localStorage.getItem('boxento-widgets')
       const widgetsFromStorage = savedWidgets ? JSON.parse(savedWidgets) : []
       
-      if (widgetsFromStorage.length === 0) {
-        // Add default widgets if no widgets exist
+      // Only use default widgets if we're not logged in and no widgets in storage
+      if (widgetsFromStorage.length === 0 && !auth.currentUser) {
+        // Add default widgets if no widgets exist and user is not logged in
         return [
           {
             id: 'default-todo',
@@ -916,10 +917,13 @@ function App() {
   // Function to load user data from Firestore
   const loadUserData = async (): Promise<void> => {
     try {
+      let userHasFirestoreData = false;
+      
       // Load layouts
       const firestoreLayouts = await userDashboardService.loadLayouts();
       if (firestoreLayouts) {
         setLayouts(firestoreLayouts);
+        userHasFirestoreData = true;
       } else {
         // No data in Firestore yet, try localStorage and migrate if needed
         const localLayouts = loadLocalLayouts();
@@ -938,18 +942,28 @@ function App() {
       // Load widgets
       try {
         const firestoreWidgets = await userDashboardService.loadWidgets();
-        if (firestoreWidgets && Array.isArray(firestoreWidgets)) {
+        // Important: If the user has saved widgets (even if it's an empty array),
+        // we should use that instead of falling back to default widgets
+        if (firestoreWidgets !== null && firestoreWidgets !== undefined) {
+          console.log('Loaded widgets from Firestore:', firestoreWidgets);
           // Convert to Widget type before setting
-          const typedWidgets = firestoreWidgets.map(widget => {
+          const typedWidgets = Array.isArray(firestoreWidgets) ? firestoreWidgets.map(widget => {
             return {
               id: widget.id as string || '',
               type: widget.type as string || '',
               config: widget.config as Record<string, unknown> || {}
             } as Widget;
-          });
+          }) : [];
+          
+          // If we have an explicit empty array from Firestore, respect that
+          // This means the user has cleared all their widgets
           setWidgets(typedWidgets);
-        } else {
-          // No data in Firestore yet, try localStorage and migrate if needed
+          userHasFirestoreData = true;
+          
+          // Also update localStorage to match Firestore state
+          localStorage.setItem('boxento-widgets', JSON.stringify(typedWidgets));
+        } else if (!userHasFirestoreData) {
+          // Only fall back to localStorage if we haven't found any Firestore data yet
           const localWidgets = loadLocalWidgets();
           if (localWidgets && localWidgets.length > 0) {
             setWidgets(localWidgets);
@@ -964,9 +978,11 @@ function App() {
         }
       } catch (widgetError) {
         console.error('Error loading widgets from Firestore:', widgetError);
-        // Fallback to localStorage for widgets
-        const localWidgets = loadLocalWidgets();
-        if (localWidgets) setWidgets(localWidgets);
+        // Only fall back to localStorage if we haven't loaded Firestore data
+        if (!userHasFirestoreData) {
+          const localWidgets = loadLocalWidgets();
+          if (localWidgets) setWidgets(localWidgets);
+        }
       }
     } catch (error) {
       console.error('Error loading user data from Firestore:', error);
@@ -1002,12 +1018,67 @@ function App() {
     try {
       const savedWidgets = localStorage.getItem('boxento-widgets');
       if (savedWidgets) {
-        return JSON.parse(savedWidgets);
+        const parsedWidgets = JSON.parse(savedWidgets);
+        // If we have widgets in localStorage, use them
+        if (Array.isArray(parsedWidgets) && parsedWidgets.length > 0) {
+          return parsedWidgets;
+        }
       }
+      
+      // If there are no widgets in localStorage and user is not logged in,
+      // return default widgets
+      if (!auth.currentUser) {
+        return [
+          {
+            id: 'default-todo',
+            type: 'todo',
+            config: getWidgetConfigByType('todo') || {}
+          },
+          {
+            id: 'default-weather',
+            type: 'weather',
+            config: getWidgetConfigByType('weather') || {}
+          },
+          {
+            id: 'default-quick-links',
+            type: 'quick-links',
+            config: getWidgetConfigByType('quick-links') || {}
+          },
+          {
+            id: 'default-notes',
+            type: 'notes',
+            config: getWidgetConfigByType('notes') || {}
+          }
+        ];
+      }
+      
+      // For logged in users with no widgets, return an empty array
+      return [];
     } catch (error) {
       console.error('Error loading widgets from localStorage:', error);
+      return auth.currentUser ? [] : [
+        {
+          id: 'default-todo',
+          type: 'todo',
+          config: getWidgetConfigByType('todo') || {}
+        },
+        {
+          id: 'default-weather',
+          type: 'weather',
+          config: getWidgetConfigByType('weather') || {}
+        },
+        {
+          id: 'default-quick-links',
+          type: 'quick-links',
+          config: getWidgetConfigByType('quick-links') || {}
+        },
+        {
+          id: 'default-notes',
+          type: 'notes',
+          config: getWidgetConfigByType('notes') || {}
+        }
+      ];
     }
-    return null;
   };
 
   // Only render the UI when data is loaded

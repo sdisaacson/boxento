@@ -24,7 +24,11 @@ export const userDashboardService = {
     if (!userId) throw new Error('User not authenticated');
     
     try {
-      await setDoc(doc(db, 'users', userId, 'dashboard', 'layouts'), { layouts }, { merge: true });
+      // Sanitize the layouts object to remove undefined values
+      // Firestore doesn't accept undefined values
+      const sanitizedLayouts = JSON.parse(JSON.stringify(layouts));
+      
+      await setDoc(doc(db, 'users', userId, 'dashboard', 'layouts'), { layouts: sanitizedLayouts }, { merge: true });
     } catch (error) {
       console.error('Error saving layouts to Firestore:', error);
       throw error;
@@ -56,9 +60,12 @@ export const userDashboardService = {
     if (!userId) throw new Error('User not authenticated');
     
     try {
+      // Sanitize the config object to remove undefined values
+      const sanitizedConfig = JSON.parse(JSON.stringify(config));
+      
       await setDoc(
         doc(db, 'users', userId, 'dashboard', 'widget-configs', 'configs', widgetId),
-        { config },
+        { config: sanitizedConfig },
         { merge: true }
       );
     } catch (error) {
@@ -136,9 +143,13 @@ export const userDashboardService = {
     if (!userId) throw new Error('User not authenticated');
     
     try {
+      // Sanitize the widgets array to remove undefined values
+      // Firestore doesn't accept undefined values
+      const sanitizedWidgets = JSON.parse(JSON.stringify(widgets));
+      
       await setDoc(
         doc(db, 'users', userId, 'dashboard', 'widget-list'),
-        { widgets },
+        { widgets: sanitizedWidgets },
         { merge: true }
       );
     } catch (error) {

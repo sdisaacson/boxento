@@ -27,42 +27,103 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
     const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
     const urlObj = new URL(normalizedUrl);
 
-    // Get favicon using Google's favicon service
+    // Get favicon using Google's favicon service (this is CORS allowed)
     const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
 
-    // Try to fetch the page directly first
+    // Extract a reasonable title from the URL if metadata fetching fails
+    let extractedTitle = "";
+    
+    // Try to get a reasonable title from the URL path
+    if (urlObj.pathname && urlObj.pathname !== "/") {
+      // Remove trailing slash if present
+      const path = urlObj.pathname.endsWith('/') 
+        ? urlObj.pathname.slice(0, -1) 
+        : urlObj.pathname;
+      
+      // Get last segment of path
+      const segments = path.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        // Get last segment and replace dashes and underscores with spaces
+        extractedTitle = segments[segments.length - 1]
+          .replace(/[-_]/g, ' ')
+          .replace(/\.\w+$/, '') // Remove file extension if present
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+    }
+
+    // If path doesn't provide a good title, use the hostname without TLD
+    if (!extractedTitle) {
+      // Clean up the hostname to create a reasonable title
+      const hostnameWithoutWWW = urlObj.hostname.replace(/^www\./, '');
+      const mainDomain = hostnameWithoutWWW.split('.')[0];
+      
+      // Capitalize first letter and clean up common domain name patterns
+      extractedTitle = mainDomain
+        .charAt(0).toUpperCase() + mainDomain.slice(1)
+        .replace(/-/g, ' '); // Replace hyphens with spaces
+    }
+
+    // Try to fetch metadata with multiple fallbacks in parallel with a short timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
+    
     try {
-      const response = await fetch(normalizedUrl, { method: 'HEAD' });
-      if (!response.ok) {
-        throw new Error('Direct fetch failed');
+      // Try a safe proxy approach - Can be replaced with your own proxy service
+      // We'll continue immediately if we get any CORS errors
+      
+      // Try JSONLink API with the timeout controller
+      const jsonLinkPromise = fetch(
+        `https://jsonlink.io/api/extract?url=${encodeURIComponent(normalizedUrl)}`, 
+        { signal: controller.signal }
+      ).then(async response => {
+        if (response.ok) {
+          const data = await response.json();
+          if (data.title) {
+            return { 
+              title: data.title.trim(),
+              favicon 
+            };
+          }
+        }
+        throw new Error('JSONLink API failed or returned no title');
+      }).catch(error => {
+        // Log but don't re-throw, we'll use the fallback
+        console.log("JSONLink API failed:", error.message);
+        return null;
+      });
+      
+      // Race against a short timeout to avoid hanging
+      const result = await Promise.race([
+        jsonLinkPromise,
+        new Promise<null>(resolve => 
+          setTimeout(() => {
+            console.log("Metadata fetch timed out");
+            resolve(null);
+          }, 2000)
+        )
+      ]);
+      
+      // If we got metadata successfully, use it
+      if (result) {
+        clearTimeout(timeoutId);
+        return result;
       }
     } catch (error) {
-      console.warn('Direct fetch failed, using fallback:', error);
-    }
-
-    // Use a more reliable service for metadata
-    const response = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(normalizedUrl)}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL metadata: ${response.statusText}`);
+      // Silent catch - we'll use the fallback
+      console.log("Metadata fetch failed:", error);
+    } finally {
+      clearTimeout(timeoutId);
     }
     
-    const data = await response.json();
-    
-    // Extract the title from the response
-    let title = data.title || '';
-    
-    // If no title is found, use the hostname
-    if (!title) {
-      title = urlObj.hostname;
-    }
-
+    // Return our fallback data - this is guaranteed to work without CORS issues
     return { 
-      title: title.trim(),
+      title: extractedTitle || urlObj.hostname,
       favicon
     };
   } catch (error) {
-    console.error('Error fetching URL metadata:', error);
+    console.error('Error in fetchUrlMetadata:', error);
     // Return a basic fallback using the URL's hostname
     try {
       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
@@ -71,10 +132,10 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
         favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
       };
     } catch {
-      // If URL parsing fails, return the raw URL
+      // Final fallback if URL parsing also fails
       return {
         title: url,
-        favicon: `https://www.google.com/s2/favicons?domain=unknown&sz=32`
+        favicon: `https://www.google.com/s2/favicons?domain=example.com&sz=32`
       };
     }
   }
@@ -146,12 +207,20 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
       // Update state
       setLinks(updatedLinks);
       
-      // Save using onUpdate callback to persist
-      if (config?.onUpdate) {
-        config.onUpdate({
-          ...config,
-          links: updatedLinks
-        });
+      // Separate the onUpdate to avoid React warnings about updates during render
+      // Use setTimeout to ensure it runs after the current render cycle
+      if (config && config.onUpdate) {
+        const updateFunction = config.onUpdate;
+        const configCopy = { ...config };
+        
+        setTimeout(() => {
+          // Create a clean copy of the data to avoid undefined values
+          const linksCopy = JSON.parse(JSON.stringify(updatedLinks));
+          updateFunction({
+            ...configCopy,
+            links: linksCopy
+          });
+        }, 0);
       }
       
       setEditingLink(null);
@@ -191,14 +260,22 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
    * Updates widget settings and saves them
    */
   const saveSettings = () => {
-    if (config?.onUpdate) {
-      config.onUpdate({
-        ...config,
-        links,
-        displayMode,
-        showFavicons,
-        customTitle
-      });
+    if (config && config.onUpdate) {
+      const updateFunction = config.onUpdate;
+      const configCopy = { ...config };
+      
+      // Use setTimeout to ensure it runs after the current render cycle
+      setTimeout(() => {
+        // Create a clean copy of the data to avoid undefined values
+        const linksCopy = JSON.parse(JSON.stringify(links));
+        updateFunction({
+          ...configCopy,
+          links: linksCopy,
+          displayMode,
+          showFavicons,
+          customTitle
+        });
+      }, 0);
     }
     setShowSettings(false);
   }
@@ -249,11 +326,20 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
       }
 
       // Update config with basic info
-      if (config?.onUpdate) {
-        config.onUpdate({
-          ...config,
-          links: [...links, newLink]
-        });
+      if (config && config.onUpdate) {
+        const updateFunction = config.onUpdate;
+        const configCopy = { ...config };
+        const currentLinks = [...links, newLink];
+        
+        // Use setTimeout to ensure it runs after the current render cycle
+        setTimeout(() => {
+          // Create a clean copy of the data to avoid undefined values
+          const linksCopy = JSON.parse(JSON.stringify(currentLinks));
+          updateFunction({
+            ...configCopy,
+            links: linksCopy
+          });
+        }, 0);
       }
 
       // Fetch metadata asynchronously
@@ -262,36 +348,69 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
         
         // Only update if the title is different from the hostname
         if (metadata.title !== newLink.title) {
+          // Create the enhanced link with metadata
           const finalLink = {
             ...newLink,
             title: metadata.title,
             favicon: metadata.favicon
           };
-
-          setLinks(prevLinks => 
-            prevLinks.map(link => 
+          
+          // Update state with metadata-enhanced link
+          setLinks(prev => {
+            const updatedLinks = prev.map(link => 
               link.id === newId ? finalLink : link
-            )
-          );
-
-          // Update config with final metadata
-          if (config?.onUpdate) {
-            config.onUpdate({
-              ...config,
-              links: links.map(link => 
-                link.id === newId ? finalLink : link
-              )
-            });
+            );
+            return updatedLinks;
+          });
+          
+          // Update config with enhanced metadata - using the current state
+          if (config && config.onUpdate) {
+            // First get the current links
+            const updateFunction = config.onUpdate;
+            const configCopy = { ...config };
+            
+            // Instead of nesting setLinks call, use the updatedLinks directly
+            const updatedLinks = [...links];
+            const linkIndex = updatedLinks.findIndex(link => link.id === newId);
+            if (linkIndex !== -1) {
+              updatedLinks[linkIndex] = finalLink;
+            }
+            
+            // Update the config with the latest links array
+            // Use setTimeout to defer this update to the next tick
+            // This prevents the "Cannot update during render" error
+            setTimeout(() => {
+              // Create a clean copy of the data to avoid undefined values
+              const linksCopy = JSON.parse(JSON.stringify(updatedLinks)); 
+              updateFunction({
+                ...configCopy,
+                links: linksCopy
+              });
+            }, 0);
+            
+            // Update state separately
+            setLinks(updatedLinks);
           }
         }
       } catch (error) {
-        console.error('Error fetching link metadata:', error);
-        // Link is already added with basic info, so we just remove the loading state
+        console.error('Error fetching metadata for link:', error);
+        // Even if metadata fetching fails, we already saved the basic link info above
+        // so the link will still be stored in Firebase with basic info
+        
+        // Log the current state to help with debugging
+        console.log('Link was saved with basic info:', newLink);
+        
+        // Since we've already saved the basic link info earlier, Firebase should have the data
+        // Let's log to help with troubleshooting
+        if (config?.links) {
+          console.log('Current config links:', config.links.length);
+        }
+      } finally {
+        // Remove loading state regardless of success or failure
+        setLoadingLinkIds(prev => prev.filter(id => id !== newId));
       }
     } catch (error) {
       console.error('Error adding link:', error);
-    } finally {
-      setLoadingLinkIds(prev => prev.filter(id => id !== newId));
     }
   };
 
@@ -586,23 +705,45 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                   value={editingLink.url} 
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     const url = e.target.value;
-                    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-                    const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
                     
-                    setEditingLink({...editingLink, url, favicon});
-                    
-                    if (url && url.match(/^https?:\/\/.+/)) {
-                      try {
-                        const metadata = await fetchUrlMetadata(url);
-                        setEditingLink(prev => ({
-                          ...prev!,
-                          url,
-                          title: metadata.title,
-                          favicon
-                        }));
-                      } catch (error) {
-                        console.error('Error fetching URL metadata:', error);
+                    try {
+                      // Basic URL validation
+                      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+                      const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+                      
+                      // Always update with basic info first
+                      setEditingLink({
+                        ...editingLink, 
+                        url, 
+                        favicon,
+                        // Use hostname as fallback title if no title exists yet
+                        title: editingLink.title || urlObj.hostname
+                      });
+                      
+                      if (url && url.match(/^https?:\/\/.+/)) {
+                        try {
+                          // Try to get enhanced metadata
+                          const metadata = await fetchUrlMetadata(url);
+                          setEditingLink(prev => ({
+                            ...prev!,
+                            url,
+                            title: metadata.title,
+                            favicon
+                          }));
+                        } catch (error) {
+                          console.error('Error fetching URL metadata:', error);
+                          // Still update with the basic info
+                          setEditingLink(prev => ({
+                            ...prev!,
+                            url,
+                            favicon
+                          }));
+                        }
                       }
+                    } catch (urlError) {
+                      // If URL is invalid, just update the URL field without other changes
+                      console.warn('Invalid URL format:', urlError);
+                      setEditingLink({...editingLink, url});
                     }
                   }}
                   placeholder="https://google.com"
