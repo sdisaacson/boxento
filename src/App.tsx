@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Moon, Sun } from 'lucide-react'
+import { Plus, Moon, Sun, Cloud, Loader2, AlertCircle } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
 // @ts-expect-error - The types don't correctly represent the module structure
@@ -16,6 +16,9 @@ import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary
 import WidgetSelector from '@/components/widgets/common/WidgetSelector'
 import { configManager } from '@/lib/configManager'
 import { UserMenuButton } from '@/components/auth/UserMenuButton'
+import { auth } from '@/lib/firebase'
+import { userDashboardService } from '@/lib/firestoreService'
+import { useSync } from '@/lib/SyncContext'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -350,9 +353,9 @@ function App() {
     }
   };
   
-  const deleteWidget = (widgetId: string): void => {
-    // Remove widget config from storage
-    configManager.clearConfig(widgetId);
+  const deleteWidget = async (widgetId: string): Promise<void> => {
+    // Remove widget config from storage using the updated configManager
+    await configManager.clearConfig(widgetId);
     
     // Remove widget from state
     const updatedWidgets = widgets.filter(widget => widget.id !== widgetId);
@@ -365,8 +368,18 @@ function App() {
     });
     setLayouts(newLayouts);
     
-    // Save to localStorage
+    // Save to localStorage as fallback
     localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
+    
+    // If user is logged in, save to Firestore
+    if (auth.currentUser) {
+      try {
+        await userDashboardService.saveWidgets(updatedWidgets);
+        await userDashboardService.saveLayouts(newLayouts);
+      } catch (error) {
+        console.error('Error saving to Firestore after widget deletion:', error);
+      }
+    }
   };
   
   // Add this near the top of the App component along with other state variables
@@ -386,7 +399,7 @@ function App() {
       if (layoutUpdateTimeout.current !== null) {
         clearTimeout(layoutUpdateTimeout.current);
       }
-      layoutUpdateTimeout.current = window.setTimeout(() => {
+      layoutUpdateTimeout.current = window.setTimeout(async () => {
         // Create a validated copy to prevent mutating the input
         const validatedLayouts = { ...allLayouts };
         
@@ -408,7 +421,18 @@ function App() {
         
         // Update layout state
         setLayouts(validatedLayouts);
+        
+        // Save to localStorage as fallback
         localStorage.setItem('boxento-layouts', JSON.stringify(validatedLayouts));
+        
+        // If user is logged in, save to Firestore
+        if (auth.currentUser) {
+          try {
+            await userDashboardService.saveLayouts(validatedLayouts);
+          } catch (error) {
+            console.error('Error saving layouts to Firestore:', error);
+          }
+        }
       }, 100); // 100ms debounce
     } else {
       // If we only have the current layout, update only the current breakpoint
@@ -416,6 +440,17 @@ function App() {
       updatedLayouts[currentBreakpoint] = validatedLayout;
       setLayouts(updatedLayouts);
       localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
+      
+      // Save to Firestore if user is logged in
+      if (auth.currentUser) {
+        (async () => {
+          try {
+            await userDashboardService.saveLayouts(updatedLayouts);
+          } catch (error) {
+            console.error('Error saving layouts to Firestore:', error);
+          }
+        })();
+      }
     }
   };
   
@@ -569,6 +604,17 @@ function App() {
     // Force save the current layout state to ensure it's preserved
     const currentLayoutSnapshot = { ...layouts };
     localStorage.setItem('boxento-layouts', JSON.stringify(currentLayoutSnapshot));
+    
+    // If user is logged in, save to Firestore
+    if (auth.currentUser) {
+      (async () => {
+        try {
+          await userDashboardService.saveLayouts(currentLayoutSnapshot);
+        } catch (error) {
+          console.error('Error saving layouts to Firestore after drag:', error);
+        }
+      })();
+    }
     
     // Log for debugging
     console.log('Drag completed, layout saved');
@@ -843,34 +889,189 @@ function App() {
     }
   }, [layouts, widgets]);
 
+  // Add state for tracking user
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
+  
+  // Get sync status from context
+  const { isSyncing, syncStatus } = useSync();
+  
+  // Initialize auth listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // User is signed in, load their data from Firestore
+        await loadUserData();
+      } else {
+        // User is signed out, load from localStorage
+        loadLocalData();
+      }
+      
+      setIsDataLoaded(true);
+    });
+    
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, []);
+  
+  // Function to load user data from Firestore
+  const loadUserData = async (): Promise<void> => {
+    try {
+      // Load layouts
+      const firestoreLayouts = await userDashboardService.loadLayouts();
+      if (firestoreLayouts) {
+        setLayouts(firestoreLayouts);
+      } else {
+        // No data in Firestore yet, try localStorage and migrate if needed
+        const localLayouts = loadLocalLayouts();
+        if (localLayouts && Object.keys(localLayouts).length > 0) {
+          setLayouts(localLayouts);
+          // Migrate to Firestore
+          try {
+            await userDashboardService.saveLayouts(localLayouts);
+          } catch (migrationError) {
+            console.error('Error migrating layouts to Firestore:', migrationError);
+            // Continue with local data even if migration fails
+          }
+        }
+      }
+      
+      // Load widgets
+      try {
+        const firestoreWidgets = await userDashboardService.loadWidgets();
+        if (firestoreWidgets && Array.isArray(firestoreWidgets)) {
+          // Convert to Widget type before setting
+          const typedWidgets = firestoreWidgets.map(widget => {
+            return {
+              id: widget.id as string || '',
+              type: widget.type as string || '',
+              config: widget.config as Record<string, unknown> || {}
+            } as Widget;
+          });
+          setWidgets(typedWidgets);
+        } else {
+          // No data in Firestore yet, try localStorage and migrate if needed
+          const localWidgets = loadLocalWidgets();
+          if (localWidgets && localWidgets.length > 0) {
+            setWidgets(localWidgets);
+            // Migrate to Firestore
+            try {
+              await userDashboardService.saveWidgets(localWidgets);
+            } catch (migrationError) {
+              console.error('Error migrating widgets to Firestore:', migrationError);
+              // Continue with local data even if migration fails
+            }
+          }
+        }
+      } catch (widgetError) {
+        console.error('Error loading widgets from Firestore:', widgetError);
+        // Fallback to localStorage for widgets
+        const localWidgets = loadLocalWidgets();
+        if (localWidgets) setWidgets(localWidgets);
+      }
+    } catch (error) {
+      console.error('Error loading user data from Firestore:', error);
+      // Fallback to localStorage
+      loadLocalData();
+    }
+  };
+  
+  // Function to load from localStorage
+  const loadLocalData = () => {
+    const localLayouts = loadLocalLayouts();
+    if (localLayouts) setLayouts(localLayouts);
+    
+    const localWidgets = loadLocalWidgets();
+    if (localWidgets) setWidgets(localWidgets);
+  };
+  
+  // Helper to load layouts from localStorage
+  const loadLocalLayouts = () => {
+    try {
+      const savedLayouts = localStorage.getItem('boxento-layouts');
+      if (savedLayouts) {
+        return JSON.parse(savedLayouts);
+      }
+    } catch (error) {
+      console.error('Error loading layouts from localStorage:', error);
+    }
+    return null;
+  };
+  
+  // Helper to load widgets from localStorage
+  const loadLocalWidgets = () => {
+    try {
+      const savedWidgets = localStorage.getItem('boxento-widgets');
+      if (savedWidgets) {
+        return JSON.parse(savedWidgets);
+      }
+    } catch (error) {
+      console.error('Error loading widgets from localStorage:', error);
+    }
+    return null;
+  };
+
+  // Only render the UI when data is loaded
+  if (!isDataLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-slate-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // In the app header, add a sync status indicator
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       <div className="fixed top-0 z-50 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
         <div className="px-4 md:px-6 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-black dark:text-white">Boxento</h1>
-          <div className="flex gap-4 items-center">
-            <UserMenuButton />
+          
+          <div className="flex items-center space-x-4">
+            {/* Sync indicator - only show when user is logged in */}
+            {auth.currentUser && (
+              <div className="flex items-center">
+                {isSyncing ? (
+                  <Loader2 className="h-5 w-5 mr-1 text-blue-500 animate-spin" />
+                ) : syncStatus === 'success' ? (
+                  <Cloud className="h-5 w-5 mr-1 text-green-500" />
+                ) : syncStatus === 'error' ? (
+                  <AlertCircle className="h-5 w-5 mr-1 text-red-500" />
+                ) : (
+                  <Cloud className="h-5 w-5 mr-1 text-gray-500" />
+                )}
+                <span className="text-sm hidden md:inline">
+                  {isSyncing ? 'Syncing...' : 
+                   syncStatus === 'success' ? 'Synced' : 
+                   syncStatus === 'error' ? 'Sync error' : 
+                   'Offline'}
+                </span>
+              </div>
+            )}
+            
             <button
               onClick={toggleTheme}
-              className="h-9 w-9 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800"
+              aria-label="Toggle theme"
             >
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
+            
+            <UserMenuButton />
+            
             <button
               onClick={toggleWidgetSelector}
-              className="group flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500 dark:bg-blue-600 text-white 
-                      text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
-                      focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-              title="Add Widget"
-              aria-label="Add Widget"
+              className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+              aria-label="Add widget"
             >
-              <Plus size={18} className="transition-transform group-hover:rotate-90" />
-              <span className="hidden sm:inline">Add Widget</span>
+              <Plus className="h-5 w-5" />
             </button>
           </div>
         </div>
       </div>
+      
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
         <main className="pt-16 md:pt-20">
           <WidgetSelector 
@@ -930,11 +1131,9 @@ function App() {
               </div>
               {/* Add a loading indicator that shows only during initial layout calculation */}
               {!isLayoutReady && widgets.length > 0 && (
-                <div className="flex justify-center items-center py-10">
-                  <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading dashboard...</p>
-                  </div>
+                <div className="flex items-center justify-center p-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <span className="ml-2">Setting up your dashboard...</span>
                 </div>
               )}
             </div>
