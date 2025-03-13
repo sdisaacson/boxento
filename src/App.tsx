@@ -19,6 +19,7 @@ import { UserMenuButton } from '@/components/auth/UserMenuButton'
 import { auth } from '@/lib/firebase'
 import { userDashboardService } from '@/lib/firestoreService'
 import { useSync } from '@/lib/SyncContext'
+import { Button } from './components/ui/button'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -1221,24 +1222,26 @@ function App() {
                 </span>
               </div>
             )}
-            
-            <button
+
+            <Button
+              onClick={toggleWidgetSelector}
+              aria-label="Add widget"
+              className="rounded-full bg-gray-500 text-white"
+            >
+              <Plus className="h-5 w-5" />
+              Add Widget
+            </Button>
+
+            <Button
               onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800"
+              className="rounded-full bg-gray-500 text-white"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
+            </Button>
             
             <UserMenuButton />
             
-            <button
-              onClick={toggleWidgetSelector}
-              className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
-              aria-label="Add widget"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
           </div>
         </div>
       </div>

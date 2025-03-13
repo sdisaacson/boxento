@@ -57,12 +57,12 @@ export function UserMenuButton() {
       {currentUser ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all">
+            <Avatar className="cursor-pointer transition-all">
               <AvatarImage 
                 src={currentUser.photoURL || undefined} 
                 alt={currentUser.displayName || 'User avatar'} 
               />
-              <AvatarFallback className="bg-blue-500 text-white">
+              <AvatarFallback className="bg-gray-500 text-white">
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
