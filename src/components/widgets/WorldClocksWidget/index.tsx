@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Trash } from 'lucide-react'
+import { Trash } from 'lucide-react'
 import WidgetHeader from '../../widgets/common/WidgetHeader'
 import {
   Dialog,
@@ -8,17 +8,10 @@ import {
   DialogTitle,
   DialogFooter
 } from '../../ui/dialog'
-import { WorldClocksWidgetProps, TimezoneItem, NewTimezoneItem } from './types'
+import { WorldClocksWidgetProps, TimezoneItem } from './types'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../ui/select'
 import {
   Card,
   CardContent,
@@ -40,14 +33,15 @@ import {
 const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, config }) => {
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
   const [timezones, setTimezones] = useState<TimezoneItem[]>(config?.timezones || [
-    { id: 1, name: 'New York', timezone: 'America/New_York' },
-    { id: 2, name: 'London', timezone: 'Europe/London' },
-    { id: 3, name: 'Tokyo', timezone: 'Asia/Tokyo' },
-    { id: 4, name: 'Sydney', timezone: 'Australia/Sydney' }
+    { id: 1, name: 'New York, USA', timezone: 'America/New_York' },
+    { id: 2, name: 'London, UK', timezone: 'Europe/London' },
+    { id: 3, name: 'Tokyo, Japan', timezone: 'Asia/Tokyo' },
+    { id: 4, name: 'Sydney, Australia', timezone: 'Australia/Sydney' }
   ])
   const [showSettings, setShowSettings] = useState<boolean>(false)
-  const [showAddForm, setShowAddForm] = useState<boolean>(false)
-  const [newTimezone, setNewTimezone] = useState<NewTimezoneItem>({ name: '', timezone: '' })
+  const [citySearchInput, setCitySearchInput] = useState<string>('')
+  const [searchResults, setSearchResults] = useState<Array<{city: string, country: string, timezone: string}>>([])
+  const [isSearching, setIsSearching] = useState<boolean>(false)
   const widgetRef = useRef<HTMLDivElement | null>(null)
   
   useEffect(() => {
@@ -156,30 +150,6 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   }
 
   /**
-   * Adds a new timezone to the list
-   */
-  const addTimezone = (): void => {
-    if (newTimezone.name && newTimezone.timezone) {
-      const newId = Math.max(0, ...timezones.map(tz => tz.id || 0)) + 1;
-      const updatedTimezones = [...timezones, { ...newTimezone, id: newId }];
-      
-      // Update state
-      setTimezones(updatedTimezones);
-      
-      // Save using onUpdate callback to persist
-      if (config?.onUpdate) {
-        config.onUpdate({
-          ...config,
-          timezones: updatedTimezones
-        });
-      }
-      
-      setNewTimezone({ name: '', timezone: '' });
-      setShowAddForm(false);
-    }
-  }
-
-  /**
    * Removes a timezone from the list
    * 
    * @param {number} id - The id of the timezone to remove
@@ -197,7 +167,148 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         timezones: updatedTimezones
       });
     }
-  }
+  };
+
+  /**
+   * Searches for cities and their timezones based on input
+   * 
+   * @param {string} searchTerm - The city name to search for
+   */
+  const searchCities = (searchTerm: string): void => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    // Comprehensive list of cities and their timezones
+    // This is a much more extensive list than the original 10 cities
+    const cityDatabase = [
+      // North America
+      { city: 'New York', country: 'USA', timezone: 'America/New_York' },
+      { city: 'Los Angeles', country: 'USA', timezone: 'America/Los_Angeles' },
+      { city: 'Chicago', country: 'USA', timezone: 'America/Chicago' },
+      { city: 'Toronto', country: 'Canada', timezone: 'America/Toronto' },
+      { city: 'Vancouver', country: 'Canada', timezone: 'America/Vancouver' },
+      { city: 'Mexico City', country: 'Mexico', timezone: 'America/Mexico_City' },
+      { city: 'Denver', country: 'USA', timezone: 'America/Denver' },
+      { city: 'Phoenix', country: 'USA', timezone: 'America/Phoenix' },
+      { city: 'Montreal', country: 'Canada', timezone: 'America/Montreal' },
+      { city: 'San Francisco', country: 'USA', timezone: 'America/Los_Angeles' },
+      { city: 'Miami', country: 'USA', timezone: 'America/New_York' },
+      { city: 'Dallas', country: 'USA', timezone: 'America/Chicago' },
+      { city: 'Seattle', country: 'USA', timezone: 'America/Los_Angeles' },
+      { city: 'Atlanta', country: 'USA', timezone: 'America/New_York' },
+      { city: 'Calgary', country: 'Canada', timezone: 'America/Edmonton' },
+      
+      // Europe
+      { city: 'London', country: 'UK', timezone: 'Europe/London' },
+      { city: 'Paris', country: 'France', timezone: 'Europe/Paris' },
+      { city: 'Berlin', country: 'Germany', timezone: 'Europe/Berlin' },
+      { city: 'Rome', country: 'Italy', timezone: 'Europe/Rome' },
+      { city: 'Madrid', country: 'Spain', timezone: 'Europe/Madrid' },
+      { city: 'Moscow', country: 'Russia', timezone: 'Europe/Moscow' },
+      { city: 'Amsterdam', country: 'Netherlands', timezone: 'Europe/Amsterdam' },
+      { city: 'Brussels', country: 'Belgium', timezone: 'Europe/Brussels' },
+      { city: 'Vienna', country: 'Austria', timezone: 'Europe/Vienna' },
+      { city: 'Stockholm', country: 'Sweden', timezone: 'Europe/Stockholm' },
+      { city: 'Athens', country: 'Greece', timezone: 'Europe/Athens' },
+      { city: 'Dublin', country: 'Ireland', timezone: 'Europe/Dublin' },
+      { city: 'Prague', country: 'Czech Republic', timezone: 'Europe/Prague' },
+      { city: 'Lisbon', country: 'Portugal', timezone: 'Europe/Lisbon' },
+      { city: 'Copenhagen', country: 'Denmark', timezone: 'Europe/Copenhagen' },
+      { city: 'Oslo', country: 'Norway', timezone: 'Europe/Oslo' },
+      { city: 'Helsinki', country: 'Finland', timezone: 'Europe/Helsinki' },
+      { city: 'Warsaw', country: 'Poland', timezone: 'Europe/Warsaw' },
+      { city: 'Budapest', country: 'Hungary', timezone: 'Europe/Budapest' },
+      { city: 'Zurich', country: 'Switzerland', timezone: 'Europe/Zurich' },
+      
+      // Asia & Pacific
+      { city: 'Tokyo', country: 'Japan', timezone: 'Asia/Tokyo' },
+      { city: 'Shanghai', country: 'China', timezone: 'Asia/Shanghai' },
+      { city: 'Hong Kong', country: 'China', timezone: 'Asia/Hong_Kong' },
+      { city: 'Singapore', country: 'Singapore', timezone: 'Asia/Singapore' },
+      { city: 'Delhi', country: 'India', timezone: 'Asia/Kolkata' },
+      { city: 'Mumbai', country: 'India', timezone: 'Asia/Kolkata' },
+      { city: 'Bangkok', country: 'Thailand', timezone: 'Asia/Bangkok' },
+      { city: 'Dubai', country: 'UAE', timezone: 'Asia/Dubai' },
+      { city: 'Seoul', country: 'South Korea', timezone: 'Asia/Seoul' },
+      { city: 'Sydney', country: 'Australia', timezone: 'Australia/Sydney' },
+      { city: 'Melbourne', country: 'Australia', timezone: 'Australia/Melbourne' },
+      { city: 'Auckland', country: 'New Zealand', timezone: 'Pacific/Auckland' },
+      { city: 'Beijing', country: 'China', timezone: 'Asia/Shanghai' },
+      { city: 'Jakarta', country: 'Indonesia', timezone: 'Asia/Jakarta' },
+      { city: 'Istanbul', country: 'Turkey', timezone: 'Europe/Istanbul' },
+      { city: 'Taipei', country: 'Taiwan', timezone: 'Asia/Taipei' },
+      { city: 'Manila', country: 'Philippines', timezone: 'Asia/Manila' },
+      { city: 'Kuala Lumpur', country: 'Malaysia', timezone: 'Asia/Kuala_Lumpur' },
+      { city: 'Osaka', country: 'Japan', timezone: 'Asia/Tokyo' },
+      { city: 'Brisbane', country: 'Australia', timezone: 'Australia/Brisbane' },
+      
+      // Africa & Middle East
+      { city: 'Cairo', country: 'Egypt', timezone: 'Africa/Cairo' },
+      { city: 'Johannesburg', country: 'South Africa', timezone: 'Africa/Johannesburg' },
+      { city: 'Lagos', country: 'Nigeria', timezone: 'Africa/Lagos' },
+      { city: 'Nairobi', country: 'Kenya', timezone: 'Africa/Nairobi' },
+      { city: 'Casablanca', country: 'Morocco', timezone: 'Africa/Casablanca' },
+      { city: 'Doha', country: 'Qatar', timezone: 'Asia/Qatar' },
+      { city: 'Abu Dhabi', country: 'UAE', timezone: 'Asia/Dubai' },
+      { city: 'Riyadh', country: 'Saudi Arabia', timezone: 'Asia/Riyadh' },
+      { city: 'Tel Aviv', country: 'Israel', timezone: 'Asia/Tel_Aviv' },
+      
+      // South America
+      { city: 'São Paulo', country: 'Brazil', timezone: 'America/Sao_Paulo' },
+      { city: 'Buenos Aires', country: 'Argentina', timezone: 'America/Argentina/Buenos_Aires' },
+      { city: 'Rio de Janeiro', country: 'Brazil', timezone: 'America/Sao_Paulo' },
+      { city: 'Lima', country: 'Peru', timezone: 'America/Lima' },
+      { city: 'Bogota', country: 'Colombia', timezone: 'America/Bogota' },
+      { city: 'Santiago', country: 'Chile', timezone: 'America/Santiago' },
+      { city: 'Caracas', country: 'Venezuela', timezone: 'America/Caracas' },
+    ];
+    
+    // Filter results based on search term (case insensitive)
+    const results = cityDatabase.filter(item => 
+      item.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.country.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 10); // Limit to 10 results for performance
+    
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  /**
+   * Selects a city from search results and adds it as a timezone
+   * 
+   * @param {Object} cityData - The selected city data with timezone
+   */
+  const selectCity = (cityData: {city: string, country: string, timezone: string}): void => {
+    // Format the display name to include the country
+    const displayName = `${cityData.city}, ${cityData.country}`;
+    
+    // Clear search results
+    setSearchResults([]);
+    setCitySearchInput('');
+    
+    // Directly add the timezone after selection
+    const newId = Math.max(0, ...timezones.map(tz => tz.id || 0)) + 1;
+    const updatedTimezones = [...timezones, { 
+      id: newId, 
+      name: displayName, 
+      timezone: cityData.timezone 
+    }];
+    
+    // Update state
+    setTimezones(updatedTimezones);
+    
+    // Save using onUpdate callback to persist
+    if (config?.onUpdate) {
+      config.onUpdate({
+        ...config,
+        timezones: updatedTimezones
+      });
+    }
+  };
 
   /**
    * Renders an elegant analog clock for a timezone
@@ -797,76 +908,57 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    * @returns {React.ReactElement} Settings content
    */
   const renderSettingsContent = (): React.ReactElement => {
-    // Common timezones for easy selection
-    const commonTimezones: Array<{ name: string; timezone: string }> = [
-      { name: 'New York', timezone: 'America/New_York' },
-      { name: 'Los Angeles', timezone: 'America/Los_Angeles' },
-      { name: 'London', timezone: 'Europe/London' },
-      { name: 'Paris', timezone: 'Europe/Paris' },
-      { name: 'Tokyo', timezone: 'Asia/Tokyo' },
-      { name: 'Sydney', timezone: 'Australia/Sydney' },
-      { name: 'Shanghai', timezone: 'Asia/Shanghai' },
-      { name: 'Dubai', timezone: 'Asia/Dubai' },
-      { name: 'Moscow', timezone: 'Europe/Moscow' },
-      { name: 'São Paulo', timezone: 'America/Sao_Paulo' }
-    ];
-    
     return (
       <div className="space-y-4">
-        {showAddForm ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Add Timezone</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="location-name">Location Name</Label>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Add Timezone</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="city-search">Search for a city</Label>
+              <div className="relative">
                 <Input
-                  id="location-name"
-                  value={newTimezone.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTimezone({...newTimezone, name: e.target.value})}
-                  placeholder="San Francisco"
+                  id="city-search"
+                  value={citySearchInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const value = e.target.value;
+                    setCitySearchInput(value);
+                    searchCities(value);
+                  }}
+                  placeholder="Type a city name..."
+                  className="w-full"
                 />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="timezone-select">Timezone</Label>
-                <Select
-                  value={newTimezone.timezone}
-                  onValueChange={(value: string) => setNewTimezone({...newTimezone, timezone: value})}
-                >
-                  <SelectTrigger id="timezone-select">
-                    <SelectValue placeholder="Select a timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {commonTimezones.map((tz, index) => (
-                      <SelectItem key={index} value={tz.timezone}>
-                        {tz.name} ({tz.timezone})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="default"
-                  onClick={addTimezone}
-                  disabled={!newTimezone.name || !newTimezone.timezone}
-                >
-                  Add
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowAddForm(true)}
-          >
-            <Plus size={16} className="mr-1" />
-            Add Timezone
-          </Button>
-        )}
+              
+              {searchResults.length > 0 && (
+                <div className="mt-1 border rounded-md overflow-hidden max-h-60 overflow-y-auto bg-white dark:bg-gray-800">
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={index}
+                      className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-0"
+                      onClick={() => selectCity(result)}
+                    >
+                      <div className="font-medium">{result.city}, {result.country}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{result.timezone}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {citySearchInput && searchResults.length === 0 && !isSearching && (
+                <div className="text-sm text-gray-500 mt-1 px-1">
+                  No cities found. Try a different search term.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
         
         {timezones.length > 0 && (
           <Card>
@@ -926,11 +1018,6 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           <Button
             variant="default"
             onClick={() => {
-              // Save the updated timezones
-              if (newTimezone.name && newTimezone.timezone) {
-                addTimezone();
-              }
-              
               // Explicitly save current timezone list to ensure persistence
               if (config?.onUpdate) {
                 config.onUpdate({
@@ -940,7 +1027,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
               }
               
               setShowSettings(false);
-              setShowAddForm(false);
+              setCitySearchInput('');
+              setSearchResults([]);
             }}
           >
             Save
@@ -967,7 +1055,6 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           onOpenChange={(open: boolean) => {
             if (!open) {
               setShowSettings(false);
-              setShowAddForm(false);
             }
           }}
         >
