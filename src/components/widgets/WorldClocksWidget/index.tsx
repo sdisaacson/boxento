@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Trash } from 'lucide-react'
+import { Trash, GripVertical } from 'lucide-react'
 import WidgetHeader from '../../widgets/common/WidgetHeader'
 import {
   Dialog,
@@ -42,6 +42,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   const [citySearchInput, setCitySearchInput] = useState<string>('')
   const [searchResults, setSearchResults] = useState<Array<{city: string, country: string, timezone: string}>>([])
   const [isSearching, setIsSearching] = useState<boolean>(false)
+  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null)
+  const [dragOverItemIndex, setDragOverItemIndex] = useState<number | null>(null)
   const widgetRef = useRef<HTMLDivElement | null>(null)
   
   useEffect(() => {
@@ -903,6 +905,67 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
+   * Handles the start of dragging a timezone item
+   * 
+   * @param {number} index - The index of the item being dragged
+   */
+  const handleDragStart = (index: number) => {
+    setDraggedItemIndex(index);
+  };
+
+  /**
+   * Handles dragging over another timezone item
+   * 
+   * @param {number} index - The index of the item being dragged over
+   */
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    setDragOverItemIndex(index);
+  };
+
+  /**
+   * Handles dropping a timezone item to reorder
+   */
+  const handleDrop = () => {
+    if (draggedItemIndex !== null && dragOverItemIndex !== null) {
+      // Create a copy of the current timezones
+      const updatedTimezones = [...timezones];
+      
+      // Save the dragged item
+      const draggedItem = updatedTimezones[draggedItemIndex];
+      
+      // Remove the dragged item from its original position
+      updatedTimezones.splice(draggedItemIndex, 1);
+      
+      // Insert the dragged item at the new position
+      updatedTimezones.splice(dragOverItemIndex, 0, draggedItem);
+      
+      // Update state with the new order
+      setTimezones(updatedTimezones);
+      
+      // Save using onUpdate callback to persist
+      if (config?.onUpdate) {
+        config.onUpdate({
+          ...config,
+          timezones: updatedTimezones
+        });
+      }
+    }
+    
+    // Reset drag state
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  /**
+   * Handles canceling the drag operation
+   */
+  const handleDragEnd = () => {
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  /**
    * Renders the settings content
    * 
    * @returns {React.ReactElement} Settings content
@@ -962,24 +1025,43 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         
         {timezones.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Current Timezones</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>Current Timezones</span>
+                <div className="text-xs text-gray-500 font-normal">Drag to reorder</div>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {timezones.map(tz => (
+              {timezones.map((tz, index) => (
                 <div 
                   key={tz.id} 
-                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                  className={`flex justify-between items-center p-2 rounded-lg border ${
+                    draggedItemIndex === index 
+                      ? 'bg-gray-100 dark:bg-gray-700 border-blue-300 dark:border-blue-500 opacity-50' 
+                      : dragOverItemIndex === index 
+                        ? 'bg-gray-50 dark:bg-gray-800 border-blue-200 dark:border-blue-700' 
+                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                  } transition-colors duration-150`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
                 >
-                  <div>
-                    <div className="font-medium">{tz.name}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{tz.timezone}</div>
+                  <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                    <div className="cursor-move flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                      <GripVertical size={16} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <div className="font-medium truncate">{tz.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{tz.timezone}</div>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => removeTimezone(tz.id)}
-                    className="text-gray-500 hover:text-red-500"
+                    className="text-gray-500 hover:text-red-500 ml-2 shrink-0"
                   >
                     <Trash size={16} />
                   </Button>
