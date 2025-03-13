@@ -1197,7 +1197,7 @@ function App() {
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       <div className="fixed top-0 z-50 w-full dark:bg-slate-900/90 backdrop-blur-sm">
-        <div className="px-4 md:px-6 py-3 flex items-center justify-between">
+        <div className="px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-black dark:text-white">Boxento</h1>
           
           <div className="flex items-center space-x-4">
@@ -1253,7 +1253,7 @@ function App() {
             widgetCategories={widgetCategories}
           />
           
-          <div className="px-6 max-w-[1600px] mx-auto">
+          <div className="max-w-[1600px] mx-auto">
             <div className="mobile-view-container">
               <div className="mobile-view">
                 {renderMobileLayout()}
