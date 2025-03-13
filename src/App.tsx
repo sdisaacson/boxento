@@ -40,9 +40,10 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
 function App() {
-  // Add a class to the body for dark mode background
+  // Add a class to the body for theme styling
   useEffect(() => {
-    document.body.className = 'bg-gray-50 dark:bg-slate-950 min-h-screen';
+    document.body.className = 'app-background min-h-screen';
+
     return () => {
       document.body.className = '';
     };
@@ -859,7 +860,7 @@ function App() {
       return (
         <div 
           key={widget.id} 
-          className={`widget-wrapper ${sizeClass}`} 
+          className={`widget-wrapper ${sizeClass} app-widget`} 
           data-grid={dataGrid}
           data-breakpoint={currentBreakpoint}
           style={isMobile ? { marginBottom: '16px', height: 'auto' } : undefined}
@@ -1080,8 +1081,8 @@ function App() {
             }
           }
         }
-      } catch (widgetError) {
-        console.error('Error loading widgets from Firestore:', widgetError);
+      } catch (error) {
+        console.error('Error loading widgets from Firestore:', error);
         // Only fall back to localStorage if we haven't loaded Firestore data
         if (!userHasFirestoreData) {
           const localWidgets = loadLocalWidgets();
@@ -1202,8 +1203,8 @@ function App() {
   
   // In the app header, add a sync status indicator
   return (
-    <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
-      <div className="fixed top-0 z-50 w-full dark:bg-slate-950 backdrop-blur-sm">
+    <div className={`app ${theme === 'dark' ? 'dark' : ''} app-background`} data-theme={theme}>
+      <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
             <a href="/" rel="noopener noreferrer">
@@ -1245,7 +1246,7 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 h-9"
+              className="rounded-full app-button-secondary h-9"
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -1254,7 +1255,7 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 h-9 w-9 p-0 flex items-center justify-center"
+              className="rounded-full app-button-secondary h-9 w-9 p-0 flex items-center justify-center"
               size="sm"
               aria-label="Toggle theme"
             >
@@ -1268,7 +1269,7 @@ function App() {
         </div>
       </div>
       
-      <div className="min-h-screen dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-hidden">
+      <div className="min-h-screen overflow-x-hidden app-background">
         <main className="pt-16 md:pt-20">
           <WidgetSelector 
             isOpen={widgetSelectorOpen}
