@@ -98,8 +98,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   , []);
   
   const GOOGLE_SCOPES = React.useMemo(() => [
-    'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/calendar.events.readonly'
+    'https://www.googleapis.com/auth/calendar',
+    // or keep both of these if you prefer more restricted access:
+    // 'https://www.googleapis.com/auth/calendar.readonly',
+    // 'https://www.googleapis.com/auth/calendar.events.readonly'
   ], []);
   
   /**
