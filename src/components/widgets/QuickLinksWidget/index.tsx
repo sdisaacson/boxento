@@ -27,26 +27,31 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
     const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
     const urlObj = new URL(normalizedUrl);
 
-    // Get favicon using Google's favicon service (this is CORS allowed)
-    const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+    // Special handling for localhost URLs
+    if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+      return {
+        title: 'Localhost',
+        favicon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcng9IjIuMTgiIHJ5PSIyLjE4Ii8+PHJlY3QgeD0iNyIgeT0iNyIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PC9zdmc+'
+      };
+    }
+
+    // Use DuckDuckGo's favicon service for non-localhost URLs
+    const favicon = `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
 
     // Extract a reasonable title from the URL if metadata fetching fails
     let extractedTitle = "";
     
     // Try to get a reasonable title from the URL path
     if (urlObj.pathname && urlObj.pathname !== "/") {
-      // Remove trailing slash if present
       const path = urlObj.pathname.endsWith('/') 
         ? urlObj.pathname.slice(0, -1) 
         : urlObj.pathname;
       
-      // Get last segment of path
       const segments = path.split('/').filter(Boolean);
       if (segments.length > 0) {
-        // Get last segment and replace dashes and underscores with spaces
         extractedTitle = segments[segments.length - 1]
           .replace(/[-_]/g, ' ')
-          .replace(/\.\w+$/, '') // Remove file extension if present
+          .replace(/\.\w+$/, '')
           .split(' ')
           .map(word => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
@@ -55,73 +60,21 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
 
     // If path doesn't provide a good title, use the hostname without TLD
     if (!extractedTitle) {
-      // Clean up the hostname to create a reasonable title
       const hostnameWithoutWWW = urlObj.hostname.replace(/^www\./, '');
       const mainDomain = hostnameWithoutWWW.split('.')[0];
       
-      // Capitalize first letter and clean up common domain name patterns
       extractedTitle = mainDomain
         .charAt(0).toUpperCase() + mainDomain.slice(1)
-        .replace(/-/g, ' '); // Replace hyphens with spaces
+        .replace(/-/g, ' ');
     }
 
-    // Try to fetch metadata with multiple fallbacks in parallel with a short timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
-    
-    try {
-      // Try a safe proxy approach - Can be replaced with your own proxy service
-      // We'll continue immediately if we get any CORS errors
-      
-      // Try JSONLink API with the timeout controller
-      const jsonLinkPromise = fetch(
-        `https://jsonlink.io/api/extract?url=${encodeURIComponent(normalizedUrl)}`, 
-        { signal: controller.signal }
-      ).then(async response => {
-        if (response.ok) {
-          const data = await response.json();
-          if (data.title) {
-            return { 
-              title: data.title.trim(),
-              favicon 
-            };
-          }
-        }
-        throw new Error('JSONLink API failed or returned no title');
-      }).catch(error => {
-        // Log but don't re-throw, we'll use the fallback
-        console.log("JSONLink API failed:", error.message);
-        return null;
-      });
-      
-      // Race against a short timeout to avoid hanging
-      const result = await Promise.race([
-        jsonLinkPromise,
-        new Promise<null>(resolve => 
-          setTimeout(() => {
-            console.log("Metadata fetch timed out");
-            resolve(null);
-          }, 2000)
-        )
-      ]);
-      
-      // If we got metadata successfully, use it
-      if (result) {
-        clearTimeout(timeoutId);
-        return result;
-      }
-    } catch (error) {
-      // Silent catch - we'll use the fallback
-      console.log("Metadata fetch failed:", error);
-    } finally {
-      clearTimeout(timeoutId);
-    }
-    
-    // Return our fallback data - this is guaranteed to work without CORS issues
+    // Skip the JSONLink API call since it's causing CORS issues
+    // Return our fallback data immediately
     return { 
       title: extractedTitle || urlObj.hostname,
       favicon
     };
+
   } catch (error) {
     console.error('Error in fetchUrlMetadata:', error);
     // Return a basic fallback using the URL's hostname
@@ -129,13 +82,13 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
       return {
         title: urlObj.hostname,
-        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
+        favicon: `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`
       };
     } catch {
       // Final fallback if URL parsing also fails
       return {
         title: url,
-        favicon: `https://www.google.com/s2/favicons?domain=example.com&sz=32`
+        favicon: `https://icons.duckduckgo.com/ip3/example.com.ico`
       };
     }
   }
@@ -167,22 +120,29 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
   const [showFavicons, setShowFavicons] = useState<boolean>(config?.showFavicons !== false);
   const [customTitle, setCustomTitle] = useState<string>(config?.customTitle || 'Quick Links');
 
-  // Check if there are any links in the configuration
+  // Remove the separate useEffects and combine them into one
   React.useEffect(() => {
-    if (config?.links) {
-      setLinks(config.links);
+    // Only update if we have config and it's different from current state
+    if (config) {
+      const shouldUpdateLinks = config.links && JSON.stringify(config.links) !== JSON.stringify(links);
+      if (shouldUpdateLinks) {
+        console.log('Updating links from config:', config.links);
+        setLinks(config.links);
+      }
+      
+      // Update other settings only if they've changed
+      if (config.displayMode && config.displayMode !== displayMode) {
+        setDisplayMode(config.displayMode);
+      }
+      if (config.customTitle && config.customTitle !== customTitle) {
+        setCustomTitle(config.customTitle);
+      }
+      if (config.showFavicons !== undefined && config.showFavicons !== showFavicons) {
+        setShowFavicons(config.showFavicons);
+      }
     }
-    if (config?.displayMode) {
-      setDisplayMode(config.displayMode);
-    }
-    if (config?.customTitle) {
-      setCustomTitle(config.customTitle);
-    }
-    if (config?.showFavicons !== undefined) {
-      setShowFavicons(config.showFavicons);
-    }
-  }, [config]);
-  
+  }, [config]); // Depend on entire config object
+
   /**
    * Adds or updates a link in the links collection
    * 
@@ -280,16 +240,11 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
     setShowSettings(false);
   }
 
-  /**
-   * Adds a new link from the quick input
-   */
+  // Modify handleQuickAdd to handle updates more carefully
   const handleQuickAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const rawUrl = newLinkUrl.trim();
     if (!rawUrl) return;
-
-    // Generate new ID outside try block
-    const newId = Math.max(0, ...links.map(link => link.id)) + 1;
 
     try {
       // Validate and normalize the URL
@@ -298,115 +253,75 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
         normalizedUrl = `https://${rawUrl}`;
       }
 
-      // Basic URL validation
-      try {
-        new URL(normalizedUrl);
-      } catch (error) {
-        console.error('Invalid URL:', error);
-        return;
-      }
-
       const urlObj = new URL(normalizedUrl);
-      // Add link immediately with basic info
+      
+      // Generate new ID using current links state
+      const newId = Math.max(0, ...links.map(link => link.id), 0) + 1;
+      
+      // Create new link
       const newLink: LinkItem = {
         id: newId,
         url: normalizedUrl,
         title: urlObj.hostname,
-        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`
+        favicon: `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`
       };
 
-      // Update state and clear input
-      setLinks(prev => [...prev, newLink]);
+      // Create updated links array
+      const updatedLinks = [...links, newLink];
+
+      // Update local state first
+      setLinks(updatedLinks);
       setNewLinkUrl('');
       setLoadingLinkIds(prev => [...prev, newId]);
 
-      // Focus the input field after adding
-      if (newLinkInputRef.current) {
-        newLinkInputRef.current.focus();
-      }
-
-      // Update config with basic info
-      if (config && config.onUpdate) {
-        const updateFunction = config.onUpdate;
-        const configCopy = { ...config };
-        const currentLinks = [...links, newLink];
+      // Update config with new links
+      if (config?.onUpdate) {
+        const configUpdate = {
+          ...config,
+          links: updatedLinks // Use the updated links array
+        };
         
-        // Use setTimeout to ensure it runs after the current render cycle
-        setTimeout(() => {
-          // Create a clean copy of the data to avoid undefined values
-          const linksCopy = JSON.parse(JSON.stringify(currentLinks));
-          updateFunction({
-            ...configCopy,
-            links: linksCopy
-          });
-        }, 0);
+        try {
+          await config.onUpdate(configUpdate);
+        } catch (error) {
+          console.error('Error updating config:', error);
+          // Rollback on error
+          setLinks(links);
+          return;
+        }
       }
 
-      // Fetch metadata asynchronously
+      // Fetch metadata after successful save
       try {
         const metadata = await fetchUrlMetadata(normalizedUrl);
         
-        // Only update if the title is different from the hostname
         if (metadata.title !== newLink.title) {
-          // Create the enhanced link with metadata
           const finalLink = {
             ...newLink,
             title: metadata.title,
             favicon: metadata.favicon
           };
-          
-          // Update state with metadata-enhanced link
-          setLinks(prev => {
-            const updatedLinks = prev.map(link => 
-              link.id === newId ? finalLink : link
-            );
-            return updatedLinks;
-          });
-          
-          // Update config with enhanced metadata - using the current state
-          if (config && config.onUpdate) {
-            // First get the current links
-            const updateFunction = config.onUpdate;
-            const configCopy = { ...config };
-            
-            // Instead of nesting setLinks call, use the updatedLinks directly
-            const updatedLinks = [...links];
-            const linkIndex = updatedLinks.findIndex(link => link.id === newId);
-            if (linkIndex !== -1) {
-              updatedLinks[linkIndex] = finalLink;
-            }
-            
-            // Update the config with the latest links array
-            // Use setTimeout to defer this update to the next tick
-            // This prevents the "Cannot update during render" error
-            setTimeout(() => {
-              // Create a clean copy of the data to avoid undefined values
-              const linksCopy = JSON.parse(JSON.stringify(updatedLinks)); 
-              updateFunction({
-                ...configCopy,
-                links: linksCopy
-              });
-            }, 0);
-            
-            // Update state separately
-            setLinks(updatedLinks);
+
+          // Update with metadata
+          const finalUpdatedLinks = updatedLinks.map(link => 
+            link.id === newId ? finalLink : link
+          );
+
+          setLinks(finalUpdatedLinks);
+
+          // Update config with metadata
+          if (config?.onUpdate) {
+            const finalConfigUpdate = {
+              ...config,
+              links: finalUpdatedLinks
+            };
+            await config.onUpdate(finalConfigUpdate);
           }
         }
       } catch (error) {
-        console.error('Error fetching metadata for link:', error);
-        // Even if metadata fetching fails, we already saved the basic link info above
-        // so the link will still be stored in Firebase with basic info
-        
-        // Log the current state to help with debugging
-        console.log('Link was saved with basic info:', newLink);
-        
-        // Since we've already saved the basic link info earlier, Firebase should have the data
-        // Let's log to help with troubleshooting
-        if (config?.links) {
-          console.log('Current config links:', config.links.length);
-        }
+        console.error('Error fetching metadata:', error);
+        // Link is already saved with basic info, so we can continue
       } finally {
-        // Remove loading state regardless of success or failure
         setLoadingLinkIds(prev => prev.filter(id => id !== newId));
       }
     } catch (error) {
@@ -709,7 +624,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                     try {
                       // Basic URL validation
                       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-                      const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+                      const favicon = `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
                       
                       // Always update with basic info first
                       setEditingLink({
