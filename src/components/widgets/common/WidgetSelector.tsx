@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Plus, ChevronDown } from 'lucide-react';
+import { X, Plus, Calendar, Cloud, Clock, Link, StickyNote, CheckSquare, Timer, DollarSign, BookOpen, Video, Rss, Github, Plane, Globe } from 'lucide-react';
 import { WidgetConfig } from '@/types';
 
 interface WidgetSelectorProps {
@@ -27,19 +27,6 @@ const WidgetSelector = ({
   widgetCategories
 }: WidgetSelectorProps): React.ReactElement | null => {
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
-
-  // Initialize with all categories expanded
-  useEffect(() => {
-    if (isOpen) {
-      const allCategories = Object.keys(widgetCategories).reduce((acc, category) => {
-        acc[category] = true;
-        return acc;
-      }, {} as { [key: string]: boolean });
-      
-      setExpandedCategories(allCategories);
-    }
-  }, [isOpen, widgetCategories]);
 
   // Handle escape key press
   useEffect(() => {
@@ -60,13 +47,6 @@ const WidgetSelector = ({
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(e.target.value);
-  };
-
-  const toggleCategory = (category: string): void => {
-    setExpandedCategories({
-      ...expandedCategories,
-      [category]: !expandedCategories[category]
-    });
   };
 
   const filteredWidgets = searchQuery 
@@ -94,13 +74,12 @@ const WidgetSelector = ({
         </div>
         
         <div className="widget-selector-search">
-          <Search size={18} className="search-icon" aria-hidden="true" />
           <input
             type="text"
             placeholder="Search widgets..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="widget-search-input"
+            className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Search widgets"
             autoFocus
           />
@@ -119,12 +98,30 @@ const WidgetSelector = ({
                     aria-label={`Add ${widget.name} widget`}
                   >
                     <div className="widget-icon">
-                      <Plus size={16} />
+                      {(() => {
+                        switch (widget.icon) {
+                          case 'Calendar': return <Calendar size={16} />;
+                          case 'Cloud': return <Cloud size={16} />;
+                          case 'Clock': return <Clock size={16} />;
+                          case 'Link': return <Link size={16} />;
+                          case 'StickyNote': return <StickyNote size={16} />;
+                          case 'CheckSquare': return <CheckSquare size={16} />;
+                          case 'Timer': return <Timer size={16} />;
+                          case 'DollarSign': return <DollarSign size={16} />;
+                          case 'BookOpen': return <BookOpen size={16} />;
+                          case 'Video': return <Video size={16} />;
+                          case 'Rss': return <Rss size={16} />;
+                          case 'Github': return <Github size={16} />;
+                          case 'Plane': return <Plane size={16} />;
+                          case 'Globe': return <Globe size={16} />;
+                          default: return <Plus size={16} />;
+                        }
+                      })()}
                     </div>
                     <div className="widget-info">
-                      <div className="widget-name">{widget.name}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-100">{widget.name}</div>
                       {widget.description && (
-                        <div className="widget-description">{widget.description}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{widget.description}</div>
                       )}
                     </div>
                   </button>
@@ -138,41 +135,45 @@ const WidgetSelector = ({
           <div className="widget-selector-categories">
             {Object.entries(widgetCategories).map(([category, widgets]) => (
               <div key={category} className="widget-category">
-                <button 
-                  className="widget-category-header"
-                  onClick={() => toggleCategory(category)}
-                  aria-expanded={expandedCategories[category]}
-                  aria-controls={`category-${category}`}
-                >
-                  <h4 className="widget-category-title">{category}</h4>
-                  <ChevronDown 
-                    size={18} 
-                    className={`transform transition-transform ${expandedCategories[category] ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                
-                {expandedCategories[category] && (
-                  <div id={`category-${category}`} className="widget-grid">
-                    {widgets.map(widget => (
-                      <button
-                        key={widget.type}
-                        className="widget-item group"
-                        onClick={() => onAddWidget(widget.type)}
-                        aria-label={`Add ${widget.name} widget`}
-                      >
-                        <div className="widget-icon">
-                          <Plus size={16} />
-                        </div>
-                        <div className="widget-info">
-                          <div className="widget-name">{widget.name}</div>
-                          {widget.description && (
-                            <div className="widget-description">{widget.description}</div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <h4 className="widget-category-title">{category}</h4>
+                <div className="widget-grid">
+                  {widgets.map(widget => (
+                    <button
+                      key={widget.type}
+                      className="widget-item group"
+                      onClick={() => onAddWidget(widget.type)}
+                      aria-label={`Add ${widget.name} widget`}
+                    >
+                      <div className="widget-icon">
+                        {(() => {
+                          switch (widget.icon) {
+                            case 'Calendar': return <Calendar size={16} />;
+                            case 'Cloud': return <Cloud size={16} />;
+                            case 'Clock': return <Clock size={16} />;
+                            case 'Link': return <Link size={16} />;
+                            case 'StickyNote': return <StickyNote size={16} />;
+                            case 'CheckSquare': return <CheckSquare size={16} />;
+                            case 'Timer': return <Timer size={16} />;
+                            case 'DollarSign': return <DollarSign size={16} />;
+                            case 'BookOpen': return <BookOpen size={16} />;
+                            case 'Video': return <Video size={16} />;
+                            case 'Rss': return <Rss size={16} />;
+                            case 'Github': return <Github size={16} />;
+                            case 'Plane': return <Plane size={16} />;
+                            case 'Globe': return <Globe size={16} />;
+                            default: return <Plus size={16} />;
+                          }
+                        })()}
+                      </div>
+                      <div className="widget-info">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{widget.name}</div>
+                        {widget.description && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{widget.description}</div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
