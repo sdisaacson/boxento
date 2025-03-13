@@ -80,6 +80,33 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     return config || { id: '' };
   });
   
+  // Helper function to format time ranges more compactly
+  const formatTimeRange = (timeRange?: string): React.ReactNode => {
+    if (!timeRange?.includes(' - ')) return timeRange || 'All day';
+    
+    const [startWithPeriod, endWithPeriod] = timeRange.split(' - ');
+    
+    // Extract time and period (AM/PM)
+    const startMatch = startWithPeriod.match(/(.+) (AM|PM)/);
+    const endMatch = endWithPeriod.match(/(.+) (AM|PM)/);
+    
+    if (startMatch && endMatch) {
+      const [, startTime, startPeriod] = startMatch;
+      const [, endTime, endPeriod] = endMatch;
+      
+      // If same period (both AM or both PM), combine them
+      if (startPeriod === endPeriod) {
+        return <>{startTime}-{endTime} {startPeriod}</>;
+      }
+      
+      // Different periods, show compact format
+      return <>{startTime}{startPeriod}-{endTime}{endPeriod}</>;
+    }
+    
+    // Fallback to original format
+    return <>{startWithPeriod}-{endWithPeriod}</>;
+  };
+  
   const widgetRef = useRef<HTMLDivElement | null>(null)
   
   // Simplified settings state
@@ -797,8 +824,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                   key={`event-${index}`}
                   className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-100 dark:border-blue-800 flex items-start"
                 >
-                  <div className="min-w-12 text-blue-500 font-medium mr-1.5 text-xs">
-                    {event.time}
+                  <div className="w-12 flex-shrink-0 text-blue-500 text-2xs font-medium mr-1">
+                    <div>{formatTimeRange(event.time)}</div>
                   </div>
                   <div className="flex-1 text-xs">
                     <div className="font-medium">{event.title}</div>
@@ -1331,15 +1358,15 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                           dayEvents.map((event, eventIndex) => (
                             <div 
                               key={eventIndex}
-                              className="text-xs p-2 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded border border-blue-100 dark:border-blue-800 flex items-start"
+                              className="text-xs p-2 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded border border-blue-100 dark:border-blue-800 flex items-start overflow-hidden"
                             >
-                              <div className="min-w-8 text-blue-500 font-medium mr-1.5">
-                                {event.time}
+                              <div className="w-12 flex-shrink-0 text-blue-500 text-2xs font-medium mr-1">
+                                <div>{formatTimeRange(event.time)}</div>
                               </div>
-                              <div className="flex-1">
-                                <div className="font-medium">{event.title}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{event.title}</div>
                                 {event.location && (
-                                  <div className="text-gray-500 dark:text-gray-400 text-2xs mt-0.5">
+                                  <div className="text-gray-500 dark:text-gray-400 text-2xs mt-0.5 truncate">
                                     {event.location}
                                   </div>
                                 )}
