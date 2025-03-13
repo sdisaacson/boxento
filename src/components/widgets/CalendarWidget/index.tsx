@@ -186,7 +186,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         },
         body: new URLSearchParams({
           client_id: GOOGLE_CLIENT_ID,
-          client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
+          client_secret: import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
           refresh_token: refreshToken,
           grant_type: 'refresh_token',
         }),
@@ -449,7 +449,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         body: new URLSearchParams({
           code,
           client_id: GOOGLE_CLIENT_ID,
-          client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET', // Not secure in client-side code
+          client_secret: import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET', // Not secure in client-side code
           redirect_uri: GOOGLE_REDIRECT_URI,
           grant_type: 'authorization_code',
         }),
