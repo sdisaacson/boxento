@@ -827,8 +827,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    * @returns Monthly view for wide layouts
    */
   const renderStandardCalendar = () => {
-    // Get the year and month from the currently selected date
-    const year = selectedDate.getFullYear()
+    // Get the month and day from the currently selected date
     const month = selectedDate.getMonth()
     const currentDay = selectedDate.getDate()
     
@@ -1521,7 +1520,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    */
   const renderContent = () => {
     // Choose the appropriate view based on widget dimensions
-    if (width >= 4 && height >= 4) {
+    if ((width >= 4 && height >= 3) || (width >= 3 && height >= 4)) {
       return renderExpandedCalendar()
     } else if (width >= 3 && height >= 3) {
       return renderFullCalendar()
