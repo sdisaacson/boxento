@@ -1199,9 +1199,8 @@ function App() {
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       <div className="fixed top-0 z-50 w-full dark:bg-slate-900/90 backdrop-blur-sm">
         <div className="px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-black dark:text-white">Boxento</h1>
-          
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <h1 className="text-lg font-semibold text-black dark:text-white mr-3">Boxento</h1>
             {/* Sync indicator - only show when user is logged in */}
             {auth.currentUser && (
               <div className="flex items-center">
@@ -1222,6 +1221,9 @@ function App() {
                 </span>
               </div>
             )}
+          </div>
+          
+          <div className="flex items-center space-x-4">
 
             <Button
               onClick={toggleWidgetSelector}
