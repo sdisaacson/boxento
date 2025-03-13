@@ -794,7 +794,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
       
-      <div className="flex-1 overflow-hidden bg-white bg-opacity-30 dark:bg-slate-900 dark:bg-opacity-30 rounded-md m-1">
+      <div className="flex-1 overflow-hidden bg-white bg-opacity-30 dark:bg-slate-950 dark:bg-opacity-30 rounded-md m-1">
         {renderContent()}
       </div>
       

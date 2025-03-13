@@ -717,7 +717,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
   };
   
   return (
-    <div ref={widgetRef} className="widget-container w-full h-full flex flex-col bg-white dark:bg-gray-900 rounded-lg shadow overflow-hidden">
+    <div ref={widgetRef} className="widget-container w-full h-full flex flex-col bg-white dark:bg-gray-950 rounded-lg shadow overflow-hidden">
       <WidgetHeader
         title={localConfig.title || 'Readwise Highlights'}
         onSettingsClick={() => setShowSettings(true)}

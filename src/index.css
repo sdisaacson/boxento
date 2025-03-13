@@ -139,7 +139,7 @@
   /* Explicitly set dark mode colors on body and html for better compatibility */
   html.dark,
   body.dark {
-    @apply bg-slate-900 text-white;
+    @apply bg-slate-950 text-white;
   }
 }
 
@@ -170,7 +170,7 @@ body.dragging-active {
 /* Global Widget Container */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words bg-white dark:bg-slate-800;
+  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative border border-black/5 dark:border-white/5 break-words bg-white dark:bg-slate-900;
   /* Prevent text selection during interaction */
   -webkit-touch-callout: none;
   -webkit-user-select: none;

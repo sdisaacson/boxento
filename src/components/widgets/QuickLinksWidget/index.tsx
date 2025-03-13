@@ -10,7 +10,6 @@ import {
 } from '../../ui/dialog'
 import { Input } from '@/components/ui/input'
 import { QuickLinksWidgetProps, LinkItem } from './types'
-import './styles.css'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
 import { Switch } from '@/components/ui/switch'

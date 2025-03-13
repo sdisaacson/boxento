@@ -42,7 +42,7 @@ const ResponsiveReactGridLayout = WidthProvider(Responsive);
 function App() {
   // Add a class to the body for dark mode background
   useEffect(() => {
-    document.body.className = 'bg-gray-50 dark:bg-slate-900 min-h-screen';
+    document.body.className = 'bg-gray-50 dark:bg-slate-950 min-h-screen';
     return () => {
       document.body.className = '';
     };
@@ -1191,7 +1191,7 @@ function App() {
   // Only render the UI when data is loaded
   if (!isDataLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center dark:bg-slate-900">
+      <div className="flex h-screen items-center justify-center dark:bg-slate-950">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-lg text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
@@ -1203,7 +1203,7 @@ function App() {
   // In the app header, add a sync status indicator
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
-      <div className="fixed top-0 z-50 w-full dark:bg-slate-900/90 backdrop-blur-sm">
+      <div className="fixed top-0 z-50 w-full dark:bg-slate-950 backdrop-blur-sm">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
             <a href="/" rel="noopener noreferrer">
@@ -1268,7 +1268,7 @@ function App() {
         </div>
       </div>
       
-      <div className="min-h-screen dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
+      <div className="min-h-screen dark:bg-gray-950 text-gray-900 dark:text-white overflow-x-hidden">
         <main className="pt-16 md:pt-20">
           <WidgetSelector 
             isOpen={widgetSelectorOpen}

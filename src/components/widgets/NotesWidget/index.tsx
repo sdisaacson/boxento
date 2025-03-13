@@ -18,7 +18,6 @@ import {
 import { Slider } from '@/components/ui/slider';
 import WidgetHeader from '../common/WidgetHeader';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
-import './styles.css';
 import { Button } from '../../ui/button';
 
 /**

@@ -93,7 +93,7 @@ const WidgetSelector = ({
                 filteredWidgets.map(widget => (
                   <button
                     key={widget.type}
-                    className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     onClick={() => onAddWidget(widget.type)}
                     aria-label={`Add ${widget.name} widget`}
                   >
@@ -140,7 +140,7 @@ const WidgetSelector = ({
                   {widgets.map(widget => (
                     <button
                       key={widget.type}
-                      className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                       onClick={() => onAddWidget(widget.type)}
                       aria-label={`Add ${widget.name} widget`}
                     >
