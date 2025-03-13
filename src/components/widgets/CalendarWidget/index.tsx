@@ -822,39 +822,52 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   }
 
   /**
-   * Renders a monthly view for wide widgets (3x2)
+   * Renders a monthly view for wide widgets (3x2) centered around the current/selected date
    * 
    * @returns Monthly view for wide layouts
    */
   const renderStandardCalendar = () => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    const currentDay = date.getDate()
-    
-    const daysInMonth = getDaysInMonth(year, month)
-    const firstDay = getFirstDayOfMonth(year, month)
+    // Get the year and month from the currently selected date
+    const year = selectedDate.getFullYear()
+    const month = selectedDate.getMonth()
+    const currentDay = selectedDate.getDate()
     
     // Adjust first day of week based on settings
     const startDay = localConfig.startDay === 'monday' ? 1 : 0
-    const adjustedFirstDay = (firstDay - startDay + 7) % 7
     
     // Day names based on start day setting - use shorter abbreviations
     const dayNames = startDay === 1 
-      ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+      : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    
+    // Calculate visible date range - we'll show 2 weeks (14 days)
+    // Position selectedDate roughly in the middle
+    const startDate = new Date(selectedDate)
+    startDate.setDate(currentDay - 7) // Go back 7 days from selected date
+    
+    // Create array of dates to display (14 days)
+    const visibleDates = Array.from({ length: 14 }, (_, i) => {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + i)
+      return date
+    })
     
     return (
       <div ref={widgetRef} className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-3">
-          <div className="flex space-x-1">
-            <button 
-              onClick={() => setDate(new Date(year, month - 1, 1))}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
-              aria-label="Previous month"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
+          <button 
+            onClick={() => {
+              const newDate = new Date(selectedDate)
+              newDate.setDate(selectedDate.getDate() - 7)
+              setSelectedDate(newDate)
+            }}
+            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
+            aria-label="Previous week"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          
+          <div className="flex space-x-2 items-center">
             <button
               onClick={() => {
                 const today = new Date();
@@ -866,16 +879,20 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             >
               Today
             </button>
+            
+            <h3 className="text-base font-medium">
+              {selectedDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
+            </h3>
           </div>
           
-          <h3 className="text-base font-medium">
-            {date.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
-          </h3>
-          
           <button 
-            onClick={() => setDate(new Date(year, month + 1, 1))}
+            onClick={() => {
+              const newDate = new Date(selectedDate)
+              newDate.setDate(selectedDate.getDate() + 7)
+              setSelectedDate(newDate)
+            }}
             className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
-            aria-label="Next month"
+            aria-label="Next week"
           >
             <ChevronRight size={16} />
           </button>
@@ -888,43 +905,84 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               key={day} 
               className="text-xs text-center text-gray-500 dark:text-gray-400 font-medium"
             >
-              {day.substring(0, 3)}
+              {day}
             </div>
           ))}
           
-          {/* Empty cells for days before the first day of month */}
-          {Array.from({ length: adjustedFirstDay }).map((_, index) => (
-            <div key={`empty-${index}`}></div>
-          ))}
-          
-          {/* Calendar days - simplified */}
-          {Array.from({ length: daysInMonth }).map((_, index) => {
-            const day = index + 1
-            const isToday = day === currentDay && new Date().getMonth() === month && new Date().getFullYear() === year
+          {/* Calendar days - now showing 2 weeks centered around selected date */}
+          {visibleDates.map((date, index) => {
+            const day = date.getDate()
+            const isToday = new Date().toDateString() === date.toDateString()
+            const isCurrentMonth = date.getMonth() === month
+            const isSelected = selectedDate.toDateString() === date.toDateString()
+            
+            // Check if this day has events
+            const dayEvents = events.filter(event => {
+              if (!event.start) return false;
+              const eventDate = new Date(event.start);
+              return eventDate.getDate() === date.getDate() &&
+                     eventDate.getMonth() === date.getMonth() &&
+                     eventDate.getFullYear() === date.getFullYear();
+            });
             
             return (
               <div 
-                key={`day-${day}`} 
-                className={`flex items-center justify-center cursor-pointer ${
-                  isToday 
-                    ? 'font-medium' 
-                    : ''
-                }`}
+                key={`day-${index}`} 
+                className={`flex flex-col items-center cursor-pointer`}
                 onClick={() => {
-                  const clickedDate = new Date(year, month, day);
-                  setSelectedDate(clickedDate);
+                  setSelectedDate(date);
                 }}
               >
                 <div className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
                   isToday 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : isSelected
+                      ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                } ${
+                  !isCurrentMonth ? 'text-gray-400 dark:text-gray-600' : ''
                 }`}>
                   {day}
                 </div>
+                
+                {dayEvents.length > 0 && (
+                  <div className="flex mt-1 space-x-0.5">
+                    {dayEvents.length > 0 && (
+                      <div 
+                        className={`h-1 w-1 rounded-full ${
+                          isCurrentMonth ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      ></div>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
+        </div>
+        
+        {/* Selected date preview */}
+        <div className="mt-auto pt-2 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex justify-between items-center text-xs">
+            <div className="font-medium">
+              {selectedDate.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </div>
+            {(() => {
+              const dayEvents = events.filter(event => {
+                if (!event.start) return false;
+                const eventDate = new Date(event.start);
+                return eventDate.getDate() === selectedDate.getDate() &&
+                       eventDate.getMonth() === selectedDate.getMonth() &&
+                       eventDate.getFullYear() === selectedDate.getFullYear();
+              });
+              
+              return dayEvents.length > 0 ? (
+                <div className="text-blue-500">{dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}</div>
+              ) : (
+                <div className="text-gray-400">No events</div>
+              );
+            })()}
+          </div>
         </div>
       </div>
     )
