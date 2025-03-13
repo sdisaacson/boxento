@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Moon, Sun, Cloud, Loader2, AlertCircle } from 'lucide-react'
+import { Plus, Moon, Sun, Cloud, Loader2 } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
 // @ts-expect-error - The types don't correctly represent the module structure
@@ -20,6 +20,12 @@ import { auth } from '@/lib/firebase'
 import { userDashboardService } from '@/lib/firestoreService'
 import { useSync } from '@/lib/SyncContext'
 import { Button } from './components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -1203,23 +1209,33 @@ function App() {
             <h1 className="text-lg font-semibold text-black dark:text-white mr-3">Boxento</h1>
             {/* Sync indicator - only show when user is logged in */}
             {auth.currentUser && (
-              <div className="flex items-center">
-                {isSyncing ? (
-                  <Loader2 className="h-5 w-5 mr-1 text-blue-500 animate-spin" />
-                ) : syncStatus === 'success' ? (
-                  <Cloud className="h-5 w-5 mr-1 text-green-500" />
-                ) : syncStatus === 'error' ? (
-                  <AlertCircle className="h-5 w-5 mr-1 text-red-500" />
-                ) : (
-                  <Cloud className="h-5 w-5 mr-1 text-gray-500" />
-                )}
-                <span className="text-sm hidden md:inline">
-                  {isSyncing ? 'Syncing...' : 
-                   syncStatus === 'success' ? 'Synced' : 
-                   syncStatus === 'error' ? 'Sync error' : 
-                   'Offline'}
-                </span>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center">
+                      {isSyncing ? (
+                        <Loader2 className="h-5 w-5 text-green-500" />
+                      ) : syncStatus === 'success' ? (
+                        <Cloud className="h-5 w-5 text-green-500" />
+                      ) : syncStatus === 'error' ? (
+                        <Cloud className="h-5 w-5 text-red-500" />
+                      ) : (
+                        <Cloud className="h-5 w-5 text-gray-500" />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[300px]">
+                    <div className="space-y-1">
+                      <p className="font-semibold">
+                        {isSyncing ? "Syncing..." : 
+                         syncStatus === 'success' ? "Everything is synced!" :
+                         syncStatus === 'error' ? "Sync error" :
+                         "Offline"}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
           
