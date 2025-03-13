@@ -2,8 +2,17 @@ import { useState } from 'react';
 import { useAuth, AuthContextType } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Mail } from 'lucide-react';
 import { AuthForm } from './AuthForm';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function UserMenuButton() {
   const [open, setOpen] = useState(false);
@@ -21,23 +30,61 @@ export function UserMenuButton() {
     setOpen(false);
   };
 
+  // Get user initials for avatar fallback
+  const getUserInitials = (): string => {
+    if (!currentUser) return '';
+    
+    if (currentUser.displayName) {
+      // Extract initials from display name
+      return currentUser.displayName
+        .split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    // If no display name, use first character of email
+    if (currentUser.email) {
+      return currentUser.email[0].toUpperCase();
+    }
+    
+    return 'U'; // Default fallback
+  };
+
   return (
     <>
       {currentUser ? (
-        <div className="flex items-center">
-          <div className="mr-2 text-sm">
-            {currentUser.displayName || currentUser.email}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="h-9 w-9 rounded-full"
-            aria-label="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all">
+              <AvatarImage 
+                src={currentUser.photoURL || undefined} 
+                alt={currentUser.displayName || 'User avatar'} 
+              />
+              <AvatarFallback className="bg-blue-500 text-white">
+                {getUserInitials()}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2">
+              <Mail className="h-4 w-4" />
+              <span className="truncate">{currentUser.email}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              variant="destructive" 
+              onClick={handleLogout}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <Button
           variant="outline"
