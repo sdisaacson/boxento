@@ -1269,32 +1269,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                 )
               })}
             </div>
-            
-            {/* Mini Month Navigation (visible for really large widgets) */}
-            {width >= 5 && height >= 5 && (
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {[-1, 0, 1].map((offset) => {
-                  const monthDate = new Date(year, month + offset, 1)
-                  const isCurrentMonth = offset === 0
-                  
-                  return (
-                    <div 
-                      key={`mini-month-${offset}`}
-                      className={`text-center p-1.5 rounded ${
-                        isCurrentMonth 
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' 
-                          : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700'
-                      }`}
-                      onClick={() => !isCurrentMonth && setDate(monthDate)}
-                    >
-                      <div className="text-xs font-medium">
-                        {monthDate.toLocaleDateString('default', { month: 'short' })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
           </div>
           
           {/* Right side - Weekly agenda with more details */}
