@@ -14,7 +14,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export function UserMenuButton() {
+interface UserMenuButtonProps {
+  className?: string;
+}
+
+export function UserMenuButton({ className }: UserMenuButtonProps) {
   const [open, setOpen] = useState(false);
   const { currentUser, logout } = useAuth() as AuthContextType;
 
@@ -57,15 +61,21 @@ export function UserMenuButton() {
       {currentUser ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="cursor-pointer transition-all">
-              <AvatarImage 
-                src={currentUser.photoURL || undefined} 
-                alt={currentUser.displayName || 'User avatar'} 
-              />
-              <AvatarFallback className="bg-gray-500 text-white">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
+            <Button
+              className={`rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 ${className} flex items-center gap-2`}
+              size="sm"
+            >
+              <Avatar className="h-5 w-5">
+                <AvatarImage 
+                  src={currentUser.photoURL || undefined} 
+                  alt={currentUser.displayName || 'User avatar'} 
+                />
+                <AvatarFallback className="bg-gray-600 text-white text-xs">
+                  {getUserInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <span>My Profile</span>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -90,7 +100,7 @@ export function UserMenuButton() {
           variant="outline"
           size="sm"
           onClick={() => setOpen(true)}
-          className="gap-1"
+          className={`rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 ${className} flex items-center gap-2`}
         >
           <User className="h-4 w-4" />
           <span>Login</span>

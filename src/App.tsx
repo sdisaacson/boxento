@@ -1206,7 +1206,9 @@ function App() {
       <div className="fixed top-0 z-50 w-full dark:bg-slate-900/90 backdrop-blur-sm">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <h1 className="text-lg font-semibold text-black dark:text-white mr-3">Boxento</h1>
+            <a href="/" rel="noopener noreferrer">
+              <h1 className="text-lg font-semibold text-black dark:text-white mr-3">Boxento</h1>
+            </a>
             {/* Sync indicator - only show when user is logged in */}
             {auth.currentUser && (
               <TooltipProvider>
@@ -1239,27 +1241,29 @@ function App() {
             )}
           </div>
           
-          <div className="flex items-center space-x-4">
-
+          <div className="flex items-center space-x-2">
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full bg-gray-500 text-white"
+              className="rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 h-9"
+              size="sm"
             >
-              <Plus className="h-5 w-5" />
-              Add Widget
+              <Plus className="h-4 w-4 mr-2" />
+              <span>Add Widget</span>
             </Button>
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full bg-gray-500 text-white"
+              className="rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 h-9 w-9 p-0 flex items-center justify-center"
+              size="sm"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             
-            <UserMenuButton />
-            
+            <div className="flex items-center">
+              <UserMenuButton className="h-9" />
+            </div>
           </div>
         </div>
       </div>
