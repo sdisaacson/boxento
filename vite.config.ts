@@ -11,6 +11,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      '/api/mindicador': {
+        target: 'https://mindicador.cl',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/mindicador/, ''),
+        secure: false
+      }
+    }
+  },
   css: {
     postcss: {
       plugins: [],

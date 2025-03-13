@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,78 @@ enum WidgetSizeCategory {
   LARGE = 'large'          // 4x4
 }
 
+// Define action types
+type UFWidgetAction = 
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; payload: { data: UFData; timestamp: Date } }
+  | { type: 'FETCH_ERROR'; payload: string }
+  | { type: 'USE_FALLBACK'; payload: UFData }
+  | { type: 'INCREMENT_RETRY' };
+
+// Define state interface
+interface UFWidgetState {
+  loading: boolean;
+  error: string | null;
+  ufData: UFData | null;
+  lastUpdated: Date | null;
+  retryCount: number;
+  useFallbackData: boolean;
+}
+
+// Initial state
+const initialState: UFWidgetState = {
+  loading: true,
+  error: null,
+  ufData: null,
+  lastUpdated: null,
+  retryCount: 0,
+  useFallbackData: false
+};
+
+// Reducer function
+function ufWidgetReducer(state: UFWidgetState, action: UFWidgetAction): UFWidgetState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return {
+        ...state,
+        loading: true,
+        error: null,
+        useFallbackData: false
+      };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        ufData: action.payload.data,
+        lastUpdated: action.payload.timestamp,
+        retryCount: 0
+      };
+    case 'FETCH_ERROR':
+      return {
+        ...state,
+        loading: false,
+        error: action.payload
+      };
+    case 'USE_FALLBACK':
+      return {
+        ...state,
+        loading: false,
+        error: null,
+        ufData: action.payload,
+        lastUpdated: new Date(),
+        useFallbackData: true
+      };
+    case 'INCREMENT_RETRY':
+      return {
+        ...state,
+        retryCount: state.retryCount + 1
+      };
+    default:
+      return state;
+  }
+}
+
 /**
  * UF Widget Component
  * 
@@ -41,31 +113,32 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     refreshInterval: 60 // minutes
   };
 
+  // Use reducer for complex state management
+  const [state, dispatch] = useReducer(ufWidgetReducer, initialState);
+  const { loading, error, ufData, lastUpdated, retryCount, useFallbackData } = state;
+
   // Component state
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [localConfig, setLocalConfig] = useState<UFWidgetConfig>({
     ...defaultConfig,
     ...config
   });
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [ufData, setUfData] = useState<UFData | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [useFallbackData, setUseFallbackData] = useState<boolean>(false);
-  const maxRetries = 3;
-  
-  // Ref for the widget container
+
+  // Refs
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Constants
+  const maxRetries = 3;
+
   // Wrap fallbackUfData in useMemo
   const fallbackUfData = useMemo<UFData>(() => ({
     codigo: 'uf',
     nombre: 'Unidad de Fomento (UF)',
     unidad_medida: 'Pesos',
     fecha: new Date().toISOString().split('T')[0],
-    valor: 38437.12, // This is a static value that should be updated when deploying
+    valor: 38437.12,
     serie: [
       {
         fecha: new Date(Date.now() - 86400000).toISOString().split('T')[0],
@@ -80,16 +153,93 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         valor: 38368.23
       }
     ]
-  }), []); // Empty dependency array since this is static data
+  }), []);
 
-  // First useEffect - fallback data
-  useEffect(() => {
-    if (useFallbackData && !ufData) {
-      setUfData(fallbackUfData);
-      setLastUpdated(new Date());
-      setLoading(false);
+  // Fetch data with improved error handling and performance
+  const fetchUfData = useCallback(async () => {
+    let controller: AbortController | null = new AbortController();
+    abortControllerRef.current = controller;
+    
+    try {
+      dispatch({ type: 'FETCH_START' });
+
+      const response = await fetch('/api/mindicador/api', {
+        method: 'GET',
+        signal: controller?.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      // Check if the request was aborted or the controller is no longer valid
+      if (!controller || controller !== abortControllerRef.current) {
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Check again if the request was aborted or the controller is no longer valid
+      if (!controller || controller !== abortControllerRef.current) {
+        return;
+      }
+
+      if (!data || !data.uf) {
+        throw new Error('Invalid API response format');
+      }
+
+      const transformedData: UFData = {
+        codigo: data.uf.codigo,
+        nombre: data.uf.nombre,
+        unidad_medida: data.uf.unidad_medida,
+        fecha: data.uf.fecha,
+        valor: data.uf.valor,
+        serie: data.uf.serie || []
+      };
+
+      dispatch({ 
+        type: 'FETCH_SUCCESS', 
+        payload: { 
+          data: transformedData, 
+          timestamp: new Date() 
+        } 
+      });
+    } catch (err) {
+      // Only handle errors if the controller is still valid
+      if (controller === abortControllerRef.current) {
+        if (err instanceof Error) {
+          console.error('Error fetching UF data:', err);
+          
+          if (err.name === 'AbortError') {
+            return; // Ignore abort errors
+          }
+          
+          if (retryCount < maxRetries) {
+            dispatch({ type: 'INCREMENT_RETRY' });
+            const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+            setTimeout(() => {
+              if (controller === abortControllerRef.current) {
+                fetchUfData();
+              }
+            }, backoffDelay);
+          } else {
+            dispatch({ type: 'FETCH_ERROR', payload: 'No se pudo obtener datos actualizados' });
+            dispatch({ type: 'USE_FALLBACK', payload: fallbackUfData });
+          }
+        }
+      }
+    } finally {
+      // Clear the controller reference if it hasn't been changed
+      if (controller === abortControllerRef.current) {
+        controller = null;
+      }
     }
-  }, [useFallbackData, ufData, fallbackUfData]);
+  }, [retryCount, maxRetries, fallbackUfData]);
 
   // Update local config when props config changes
   useEffect(() => {
@@ -99,68 +249,60 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     }));
   }, [config]);
 
-  // Wrap fetchUfData in useCallback
-  const fetchUfData = useCallback(async () => {
-    try {
-      setError(null);
-      setUseFallbackData(false);
-
-      const response = await fetch('https://mindicador.cl/api/uf');
-      if (!response.ok) {
-        throw new Error('Failed to fetch UF data');
-      }
-
-      const data = await response.json();
-      setUfData(data);
-      setLastUpdated(new Date());
-      setRetryCount(0); // Reset retry count on success
-    } catch (err) {
-      console.error('Error fetching UF data:', err);
-      
-      if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
-        // Retry after a delay
-        setTimeout(() => {
-          fetchUfData();
-        }, 1000 * Math.pow(2, retryCount)); // Exponential backoff
-      } else {
-        setError('Failed to fetch UF data after multiple attempts');
-        setUseFallbackData(true);
-      }
+  // Format the UF value with proper thousands separator and 2 decimal places
+  const formatUfValue = useCallback((value: number | undefined | null): string => {
+    if (value === undefined || value === null) {
+      return '--';
     }
-  }, [retryCount, maxRetries]); // Add dependencies used in the callback
-  
-  // Second useEffect - data fetching and refresh timer
+    return value.toLocaleString('es-CL', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }, []); // Empty dependency array as this function doesn't depend on any props or state
+
+  // Format date to DD/MM/YYYY
+  const formatDate = useCallback((dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-CL');
+  }, []); // Empty dependency array as this function doesn't depend on any props or state
+
+  // Data fetching and refresh timer effect
   useEffect(() => {
-    // Create abort controller for cleanup
-    const abortController = new AbortController();
-    
-    // Fetch data immediately
-    fetchUfData().catch(console.error);
-    
-    // Setup refresh timer with fallback default
+    let isActive = true;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const fetchData = async () => {
+      if (isActive) {
+        await fetchUfData();
+      }
+    };
+
+    // Initial fetch
+    fetchData();
+
+    // Setup refresh timer
     const refreshIntervalMinutes = localConfig.refreshInterval ?? defaultConfig.refreshInterval ?? 60;
     const refreshIntervalMs = refreshIntervalMinutes * 60 * 1000;
     
-    // Clear any existing timer
-    if (refreshTimerRef.current) {
-      clearInterval(refreshTimerRef.current);
-    }
-    
-    // Set up new timer and store the ID
     const timerId = setInterval(() => {
-      fetchUfData().catch(console.error);
+      if (isActive) {
+        fetchData();
+      }
     }, refreshIntervalMs);
-    refreshTimerRef.current = timerId;
     
-    // Cleanup
+    refreshTimerRef.current = timerId;
+
+    // Cleanup function
     return () => {
-      // Abort any pending fetch
-      abortController.abort();
-      
-      // Cleanup timer
+      isActive = false;
+      if (controller === abortControllerRef.current) {
+        controller.abort();
+        abortControllerRef.current = null;
+      }
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
       }
     };
   }, [localConfig.refreshInterval, fetchUfData, defaultConfig.refreshInterval]);
@@ -168,7 +310,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
   /**
    * Determines the appropriate size category based on width and height
    */
-  const getWidgetSizeCategory = (width: number, height: number): WidgetSizeCategory => {
+  const getWidgetSizeCategory = useCallback((width: number, height: number): WidgetSizeCategory => {
     if (width >= 4 && height >= 4) {
       return WidgetSizeCategory.LARGE;
     } else if (width >= 4 && height >= 3) {
@@ -184,51 +326,43 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     } else {
       return WidgetSizeCategory.SMALL;
     }
-  };
-  
-  // Format the UF value with proper thousands separator and 2 decimal places
-  const formatUfValue = (value: number | undefined | null): string => {
-    if (value === undefined || value === null) {
-      return '--';
-    }
-    return value.toLocaleString('es-CL', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
-  
-  // Format date to DD/MM/YYYY
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-CL');
-  };
-  
-  // Render content based on widget size
-  const renderContent = () => {
-    const sizeCategory = getWidgetSizeCategory(width, height);
-    
-    switch (sizeCategory) {
-      case WidgetSizeCategory.SMALL:
-        return renderSmallView();
-      case WidgetSizeCategory.WIDE_SMALL:
-        return renderWideSmallView();
-      case WidgetSizeCategory.TALL_SMALL:
-        return renderTallSmallView();
-      case WidgetSizeCategory.MEDIUM:
-        return renderMediumView();
-      case WidgetSizeCategory.WIDE_MEDIUM:
-        return renderWideMediumView();
-      case WidgetSizeCategory.TALL_MEDIUM:
-        return renderTallMediumView();
-      case WidgetSizeCategory.LARGE:
-        return renderLargeView();
-      default:
-        return renderSmallView();
-    }
-  };
-  
-  // Render small view (2x2)
-  const renderSmallView = () => {
+  }, []);
+
+  // Render error view with retry button and fallback option
+  const renderErrorView = useCallback(() => {
+    return (
+      <div className="h-full flex flex-col items-center justify-center">
+        <div className="text-red-500 text-sm mb-2">Error al cargar datos</div>
+        <div className="text-xs text-gray-500 mb-3">
+          {error}
+        </div>
+        <div className="flex flex-col space-y-2">
+          <button 
+            onClick={() => fetchUfData()}
+            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            aria-label="Reintentar cargar datos"
+          >
+            Reintentar
+          </button>
+          <button 
+            onClick={() => {
+              setLocalConfig({...localConfig, useFallbackData: true, ufData: fallbackUfData});
+            }}
+            className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 transition-colors"
+            aria-label="Usar datos aproximados"
+          >
+            Usar valor aproximado
+          </button>
+        </div>
+      </div>
+    );
+  }, [error, fetchUfData, localConfig, fallbackUfData]);
+
+  // Memoize the size category calculation
+  const sizeCategory = useMemo(() => getWidgetSizeCategory(width, height), [width, height, getWidgetSizeCategory]);
+
+  // Memoize the view components with proper dependencies
+  const smallView = useMemo(() => {
     if (loading) {
       return (
         <div className="h-full flex items-center justify-center">
@@ -254,54 +388,21 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
           ${formatUfValue(ufData.valor)}
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
           {formatDate(ufData.fecha)}
+          {lastUpdated && ` · ${lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}`}
         </div>
         {useFallbackData && (
-          <div className="text-xs text-amber-500 dark:text-amber-400 mt-1">
+          <div className="text-[10px] text-amber-500 dark:text-amber-400 mt-0.5">
             (Valor aproximado)
           </div>
         )}
       </div>
     );
-  };
-  
-  // Render error view with retry button and fallback option
-  const renderErrorView = () => {
-    return (
-      <div className="h-full flex flex-col items-center justify-center">
-        <div className="text-red-500 text-sm mb-2">Error al cargar datos</div>
-        <div className="text-xs text-gray-500 mb-3">
-          {error}
-        </div>
-        <div className="flex flex-col space-y-2">
-          <button 
-            onClick={() => fetchUfData()}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
-            aria-label="Reintentar cargar datos"
-          >
-            Reintentar
-          </button>
-          <button 
-            onClick={() => {
-              setUseFallbackData(true);
-              setUfData(fallbackUfData);
-              setLastUpdated(new Date());
-              setLoading(false);
-              setError(null);
-            }}
-            className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 transition-colors"
-            aria-label="Usar datos aproximados"
-          >
-            Usar valor aproximado
-          </button>
-        </div>
-      </div>
-    );
-  };
+  }, [loading, error, ufData, useFallbackData, formatUfValue, formatDate, lastUpdated, renderErrorView]);
   
   // Render wide small view (3x2 or 4x2)
-  const renderWideSmallView = () => {
+  const renderWideSmallView = useCallback(() => {
     if (loading) {
       return (
         <div className="h-full flex items-center justify-center">
@@ -349,10 +450,10 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
   // Render tall small view (2x3 or 2x4)
-  const renderTallSmallView = () => {
+  const renderTallSmallView = useCallback(() => {
     if (loading) {
       return (
         <div className="h-full flex items-center justify-center">
@@ -400,12 +501,12 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
   // Render medium view (3x3)
-  const renderMediumView = () => {
+  const renderMediumView = useCallback(() => {
     if (loading || error || !ufData) {
-      return renderSmallView();
+      return smallView;
     }
     
     const showHistoricalData = localConfig.showHistory && ufData.serie && ufData.serie.length > 0;
@@ -454,10 +555,10 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
   // Render wide medium view (4x3)
-  const renderWideMediumView = () => {
+  const renderWideMediumView = useCallback(() => {
     if (loading || error || !ufData) {
       return renderMediumView();
     }
@@ -513,10 +614,10 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
   // Render tall medium view (3x4)
-  const renderTallMediumView = () => {
+  const renderTallMediumView = useCallback(() => {
     if (loading || error || !ufData) {
       return renderMediumView();
     }
@@ -568,10 +669,10 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
   // Render large view (4x4 or larger)
-  const renderLargeView = () => {
+  const renderLargeView = useCallback(() => {
     if (loading || error || !ufData) {
       return renderMediumView();
     }
@@ -628,8 +729,61 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
       </div>
     );
-  };
+  }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
   
+  // Memoize the content selection based on size category
+  const content = useMemo(() => {
+    switch (sizeCategory) {
+      case WidgetSizeCategory.SMALL:
+        return smallView;
+      case WidgetSizeCategory.WIDE_SMALL:
+        return renderWideSmallView();
+      case WidgetSizeCategory.TALL_SMALL:
+        return renderTallSmallView();
+      case WidgetSizeCategory.MEDIUM:
+        return renderMediumView();
+      case WidgetSizeCategory.WIDE_MEDIUM:
+        return renderWideMediumView();
+      case WidgetSizeCategory.TALL_MEDIUM:
+        return renderTallMediumView();
+      case WidgetSizeCategory.LARGE:
+        return renderLargeView();
+      default:
+        return smallView;
+    }
+  }, [
+    sizeCategory,
+    smallView,
+    renderWideSmallView,
+    renderTallSmallView,
+    renderMediumView,
+    renderWideMediumView,
+    renderTallMediumView,
+    renderLargeView
+  ]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Main render with memoized header
+  const header = useMemo(() => (
+    <WidgetHeader 
+      title={localConfig.title || defaultConfig.title} 
+      onSettingsClick={() => setShowSettings(true)}
+    />
+  ), [localConfig.title, defaultConfig.title]);
+
   // Save settings
   const saveSettings = () => {
     if (config?.onUpdate) {
@@ -753,18 +907,13 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
   // Main render
   return (
     <div ref={widgetRef} className="widget-container h-full flex flex-col relative">
-      <WidgetHeader 
-        title={localConfig.title || defaultConfig.title} 
-        onSettingsClick={() => setShowSettings(true)}
-      />
-      
+      {header}
       <div className="flex-grow p-4 overflow-hidden">
-        {renderContent()}
+        {content}
       </div>
-      
       {renderSettings()}
     </div>
   );
 };
 
-export default UFWidget; 
+export default React.memo(UFWidget); 
