@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { SocialLoginButtons } from './SocialLoginButtons';
 
 interface LoginFormProps {
   onToggleForm: () => void;
@@ -76,19 +75,6 @@ export function LoginForm({ onToggleForm, onForgotPassword, onSuccess, onPhoneAu
             {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" style={{borderColor: "oklch(var(--border))"}} />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <SocialLoginButtons />
 
         <div className="flex flex-col space-y-2 text-center text-sm">
           <Button variant="link" onClick={onForgotPassword} type="button" className="text-primary">

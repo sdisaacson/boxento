@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { SocialLoginButtons } from './SocialLoginButtons';
 
 interface SignupFormProps {
   onToggleForm: () => void;
@@ -93,19 +92,6 @@ export function SignupForm({ onToggleForm, onSuccess }: SignupFormProps) {
             {isLoading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" style={{borderColor: "oklch(var(--border))"}} />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <SocialLoginButtons />
 
         <div className="text-center">
           <Button variant="link" onClick={onToggleForm} type="button" className="text-primary">
