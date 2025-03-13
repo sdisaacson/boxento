@@ -10,6 +10,7 @@ import {
   Check,
   Plus,
   Trash2,
+  GripVertical,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import WidgetHeader from '../common/WidgetHeader';
@@ -49,6 +50,9 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
   const [showSettings, setShowSettings] = useState(false);
   const [newTodoText, setNewTodoText] = useState('');
+  const [draggedItem, setDraggedItem] = useState<TodoItem | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+  const [dragDirection, setDragDirection] = useState<'up' | 'down' | null>(null);
   const newTodoInputRef = useRef<HTMLInputElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   
@@ -67,14 +71,23 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
   // Add a new todo item
   const addTodo = () => {
+    if (!newTodoText.trim()) return;
+    
+    // Get current items and determine the highest sort order
+    const currentItems = localConfig.items || [];
+    const maxSortOrder = currentItems.length > 0 
+      ? Math.max(...currentItems.map(item => item.sortOrder || 0)) 
+      : -1;
+    
     const newTodo: TodoItem = {
       id: crypto.randomUUID(),
       text: newTodoText.trim(),
       completed: false,
-      createdAt: new Date()
+      createdAt: new Date(),
+      sortOrder: maxSortOrder + 1
     };
 
-    const updatedItems = [...(localConfig.items || []), newTodo];
+    const updatedItems = [...currentItems, newTodo];
     
     setLocalConfig(prev => ({
       ...prev,
@@ -150,8 +163,142 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }));
   };
 
+  // Handle drag start
+  const handleDragStart = (e: React.DragEvent<HTMLLIElement>, item: TodoItem) => {
+    setDraggedItem(item);
+    e.dataTransfer.effectAllowed = 'move';
+    // Add some transparency to the dragged item
+    if (e.currentTarget) {
+      setTimeout(() => {
+        e.currentTarget.style.opacity = '0.5';
+      }, 0);
+    }
+  };
+
+  // Handle drag end
+  const handleDragEnd = (e: React.DragEvent<HTMLLIElement>) => {
+    setDraggedItem(null);
+    setDragOverItemId(null);
+    setDragDirection(null);
+    e.currentTarget.style.opacity = '1';
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLLIElement>, overItem: TodoItem) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.id === overItem.id) {
+      setDragOverItemId(null);
+      return false;
+    }
+    
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Get mouse position relative to the item
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseY = e.clientY - rect.top;
+    const threshold = rect.height / 2;
+    
+    // Set direction based on mouse position and item position
+    if (mouseY < threshold) {
+      setDragDirection('up'); // Drop above the item
+    } else {
+      setDragDirection('down'); // Drop below the item
+    }
+    
+    setDragOverItemId(overItem.id);
+    
+    return false;
+  };
+
+  // Handle drop
+  const handleDrop = (e: React.DragEvent<HTMLLIElement>, targetItem: TodoItem) => {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.id === targetItem.id) return;
+    
+    // Get current items
+    const items = [...(localConfig.items || [])];
+    
+    // Find indices
+    const draggedIndex = items.findIndex(item => item.id === draggedItem.id);
+    const targetIndex = items.findIndex(item => item.id === targetItem.id);
+    
+    if (draggedIndex < 0 || targetIndex < 0) return;
+    
+    // Remove the dragged item
+    const [removed] = items.splice(draggedIndex, 1);
+    
+    // Calculate the new index based on direction
+    let newIndex = targetIndex;
+    
+    // If we're dragging down and the dragged item is before the target, 
+    // we need to adjust the target index
+    if (dragDirection === 'down' && draggedIndex < targetIndex) {
+      newIndex = targetIndex - 1;
+    }
+    
+    // If we're dragging up and the dragged item is after the target,
+    // we don't need to adjust
+    if (dragDirection === 'up' && draggedIndex > targetIndex) {
+      newIndex = targetIndex;
+    }
+    
+    // If we're dragging up and the dragged item is before the target,
+    // we need to insert after the target
+    if (dragDirection === 'up' && draggedIndex < targetIndex) {
+      newIndex = targetIndex - 1;
+    }
+    
+    // If we're dragging down and the dragged item is after the target,
+    // we need to insert after the target
+    if (dragDirection === 'down' && draggedIndex > targetIndex) {
+      newIndex = targetIndex + 1;
+    }
+    
+    // Insert at new position
+    items.splice(newIndex, 0, removed);
+    
+    // Update sort orders
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      sortOrder: index
+    }));
+    
+    // Reset drag state
+    setDragOverItemId(null);
+    setDragDirection(null);
+    
+    // Update to manual sort order if not already set
+    const updatedConfig = {
+      ...localConfig,
+      items: updatedItems,
+      sortOrder: 'manual' as const
+    };
+    
+    // Update local state
+    setLocalConfig(updatedConfig);
+    
+    // Update parent state
+    if (config?.onUpdate) {
+      config.onUpdate(updatedConfig);
+    }
+  };
+
+  // Helper to get drop zone class
+  const getDropZoneClass = (itemId: string) => {
+    if (draggedItem && dragOverItemId === itemId) {
+      if (dragDirection === 'up') {
+        return 'border-t-2 border-blue-500';
+      } else if (dragDirection === 'down') {
+        return 'border-b-2 border-blue-500';
+      }
+    }
+    return '';
+  };
+
   // Handle sort order change
-  const handleSortOrderChange = (value: 'created' | 'alphabetical' | 'completed') => {
+  const handleSortOrderChange = (value: 'created' | 'alphabetical' | 'completed' | 'manual') => {
     setLocalConfig(prev => ({
       ...prev,
       sortOrder: value
@@ -170,12 +317,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const getFilteredAndSortedItems = () => {
     let items = [...(localConfig.items || [])];
     
-    // Ensure createdAt is a Date object for each item
-    items = items.map(item => ({
-      ...item,
-      createdAt: item.createdAt instanceof Date ? item.createdAt : new Date(item.createdAt)
-    }));
-    
     // Filter out completed items if needed
     if (!localConfig.showCompletedItems) {
       items = items.filter(item => !item.completed);
@@ -189,14 +330,21 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       case 'completed':
         items.sort((a, b) => {
           if (a.completed === b.completed) {
-            return a.createdAt.getTime() - b.createdAt.getTime();
+            return 0;
           }
           return a.completed ? 1 : -1;
         });
         break;
+      case 'manual':
+        items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        break;
       case 'created':
       default:
-        items.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        items.sort((a, b) => {
+          const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+          const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+          return dateA.getTime() - dateB.getTime();
+        });
         break;
     }
     
@@ -208,8 +356,17 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       {items.map(item => (
         <li 
           key={item.id} 
-          className="flex items-center gap-3 p-2.5 hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 rounded-lg transition-all relative text-gray-800 dark:text-gray-100 group"
+          draggable
+          onDragStart={(e) => handleDragStart(e, item)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => handleDragOver(e, item)}
+          onDrop={(e) => handleDrop(e, item)}
+          className={`flex items-center gap-3 p-2.5 hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 rounded-lg transition-all relative text-gray-800 dark:text-gray-100 group cursor-grab active:cursor-grabbing ${getDropZoneClass(item.id)}`}
         >
+          <div className="flex-shrink-0 mr-0.5 text-gray-300 dark:text-gray-700 group-hover:text-gray-400 dark:group-hover:text-gray-600 transition-colors">
+            <GripVertical size={14} />
+          </div>
+          
           <button
             onClick={() => toggleTodo(item.id)}
             className={`flex-shrink-0 w-5 h-5 rounded-full border ${
@@ -308,8 +465,16 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               {items.map(item => (
                 <li 
                   key={item.id} 
-                  className="flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 transition-all relative text-gray-800 dark:text-gray-100 group"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, item)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, item)}
+                  onDrop={(e) => handleDrop(e, item)}
+                  className={`flex items-center p-1 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 dark:hover:bg-opacity-50 transition-all relative text-gray-800 dark:text-gray-100 group cursor-grab active:cursor-grabbing ${getDropZoneClass(item.id)}`}
                 >
+                  <div className="flex-shrink-0 mr-0.5 text-gray-300 dark:text-gray-700 group-hover:text-gray-400 dark:group-hover:text-gray-600 transition-colors">
+                    <GripVertical size={10} />
+                  </div>
                   <button
                     onClick={() => toggleTodo(item.id)}
                     className={`flex-shrink-0 w-3 h-3 rounded-full border ${
@@ -473,44 +638,47 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Todo List Settings</DialogTitle>
+            <DialogTitle>Widget Settings</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="title-input">Title</Label>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Widget Title</Label>
               <Input
-                id="title-input"
-                type="text"
+                id="title"
+                placeholder="Todo List"
                 value={localConfig.title || ''}
                 onChange={handleTitleChange}
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="sort-order-select">Sort Order</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="showCompleted">Show Completed Items</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="showCompleted"
+                  checked={!!localConfig.showCompletedItems}
+                  onCheckedChange={handleShowCompletedChange}
+                />
+                <Label htmlFor="showCompleted" className="text-sm text-gray-500">
+                  {localConfig.showCompletedItems ? 'On' : 'Off'}
+                </Label>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="sortOrder">Sort Order</Label>
               <Select
                 value={localConfig.sortOrder || 'created'}
-                onValueChange={handleSortOrderChange}
+                onValueChange={(value: 'created' | 'alphabetical' | 'completed' | 'manual') => handleSortOrderChange(value)}
               >
-                <SelectTrigger id="sort-order-select">
+                <SelectTrigger>
                   <SelectValue placeholder="Select sort order" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="created">By Creation Date</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetically</SelectItem>
-                  <SelectItem value="completed">By Completion Status</SelectItem>
+                  <SelectItem value="created">Created Date</SelectItem>
+                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                  <SelectItem value="completed">Completion Status</SelectItem>
+                  <SelectItem value="manual">Manual (Drag to Sort)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-completed-toggle">Show completed items</Label>
-              <Switch
-                id="show-completed-toggle"
-                checked={localConfig.showCompletedItems ?? true}
-                onCheckedChange={handleShowCompletedChange}
-              />
             </div>
           </div>
           
