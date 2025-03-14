@@ -328,6 +328,46 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
     }
   };
 
+  const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editingLink) return;
+    const currentLink = editingLink;
+    const url = e.target.value;
+    try {
+      // Basic URL validation
+      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+      const favicon = `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
+      setEditingLink({
+        ...currentLink,
+        url,
+        favicon,
+        title: currentLink.title || urlObj.hostname
+      });
+      
+      if (url && url.match(/^https?:\/\/.+/)) {
+        try {
+          // Try to get enhanced metadata
+          const metadata = await fetchUrlMetadata(url);
+          setEditingLink(prev => prev ? ({
+            ...prev,
+            url,
+            title: metadata.title,
+            favicon
+          }) : prev);
+        } catch (error) {
+          console.error('Error fetching URL metadata:', error);
+          setEditingLink(prev => prev ? ({
+            ...prev,
+            url,
+            favicon
+          }) : prev);
+        }
+      }
+    } catch (urlError) {
+      console.warn('Invalid URL format:', urlError);
+      setEditingLink({ ...currentLink, url });
+    }
+  };
+
   /**
    * Renders the main content of the widget
    */
@@ -514,7 +554,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
               <DialogTitle>Widget Settings</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4 mt-2">
+            <div className="space-y-2 mt-2">
               <div className="space-y-2">
                 <Label htmlFor="widget-title">Widget Title</Label>
                 <Input 
@@ -594,73 +634,21 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
             }
           }}
         >
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit Link</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 mb-2">
-                <img 
-                  src={editingLink.favicon}
-                  alt=""
-                  className="w-5 h-5"
-                  loading="lazy"
-                />
-                <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {editingLink.url}
-                </span>
-              </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 mt-4">
                 <Label htmlFor="url-input">URL</Label>
                 <Input 
                   id="url-input"
                   type="url" 
                   value={editingLink.url} 
-                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const url = e.target.value;
-                    
-                    try {
-                      // Basic URL validation
-                      const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-                      const favicon = `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
-                      
-                      // Always update with basic info first
-                      setEditingLink({
-                        ...editingLink, 
-                        url, 
-                        favicon,
-                        // Use hostname as fallback title if no title exists yet
-                        title: editingLink.title || urlObj.hostname
-                      });
-                      
-                      if (url && url.match(/^https?:\/\/.+/)) {
-                        try {
-                          // Try to get enhanced metadata
-                          const metadata = await fetchUrlMetadata(url);
-                          setEditingLink(prev => ({
-                            ...prev!,
-                            url,
-                            title: metadata.title,
-                            favicon
-                          }));
-                        } catch (error) {
-                          console.error('Error fetching URL metadata:', error);
-                          // Still update with the basic info
-                          setEditingLink(prev => ({
-                            ...prev!,
-                            url,
-                            favicon
-                          }));
-                        }
-                      }
-                    } catch (urlError) {
-                      // If URL is invalid, just update the URL field without other changes
-                      console.warn('Invalid URL format:', urlError);
-                      setEditingLink({...editingLink, url});
-                    }
-                  }}
+                  onChange={handleUrlChange}
                   placeholder="https://google.com"
+                  className="w-full truncate"
                 />
               </div>
 
