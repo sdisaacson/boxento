@@ -1246,7 +1246,7 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full app-button-secondary h-9"
+              className="rounded-full app-button-secondary h-9 cursor-pointer"
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -1255,7 +1255,7 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full app-button-secondary h-9 w-9 p-0 flex items-center justify-center"
+              className="rounded-full app-button-secondary h-9 w-9 p-0 flex items-center justify-center cursor-pointer"
               size="sm"
               aria-label="Toggle theme"
             >
@@ -1263,7 +1263,7 @@ function App() {
             </Button>
             
             <div className="flex items-center">
-              <UserMenuButton className="h-9" />
+              <UserMenuButton className="h-9 cursor-pointer" />
             </div>
           </div>
         </div>
