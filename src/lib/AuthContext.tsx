@@ -118,8 +118,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             
             // Add a small delay before reload to ensure all operations complete
             setTimeout(() => {
-              // Use location.href with cache buster to force a complete reload
-              window.location.href = window.location.origin + window.location.pathname + '?logout=' + Date.now();
+              // Use clean client-side routing instead of cache busting parameter
+              window.location.replace(window.location.origin);
             }, 100);
             
             resolve();
