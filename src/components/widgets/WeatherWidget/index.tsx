@@ -40,6 +40,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     config || { id: '', location: 'New York', units: 'metric' }
   );
   const widgetRef = useRef<HTMLDivElement | null>(null);
+  const configRef = useRef<string>(''); // Track the last config for comparison
 
   // Mock weather data for development/testing
   const mockWeatherData: WeatherData = {
@@ -248,6 +249,21 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       }
     }
   }, [localConfig.location, localConfig.units]); // Only depend on location and units
+
+  // Update localConfig when config changes without creating a circular dependency
+  useEffect(() => {
+    if (config) {
+      // Create a config signature to detect real changes
+      const configSignature = `${config.id}-${config.location}-${config.units}`;
+      
+      // Only update if there's a real change and not just a re-render
+      if (configSignature !== configRef.current) {
+        console.log(`[WeatherWidget] Config changed to ${config.location}`);
+        configRef.current = configSignature;
+        setLocalConfig(config);
+      }
+    }
+  }, [config]);
 
   // Combine both useEffects into one
   useEffect(() => {
