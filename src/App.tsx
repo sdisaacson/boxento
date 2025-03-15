@@ -1248,8 +1248,9 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white h-9 cursor-pointer transition-colors"
+              className="rounded-full h-9 cursor-pointer transition-colors"
               size="sm"
+              variant="outline"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span>Add Widget</span>
@@ -1257,11 +1258,12 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white h-9 w-9 p-0 flex items-center justify-center cursor-pointer transition-colors"
+              className="rounded-full h-9 w-9 p-0 flex items-center justify-center cursor-pointer transition-colors"
               size="sm"
               aria-label="Toggle theme"
+              variant="outline"
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-500 dark:text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             
             <div className="flex items-center">

@@ -97,10 +97,10 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
         </DropdownMenu>
       ) : (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => setOpen(true)}
-          className={`rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white transition-colors ${className} flex items-center gap-2`}
+          className={`rounded-full transition-colors ${className} flex items-center gap-2`}
         >
           <User className="h-4 w-4" />
           <span>Login</span>
