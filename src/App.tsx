@@ -1212,13 +1212,13 @@ function App() {
             <a href="/" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-gray-700 transition-colors">
               <h1 className="text-lg font-semibold mr-3">Boxento</h1>
             </a>
-            {/* Sync indicator - only show when user is logged in */}
-            {auth.currentUser && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center">
-                      {isSyncing ? (
+            {/* Sync indicator - show for all users, with different messages based on login status */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    {auth.currentUser ? (
+                      isSyncing ? (
                         <Loader2 className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                       ) : syncStatus === 'success' ? (
                         <Cloud className="h-5 w-5 text-blue-500 dark:text-blue-400" />
@@ -1226,22 +1226,28 @@ function App() {
                         <Cloud className="h-5 w-5 text-red-500 dark:text-red-400" />
                       ) : (
                         <Cloud className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      )
+                    ) : (
+                      <Cloud className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div>
+                    <p className="font-semibold">
+                      {auth.currentUser ? (
+                        isSyncing ? "Syncing..." : 
+                        syncStatus === 'success' ? "Everything is synced!" :
+                        syncStatus === 'error' ? "Sync error" :
+                        "Offline"
+                      ) : (
+                        "Sign up to sync (saved locally for now)"
                       )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg">
-                    <div className="space-y-1">
-                      <p className="font-semibold">
-                        {isSyncing ? "Syncing..." : 
-                         syncStatus === 'success' ? "Everything is synced!" :
-                         syncStatus === 'error' ? "Sync error" :
-                         "Offline"}
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+                    </p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           
           <div className="flex items-center space-x-2">
