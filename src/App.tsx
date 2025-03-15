@@ -1204,11 +1204,13 @@ function App() {
   // In the app header, add a sync status indicator
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''} app-background`} data-theme={theme}>
+
+      {/* Header */}
       <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <a href="/" rel="noopener noreferrer">
-              <h1 className="text-lg font-semibold text-black dark:text-white mr-3">Boxento</h1>
+            <a href="/" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-gray-700 transition-colors">
+              <h1 className="text-lg font-semibold mr-3">Boxento</h1>
             </a>
             {/* Sync indicator - only show when user is logged in */}
             {auth.currentUser && (
@@ -1217,17 +1219,17 @@ function App() {
                   <TooltipTrigger asChild>
                     <div className="flex items-center">
                       {isSyncing ? (
-                        <Loader2 className="h-5 w-5 text-green-500" />
+                        <Loader2 className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                       ) : syncStatus === 'success' ? (
-                        <Cloud className="h-5 w-5 text-green-500" />
+                        <Cloud className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                       ) : syncStatus === 'error' ? (
-                        <Cloud className="h-5 w-5 text-red-500" />
+                        <Cloud className="h-5 w-5 text-red-500 dark:text-red-400" />
                       ) : (
-                        <Cloud className="h-5 w-5 text-gray-500" />
+                        <Cloud className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[300px]">
+                  <TooltipContent side="bottom" className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700">
                     <div className="space-y-1">
                       <p className="font-semibold">
                         {isSyncing ? "Syncing..." : 
@@ -1246,7 +1248,7 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full app-button-secondary h-9 cursor-pointer"
+              className="rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white h-9 cursor-pointer transition-colors"
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -1255,11 +1257,11 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full app-button-secondary h-9 w-9 p-0 flex items-center justify-center cursor-pointer"
+              className="rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white h-9 w-9 p-0 flex items-center justify-center cursor-pointer transition-colors"
               size="sm"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-500 dark:text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
             </Button>
             
             <div className="flex items-center">
@@ -1269,6 +1271,7 @@ function App() {
         </div>
       </div>
       
+      {/* Main */}
       <div className="min-h-screen overflow-x-hidden app-background">
         <main className="pt-16 md:pt-20">
           <WidgetSelector 

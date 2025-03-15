@@ -62,7 +62,7 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className={`rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 ${className} flex items-center gap-2`}
+              className={`rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white transition-colors ${className} flex items-center gap-2`}
               size="sm"
             >
               <Avatar className="h-5 w-5">
@@ -70,25 +70,25 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
                   src={currentUser.photoURL || undefined} 
                   alt={currentUser.displayName || 'User avatar'} 
                 />
-                <AvatarFallback className="bg-gray-600 text-white text-xs">
+                <AvatarFallback className="bg-blue-600 dark:bg-blue-700 text-white text-xs">
                   {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
               <span>My Profile</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2">
-              <Mail className="h-4 w-4" />
+          <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <DropdownMenuLabel className="text-gray-900 dark:text-white">My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+            <DropdownMenuItem className="gap-2 text-gray-700 dark:text-gray-300 focus:bg-gray-100 dark:focus:bg-gray-700">
+              <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               <span className="truncate">{currentUser.email}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
             <DropdownMenuItem 
               variant="destructive" 
               onClick={handleLogout}
-              className="gap-2"
+              className="gap-2 text-red-600 dark:text-red-400 focus:bg-gray-100 dark:focus:bg-gray-700"
             >
               <LogOut className="h-4 w-4" />
               <span>Logout</span>
@@ -97,10 +97,10 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
         </DropdownMenu>
       ) : (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setOpen(true)}
-          className={`rounded-full bg-white border-gray-500 hover:bg-gray-500 hover:text-white text-gray-500 ${className} flex items-center gap-2`}
+          className={`rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white transition-colors ${className} flex items-center gap-2`}
         >
           <User className="h-4 w-4" />
           <span>Login</span>
@@ -108,7 +108,7 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700">
           <AuthForm onSuccess={handleLoginSuccess} />
         </DialogContent>
       </Dialog>
