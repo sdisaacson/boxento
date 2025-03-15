@@ -501,7 +501,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         <div className="flex-1 overflow-hidden">
           <div className="flex space-x-2 h-full">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center justify-between py-2 px-1 bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md">
+              <div key={index} className="flex-1 flex flex-col items-center justify-between py-2 px-1">
                 <div className="text-xs font-medium">{day.day}</div>
                 <div className="py-1">
                   {getWeatherIcon(day.condition, day.icon)}
@@ -556,16 +556,16 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         </div>
         
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Humidity</div>
+          <div className="rounded-md p-2 text-center">
+            <div className="text-xs text-gray-500 ">Humidity</div>
             <div className="text-sm font-medium mt-1">{weather.humidity}%</div>
           </div>
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Wind</div>
+          <div className="rounded-md p-2 text-center">
+            <div className="text-xs text-gray-500 ">Wind</div>
             <div className="text-sm font-medium mt-1">{weather.windSpeed} {unit === 'celsius' ? 'm/s' : 'mph'}</div>
           </div>
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-2 text-center">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Sunrise/Sunset</div>
+          <div className="rounded-md p-2 text-center">
+            <div className="text-xs text-gray-500">Sunrise/Sunset</div>
             <div className="text-xs font-medium mt-1">{sunriseTime} / {sunsetTime}</div>
           </div>
         </div>
@@ -574,14 +574,14 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
           <div className="text-xs font-medium mb-2">5-Day Forecast</div>
           <div className="space-y-2">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md py-2 px-3">
+              <div key={index} className="flex items-center justify-between rounded-md py-2 px-3">
                 <div className="text-xs font-medium w-10">{day.day}</div>
                 <div className="flex-1 flex justify-center">
                   {getWeatherIcon(day.condition, day.icon)}
                 </div>
                 <div className="text-xs w-16 text-right">
                   <span className="font-medium">{Math.round(day.temp.max)}°</span>
-                  <span className="text-gray-400 dark:text-gray-500 ml-1">{Math.round(day.temp.min)}°</span>
+                  <span className="text-gray-400 ml-1">{Math.round(day.temp.min)}°</span>
                 </div>
               </div>
             ))}
@@ -637,20 +637,20 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         </div>
         
         <div className="grid grid-cols-4 gap-3 mb-5">
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Humidity</div>
+          <div className="rounded-md p-3">
+            <div className="text-xs text-gray-500 mb-1">Humidity</div>
             <div className="text-lg font-medium">{weather.humidity}%</div>
           </div>
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Wind</div>
+          <div className="rounded-md p-3">
+            <div className="text-xs text-gray-500 mb-1">Wind</div>
             <div className="text-lg font-medium">{weather.windSpeed} {unit === 'celsius' ? 'm/s' : 'mph'}</div>
           </div>
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sunrise</div>
+          <div className="rounded-md p-3">
+            <div className="text-xs text-gray-500 mb-1">Sunrise</div>
             <div className="text-lg font-medium">{sunriseTime}</div>
           </div>
-          <div className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sunset</div>
+          <div className="rounded-md p-3">
+            <div className="text-xs text-gray-500 mb-1">Sunset</div>
             <div className="text-lg font-medium">{sunsetTime}</div>
           </div>
         </div>
@@ -659,7 +659,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
           <h4 className="text-sm font-medium mb-3">5-Day Forecast</h4>
           <div className="grid grid-cols-5 gap-3">
             {weather.forecast.map((day, index) => (
-              <div key={index} className="bg-gray-50 bg-opacity-50 dark:bg-slate-800 dark:bg-opacity-30 rounded-md p-3 flex flex-col items-center">
+              <div key={index} className="rounded-md p-3 flex flex-col items-center">
                 <div className="text-sm font-medium mb-2">{day.day}</div>
                 <div className="mb-2">
                   {getWeatherIcon(day.condition, day.icon)}
@@ -810,7 +810,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         onSettingsClick={() => setIsSettingsOpen(true)}
       />
       
-      <div className="flex-1 overflow-hidden bg-white bg-opacity-30 dark:bg-slate-950 dark:bg-opacity-30 rounded-md m-1">
+      <div className="flex-1 overflow-hidden rounded-md m-1">
         {renderContent()}
       </div>
       
