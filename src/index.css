@@ -389,7 +389,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 /* Adding a subtle hover effect to grid items */
 .react-grid-item:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
   @apply dark:shadow-lg dark:shadow-black/20;
 }
 
