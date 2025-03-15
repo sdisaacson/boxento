@@ -232,10 +232,9 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="general">
-            {/* General settings content */}
+          <TabsContent value="general" className="space-y-4 pt-4">
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="title-input">Widget Title</Label>
                 <Input
                   id="title-input"
@@ -244,13 +243,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="base-currency-select">Base Currency</Label>
                 <Select
                   value={localConfig.baseCurrency || 'USD'}
                   onValueChange={(value: string) => setLocalConfig(prev => ({ ...prev, baseCurrency: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="base-currency-select">
                     <SelectValue placeholder="Select base currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -265,10 +264,9 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             </div>
           </TabsContent>
           
-          <TabsContent value="currencies">
-            {/* Currency selection content */}
+          <TabsContent value="currencies" className="space-y-4 pt-4">
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div className="grid w-full items-center gap-1.5">
                 <div className="flex justify-between items-center">
                   <Label>Target Currencies</Label>
                   <span className="text-xs text-muted-foreground">
@@ -312,10 +310,9 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             </div>
           </TabsContent>
           
-          <TabsContent value="advanced">
-            {/* Advanced settings content */}
+          <TabsContent value="advanced" className="space-y-4 pt-4">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Switch
                   id="use-shared-credential"
                   checked={localConfig.useSharedCredential || false}
@@ -325,7 +322,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
               </div>
 
               {localConfig.useSharedCredential ? (
-                <div className="space-y-2">
+                <div className="grid w-full items-center gap-1.5">
                   <Label>Shared API Key</Label>
                   <Input
                     type="password"
@@ -334,11 +331,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                     placeholder="Enter shared API key"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">openexchangerates.org</a>
+                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openexchangerates.org</a>
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid w-full items-center gap-1.5">
                   <Label>Private API Key</Label>
                   <Input
                     type="password"
@@ -347,12 +344,12 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                     placeholder="Enter your Open Exchange Rates API key"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">openexchangerates.org</a>
+                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openexchangerates.org</a>
                   </p>
                 </div>
               )}
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Switch
                   id="auto-refresh"
                   checked={localConfig.autoRefresh || false}
@@ -362,7 +359,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
               </div>
               
               {localConfig.autoRefresh && (
-                <div className="flex items-center space-x-2">
+                <div className="grid grid-cols-2 items-center gap-2">
                   <Label>Refresh Interval (minutes)</Label>
                   <Input
                     type="number"
@@ -373,7 +370,6 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                       ...prev,
                       refreshInterval: parseInt(e.target.value) || 60
                     }))}
-                    className="w-20"
                   />
                 </div>
               )}
@@ -454,8 +450,8 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <span className="block text-2xl font-bold">-</span>
-            <span className="text-xs text-gray-500">No currencies selected</span>
+            <span className="block text-2xl font-semibold">-</span>
+            <span className="text-xs text-muted-foreground">No currencies selected</span>
           </div>
         </div>
       );
@@ -469,11 +465,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     return (
       <div className="flex items-center justify-center h-full p-2">
         <div className="text-center">
-          <span className="block text-2xl font-bold">
+          <span className="block text-2xl font-semibold">
             {CURRENCIES[primaryCurrency as keyof typeof CURRENCIES]?.symbol}
             {value}
           </span>
-          <span className="text-xs text-gray-500">{primaryCurrency}</span>
+          <span className="text-xs text-muted-foreground">{primaryCurrency}</span>
         </div>
       </div>
     );
@@ -495,11 +491,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const value = (numericAmount * rate).toFixed(2);
           return (
             <div key={currency} className="text-center">
-              <span className="block text-2xl font-bold">
+              <span className="block text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
             </div>
           );
         })}
@@ -523,11 +519,11 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const value = (numericAmount * rate).toFixed(2);
           return (
             <div key={currency} className="text-center">
-              <span className="block text-2xl font-bold">
+              <span className="block text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
             </div>
           );
         })}
@@ -550,12 +546,12 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const rate = rates[currency] || 0;
           const value = (numericAmount * rate).toFixed(2);
           return (
-            <div key={currency} className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-              <span className="text-2xl font-bold">
+            <div key={currency} className="flex flex-col items-center justify-center bg-card text-card-foreground rounded-md p-3 border shadow-sm">
+              <span className="text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
             </div>
           );
         })}
@@ -578,12 +574,12 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const rate = rates[currency] || 0;
           const value = (numericAmount * rate).toFixed(2);
           return (
-            <div key={currency} className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-              <span className="text-2xl font-bold">
+            <div key={currency} className="flex flex-col items-center justify-center bg-card text-card-foreground rounded-md p-3 border shadow-sm">
+              <span className="text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
             </div>
           );
         })}
@@ -606,12 +602,12 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const rate = rates[currency] || 0;
           const value = (numericAmount * rate).toFixed(2);
           return (
-            <div key={currency} className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-              <span className="text-2xl font-bold">
+            <div key={currency} className="flex flex-col items-center justify-center bg-card text-card-foreground rounded-md p-3 border shadow-sm">
+              <span className="text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
             </div>
           );
         })}
@@ -629,17 +625,17 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     const numericAmount = parseFloat(amount) || 0;
 
     return (
-      <div className="grid grid-cols-3 grid-rows-3 gap-2 h-full p-2">
+      <div className="grid grid-cols-3 grid-rows-3 gap-3 h-full p-3">
         {/* Input section */}
-        <div className="col-span-3 flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+        <div className="col-span-3 flex border rounded-md overflow-hidden">
           <Input
             type="text"
             value={amount}
             onChange={handleAmountChange}
-            className="flex-grow w-full px-3 py-2 text-base border-0 dark:bg-gray-700 dark:text-white focus:ring-0 focus:outline-none"
+            className="flex-grow border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             aria-label={`Amount in ${localConfig.baseCurrency}`}
           />
-          <div className="flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border-l border-gray-300 dark:border-gray-600">
+          <div className="flex items-center px-3 text-sm text-muted-foreground bg-muted">
             {localConfig.baseCurrency}
           </div>
         </div>
@@ -649,13 +645,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           const rate = rates[currency] || 0;
           const value = (numericAmount * rate).toFixed(2);
           return (
-            <div key={currency} className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
-              <span className="text-2xl font-bold">
+            <div key={currency} className="flex flex-col items-center justify-center bg-card text-card-foreground rounded-md p-3 border shadow-sm">
+              <span className="text-2xl font-semibold">
                 {CURRENCIES[currency as keyof typeof CURRENCIES]?.symbol}
                 {value}
               </span>
-              <span className="text-xs text-gray-500">{currency}</span>
-              <span className="text-xs text-gray-400 mt-1">1 {localConfig.baseCurrency} = {rate.toFixed(4)} {currency}</span>
+              <span className="text-xs text-muted-foreground">{currency}</span>
+              <span className="text-xs text-muted-foreground mt-1">1 {localConfig.baseCurrency} = {rate.toFixed(4)} {currency}</span>
             </div>
           );
         })}
@@ -674,13 +670,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
       <div className="flex-grow overflow-hidden">
         {error ? (
           <div className="flex items-center justify-center h-full p-4">
-            <div className="text-red-500 dark:text-red-400 text-center">
+            <div className="text-destructive text-center">
               {error}
             </div>
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="animate-spin h-6 w-6 rounded-full border-2 border-primary border-t-transparent"></div>
           </div>
         ) : (
           renderContent()
