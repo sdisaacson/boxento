@@ -209,6 +209,14 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     }, 1500);
   };
 
+  // Handle widget deletion
+  const handleDelete = () => {
+    if (config?.onDelete) {
+      config.onDelete();
+    }
+    setShowSettings(false);
+  };
+
   // Render settings dialog
   const renderSettings = () => (
     <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -374,7 +382,23 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
         </Tabs>
         
         <DialogFooter>
-          <Button onClick={saveSettings}>Save Changes</Button>
+          <div className="flex justify-between w-full">
+            {config?.onDelete && (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                aria-label="Delete this widget"
+              >
+                Delete Widget
+              </Button>
+            )}
+            <Button
+              variant="default"
+              onClick={saveSettings}
+            >
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
