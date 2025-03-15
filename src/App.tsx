@@ -1219,9 +1219,9 @@ function App() {
                   <div className="flex items-center">
                     {auth.currentUser ? (
                       isSyncing ? (
-                        <Loader2 className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                        <Loader2 className="h-5 w-5 text-green-500 dark:text-green-400" />
                       ) : syncStatus === 'success' ? (
-                        <Cloud className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                        <Cloud className="h-5 w-5 text-green-500 dark:text-green-400" />
                       ) : syncStatus === 'error' ? (
                         <Cloud className="h-5 w-5 text-red-500 dark:text-red-400" />
                       ) : (
