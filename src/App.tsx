@@ -1312,7 +1312,7 @@ function App() {
                   onDragStop={handleDragStop}
                   onResizeStart={handleResizeStart}
                   onResizeStop={handleResizeStop}
-                  margin={[10, 10]}
+                  margin={[15, 15]}
                   containerPadding={[10, 10]}
                   draggableHandle=".widget-drag-handle"
                   draggableCancel=".settings-button"
