@@ -1229,7 +1229,7 @@ function App() {
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700">
+                  <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg">
                     <div className="space-y-1">
                       <p className="font-semibold">
                         {isSyncing ? "Syncing..." : 
