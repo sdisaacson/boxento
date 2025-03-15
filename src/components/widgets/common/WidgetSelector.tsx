@@ -60,44 +60,44 @@ const WidgetSelector = ({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl dark:border dark:border-gray-700 w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-black rounded-xl shadow-2xl dark:shadow-xl dark:shadow-black/40 w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-[#1c1c1e]" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Add Widget</h3>
           <button 
             onClick={onClose} 
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1c1c1e] transition-colors duration-200"
             aria-label="Close widget selector"
           >
-            <X size={20} />
+            <X size={20} className="dark:text-white" />
           </button>
         </div>
         
-        <div className="relative p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="relative p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
           <input
             type="text"
             placeholder="Search widgets..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="w-full h-10 rounded-md border border-gray-300 dark:border-[#2c2c2e] bg-white dark:bg-[#1c1c1e] px-3 py-2 text-sm ring-offset-background dark:text-white dark:placeholder:text-[#8e8e93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 dark:focus-visible:ring-blue-400/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
             aria-label="Search widgets"
             autoFocus
           />
         </div>
         
         {searchQuery ? (
-          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1">
-            <h4 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-2">Search Results</h4>
+          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1 dark:bg-black">
+            <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">Search Results</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {filteredWidgets.length > 0 ? (
                 filteredWidgets.map(widget => (
                   <button
                     key={widget.type}
-                    className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="flex items-center gap-3 p-4 border border-gray-100 dark:border-[#2c2c2e] rounded-lg bg-white dark:bg-[#1c1c1e] transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-[#2c2c2e] hover:border-blue-200 dark:hover:border-[#3c3c3e] hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:focus:ring-blue-400/30"
                     onClick={() => onAddWidget(widget.type)}
                     aria-label={`Add ${widget.name} widget`}
                   >
-                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-[#1c1c54] text-blue-600 dark:text-blue-300">
                       {(() => {
                         switch (widget.icon) {
                           case 'Calendar': return <Calendar size={16} />;
@@ -119,32 +119,32 @@ const WidgetSelector = ({
                       })()}
                     </div>
                     <div className="flex flex-col flex-1 pt-1">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">{widget.name}</div>
+                      <div className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</div>
                       {widget.description && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{widget.description}</div>
+                        <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
                       )}
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400 text-sm">No widgets found matching "{searchQuery}"</div>
+                <div className="col-span-full text-center py-8 text-gray-500 dark:text-[#8e8e93] text-sm">No widgets found matching "{searchQuery}"</div>
               )}
             </div>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1">
+          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1 dark:bg-black">
             {Object.entries(widgetCategories).map(([category, widgets]) => (
               <div key={category} className="mb-8">
-                <h4 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-2">{category}</h4>
+                <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">{category}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {widgets.map(widget => (
                     <button
                       key={widget.type}
-                      className="flex items-center gap-3 p-4 border border-gray-100 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      className="flex items-center gap-3 p-4 border border-gray-100 dark:border-[#2c2c2e] rounded-lg bg-white dark:bg-[#1c1c1e] transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-[#2c2c2e] hover:border-blue-200 dark:hover:border-[#3c3c3e] hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:focus:ring-blue-400/30"
                       onClick={() => onAddWidget(widget.type)}
                       aria-label={`Add ${widget.name} widget`}
                     >
-                      <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                      <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-[#1c1c54] text-blue-600 dark:text-blue-300">
                         {(() => {
                           switch (widget.icon) {
                             case 'Calendar': return <Calendar size={16} />;
@@ -166,9 +166,9 @@ const WidgetSelector = ({
                         })()}
                       </div>
                       <div className="flex flex-col flex-1 pt-1 text-left">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{widget.name}</div>
+                        <div className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</div>
                         {widget.description && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{widget.description}</div>
+                          <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
                         )}
                       </div>
                     </button>
