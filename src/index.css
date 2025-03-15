@@ -127,7 +127,7 @@
 /* Widget Container */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  @apply shadow-md p-4 overflow-hidden h-full w-full flex flex-col relative break-words;
+  @apply p-4 overflow-hidden h-full w-full flex flex-col relative break-words;
   background-color: var(--card);
   color: var(--card-foreground);
   border: 1px solid var(--border);
@@ -727,5 +727,4 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .app-widget {
   background-color: var(--card);
   color: var(--card-foreground);
-  border: 1px solid var(--border);
 }

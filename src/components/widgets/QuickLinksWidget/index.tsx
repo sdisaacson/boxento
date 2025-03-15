@@ -529,7 +529,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
   return (
     <div 
       ref={widgetRef} 
-      className="widget-container quicklinks-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+      className="widget-container h-full flex flex-col"
     >
       <WidgetHeader 
         title={customTitle}

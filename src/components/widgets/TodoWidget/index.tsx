@@ -713,7 +713,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   return (
     <div 
       ref={widgetRef} 
-      className="widget-container todo-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+      className="widget-container h-full flex flex-col"
     >
       <WidgetHeader 
         title={localConfig.title || defaultConfig.title} 

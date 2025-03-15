@@ -246,7 +246,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width, height, config }) => {
   return (
     <div
       ref={widgetRef} 
-      className="widget-container notes-widget h-full flex flex-col rounded-lg shadow overflow-hidden"
+      className="widget-container h-full flex flex-col"
     >
       <WidgetHeader 
         title={localConfig.title || 'Notes'} 

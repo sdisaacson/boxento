@@ -239,7 +239,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
     const { showImages, showDate, showAuthor, showDescription, openInNewTab } = localConfig;
     
     return (
-      <div key={`${item.link}-${index}`} className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden h-full flex flex-col">
+      <div key={`${item.link}-${index}`} className="widget-container h-full flex flex-col">
         {showImages && item.image && (
           <div className="h-32 overflow-hidden">
             <img 
