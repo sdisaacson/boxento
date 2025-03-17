@@ -80,12 +80,36 @@ Visit [http://localhost:5173](http://localhost:5173) to see your personal dashbo
 
 ### Current Widget Collection
 
-- **Todo Widget**: Track tasks and activities
-- **Weather Widget**: Local forecasts at a glance
-- **Quick Links Widget**: Your personal web directory
-- **Notes Widget**: Capture thoughts instantly
+Boxento comes with a diverse collection of widgets organized by category:
 
-And many more including Calendar, World Clocks, GitHub Streak Tracker, Currency Converter, Pomodoro Timer, Flight Tracker, and Readwise integration.
+#### Productivity
+- **Todo Widget**: Track tasks and stay organized with customizable todo lists
+- **Calendar Widget**: Display upcoming events and appointments at a glance
+- **Notes Widget**: Capture thoughts and ideas instantly with a simple notepad
+- **Pomodoro Timer**: Boost productivity with time management using the Pomodoro Technique
+- **GitHub Streak Tracker**: Monitor your GitHub contribution streak and coding activity
+
+#### Information
+- **Weather Widget**: Check current conditions and forecasts without leaving your dashboard
+- **World Clocks Widget**: Display time across different time zones
+- **RSS Feed Widget**: Stay updated with news and content from your favorite websites
+- **Readwise Widget**: Access your Readwise reading highlights directly on your dashboard
+
+#### Finance
+- **Currency Converter Widget**: Convert between currencies using live exchange rates
+- **UF (Chile) Widget**: Display the value of UF in Chilean Pesos
+
+#### Entertainment
+- **YouTube Widget**: Watch videos directly on your dashboard
+- **Geography Quiz Widget**: Test your knowledge of world geography
+
+#### Travel
+- **Flight Tracker Widget**: Monitor real-time flight status using the Amadeus API
+
+#### Utilities
+- **Quick Links Widget**: Organize and quickly access your favorite websites in one place
+
+Each widget can be customized through its settings panel to match your preferences and needs.
 
 ### Create Your Own Widgets
 
@@ -93,7 +117,7 @@ The true power of Boxento is its extensibility. Anyone can create widgets - no m
 
 Check out our resources:
 - [Widget Development Guide](/docs/widget-development.md) - Step-by-step instructions
-- [Template Widget](/src/components/widgets/TemplateWidget.tsx) - Ready-to-use starting point
+- [Template Widget](/src/components/widgets/TemplateWidget) - Ready-to-use starting point
 
 Follow these steps:
 1. Fork the repo
@@ -141,3 +165,5 @@ Want to influence what we build next? Join our [Discord Community](https://disco
 ## 📄 License
 
 Boxento is open source under the MIT License - free to use, modify, and share.
+
+![Boxento Banner](./public/screenshot-darkmode.png)
