@@ -12,7 +12,7 @@
 - **Hobby coders** can modify existing widgets to suit their needs
 - **Complete beginners** can use LLMs like ChatGPT, Claude, or LLM based code editors like Cursor or Windsurf to help generate widget code
 
-There are no gatekeepers here - just bring your imagination, and we'll help you make it real. Check out our [Widget Development Guide](/docs/widget-development.md) and [Template Widget](/src/components/widgets/TemplateWidget) to get started. Simply load these files into your favorite AI coding assistant and describe what you want to create!
+There are no gatekeepers here - just bring your imagination, and we'll help you make it real. Check out our [Widget Development Guide](/docs/WIDGET_DEVELOPMENT.md) and [Template Widget](/src/components/widgets/TemplateWidget) to get started. Simply load these files into your favorite AI coding assistant and describe what you want to create!
 
 ## 📋 Table of Contents
 - [Why Boxento?](#-why-boxento)
