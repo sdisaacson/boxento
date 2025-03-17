@@ -1,45 +1,103 @@
 # Boxento
 
-Boxento is a lightweight, open-source customizable start page for tech-savvy users built with React, Vite, Tailwind CSS, and shadcn/ui. It features dynamic, draggable, and resizable widgets to help you stay organized.
+![Boxento Banner](./public/screenshot.png)
 
-## Features
-- **Modular & Fast:** Powered by React, Vite, and Bun for rapid development.
-- **Customizable Widgets:** Drag, drop, and resize with a minimum size of 2×2. New widgets default to 3×3 on desktop (2×2 on mobile).
-- **Theme Support:** Toggle between light and dark modes.
-- **Community-Driven:** Open source under the MIT License.
+## 🌟 Bringing Back the Magic of Start Pages
 
-## Getting Started
+**Remember the golden days of My Yahoo and iGoogle?** Boxento is bringing that back - but better, open source, and completely in your control.
 
-### Prerequisites
+Boxento is a modern revival of the classic web start page, reimagined for today's internet. It's your own personal dashboard that you can customize with widgets, arrange however you want, and even extend with your own creations.
+
+## 🔍 Why Boxento?
+
+While big tech has abandoned customizable start pages, we believe in:
+
+- **Your dashboard, your rules**: Unlike closed platforms, you own and control everything
+- **Open source freedom**: Modify, extend, or completely transform it to suit your needs
+- **Self-hosted privacy**: Your data stays on your systems
+- **Creative expression**: Build your perfect internet starting point, exactly how you want it
+
+## ✨ What is Boxento?
+
+Boxento transforms your new tab or home page into a personalized command center with widgets that matter to you:
+
+- ☑️ Track your to-dos and stay productive
+- 🌤️ Check the weather without leaving your start page
+- 🔗 Organize your favorite websites in one place
+- 📝 Keep notes and ideas at your fingertips
+- 🧩 Add more widgets or create your own!
+
+All in a modern interface that gives you that warm, familiar feeling of the web's golden era.
+
+## 🚀 Get Your Own Boxento
+
+### Option 1: Use the Online Demo
+
+Visit our [live demo](https://boxento.app) to try Boxento instantly.
+
+### Option 2: Install Boxento
+
+For the full experience, host your own Boxento:
+
+**Prerequisites:**
 - Bun (v1.0+)
-- Git (optional)
+- Git
 
-### Installation
+**Installation:**
 ```bash
 git clone https://github.com/sushaantu/boxento.git
 cd boxento
 bun install
-```
-
-### Running Locally
-```bash
 bun run dev
 ```
-Visit [http://localhost:5173](http://localhost:5173).
 
-## Widgets
-Default widgets include:
-- **Todo Widget**
-- **Weather Widget**
-- **Quick Links Widget**
-- **Notes Widget**
+Visit [http://localhost:5173](http://localhost:5173) to see your personal dashboard.
 
-Additional widgets like Calendar or World Clocks can be added via the widget selector.
+## 📖 Making Boxento Your Own
 
-## Contributing
-1. Fork and clone the repo.
-2. Create or update widgets in `/src/components/widgets/`.
-3. Test with `bun run dev` and submit a clear PR.
+### Getting Started
 
-## License
-MIT License.
+1. **Add Widgets**: Click the "+" button to add widgets to your dashboard
+2. **Arrange Everything**: Drag and drop widgets anywhere you like
+3. **Resize as Needed**: Grab any widget corner to resize it
+4. **Make It Yours**: Customize each widget through its settings
+
+### Current Widget Collection
+
+- **Todo Widget**: Track tasks and activities
+- **Weather Widget**: Local forecasts at a glance
+- **Quick Links Widget**: Your personal web directory
+- **Notes Widget**: Capture thoughts instantly
+
+And many more including Calendar, World Clocks, GitHub Streak Tracker, Currency Converter, Pomodoro Timer, Flight Tracker, and Readwise integration.
+
+### Create Your Own Widgets
+
+The true power of Boxento is its extensibility. Create your own widgets by:
+
+1. Forking the repo
+2. Looking at existing widgets as templates
+3. Building your own in `/src/components/widgets/`
+4. Sharing with the community or keeping for personal use
+
+## 💻 For Developers and Tinkerers
+
+### Tech Foundation
+Built with React, Vite, Tailwind CSS, and shadcn/ui - modern tools that make customization easy.
+
+### Contributing
+1. Fork and clone the repo
+2. Create or update widgets in `/src/components/widgets/`
+3. Test locally with `bun run dev`
+4. Submit a PR to share with others
+
+## 📚 Community & Support
+
+Join us in reviving the golden era of start pages, but with modern tech and complete freedom.
+
+- [Discord Community](https://discord.gg/4NXFScs5rv)
+- [GitHub Discussions](https://github.com/sushaantu/boxento/discussions)
+
+## 📄 License
+
+Boxento is open source under the MIT License - free to use, modify, and share.
