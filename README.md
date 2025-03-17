@@ -2,11 +2,27 @@
 
 ![Boxento Banner](./public/screenshot.png)
 
+**Project Status:** Beta - Ready for early adopters and contributors! Expect some rough edges, but core functionality is solid.
+
 ## 🌟 Bringing Back the Magic of Start Pages
 
 **Remember the golden days of My Yahoo and iGoogle?** Boxento is bringing that back - but better, open source, and completely in your control.
 
-Boxento is a modern revival of the classic web start page, reimagined for today's internet. It's your own personal dashboard that you can customize with widgets, arrange however you want, and even extend with your own creations.
+- **Seasoned developers** can dive deep into our codebase
+- **Hobby coders** can modify existing widgets to suit their needs
+- **Complete beginners** can use LLMs like ChatGPT, Claude, or LLM based code editors like Cursor or Windsurf to help generate widget code
+
+There are no gatekeepers here - just bring your imagination, and we'll help you make it real. Check out our [Widget Development Guide](/docs/widget-development.md) and [Template Widget](/src/components/widgets/TemplateWidget) to get started. Simply load these files into your favorite AI coding assistant and describe what you want to create!
+
+## 📋 Table of Contents
+- [Why Boxento?](#-why-boxento)
+- [What is Boxento?](#-what-is-boxento)
+- [Get Your Own Boxento](#-get-your-own-boxento)
+- [Making Boxento Your Own](#-making-boxento-your-own)
+- [For Developers and Tinkerers](#-for-developers-and-tinkerers)
+- [Community & Support](#-community--support)
+- [Roadmap](#️-roadmap)
+- [License](#-license)
 
 ## 🔍 Why Boxento?
 
@@ -73,12 +89,19 @@ And many more including Calendar, World Clocks, GitHub Streak Tracker, Currency 
 
 ### Create Your Own Widgets
 
-The true power of Boxento is its extensibility. Create your own widgets by:
+The true power of Boxento is its extensibility. Anyone can create widgets - no matter your experience level.
 
-1. Forking the repo
-2. Looking at existing widgets as templates
-3. Building your own in `/src/components/widgets/`
-4. Sharing with the community or keeping for personal use
+Check out our resources:
+- [Widget Development Guide](/docs/widget-development.md) - Step-by-step instructions
+- [Template Widget](/src/components/widgets/TemplateWidget.tsx) - Ready-to-use starting point
+
+Follow these steps:
+1. Fork the repo
+2. Use our guides with your favorite coding tools (including AI assistants)
+3. Describe what you want to build - if you can imagine it in TypeScript, you can create it!
+4. Share with the community or keep for personal use
+
+Don't be afraid to experiment.
 
 ## 💻 For Developers and Tinkerers
 
@@ -86,10 +109,15 @@ The true power of Boxento is its extensibility. Create your own widgets by:
 Built with React, Vite, Tailwind CSS, and shadcn/ui - modern tools that make customization easy.
 
 ### Contributing
+We welcome contributions of all kinds! Here's how to get started:
+
 1. Fork and clone the repo
 2. Create or update widgets in `/src/components/widgets/`
 3. Test locally with `bun run dev`
 4. Submit a PR to share with others
+
+### Reporting Issues
+Found a bug or have a feature request? Please open an issue on our [GitHub repository](https://github.com/sushaantu/boxento/issues).
 
 ## 📚 Community & Support
 
@@ -97,6 +125,18 @@ Join us in reviving the golden era of start pages, but with modern tech and comp
 
 - [Discord Community](https://discord.gg/4NXFScs5rv)
 - [GitHub Discussions](https://github.com/sushaantu/boxento/discussions)
+
+## 🗺️ Roadmap
+
+Here's what we're working on to make Boxento even better:
+
+### Coming Soon (Q2 2025)
+- 🔒 **End-to-End Encryption**: Keeping your dashboard data completely private
+- 🌐 **Widget Marketplace**: Discover and install community-created widgets
+- 📱 **Mobile Responsive Design**: Perfect dashboard experience on any device
+
+
+Want to influence what we build next? Join our [Discord Community](https://discord.gg/4NXFScs5rv) or open a feature request on [GitHub](https://github.com/sushaantu/boxento/issues).
 
 ## 📄 License
 
