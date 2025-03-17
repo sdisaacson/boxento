@@ -39,132 +39,237 @@ const cols = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
 // This is important for performance as it prevents recreation on each render
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
+// Helper function to validate layout items
+const validateLayoutItem = (item: LayoutItem): LayoutItem => ({
+  ...item,
+  w: Math.max(item.w, 2), // Minimum width of 2
+  h: Math.max(item.h, 2)  // Minimum height of 2
+});
+
+// Helper function to validate a layout
+const validateLayout = (layout: LayoutItem[]): LayoutItem[] => {
+  return layout.map(validateLayoutItem);
+};
+
+// Helper function to validate all layouts for all breakpoints
+const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: string]: LayoutItem[] } => {
+  const validatedLayouts = { ...layouts };
+  
+  // Ensure all breakpoints have layouts
+  Object.keys(breakpoints).forEach(breakpoint => {
+    if (!validatedLayouts[breakpoint]) {
+      validatedLayouts[breakpoint] = [];
+    }
+    
+    // Enforce minimum sizes on all layouts
+    validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(validateLayoutItem);
+  });
+  
+  return validatedLayouts;
+};
+
+// Helper function to create a default layout item
+const createDefaultLayoutItem = (
+  widgetId: string, 
+  index: number, 
+  colCount: number,
+  breakpoint: string
+): LayoutItem => {
+  // For desktop layouts (lg, md), create a grid layout
+  if (breakpoint === 'lg' || breakpoint === 'md') {
+    // Calculate a grid position that works well with vertical compacting
+    const maxItemsPerRow = Math.max(1, Math.floor(colCount / 3));
+    const col = index % maxItemsPerRow;
+    const row = Math.floor(index / maxItemsPerRow);
+    
+    return {
+      i: widgetId,
+      x: col * 3,
+      y: row * 3,
+      w: 3,
+      h: 3,
+      minW: 2,
+      minH: 2
+    };
+  } 
+  // For medium tablet layouts
+  else if (breakpoint === 'sm') {
+    // For tablet, use 2 items per row
+    const itemsPerRow = 2;
+    const col = index % itemsPerRow;
+    const row = Math.floor(index / itemsPerRow);
+    
+    return {
+      i: widgetId,
+      x: col * 3,
+      y: row * 3,
+      w: 3,
+      h: 3,
+      minW: 2,
+      minH: 2
+    };
+  }
+  // For mobile layouts (xs, xxs), stack vertically
+  else {
+    return {
+      i: widgetId,
+      x: 0,
+      y: index * 2,
+      w: 2,
+      h: 2,
+      minW: 2,
+      minH: 2,
+      maxW: 2,
+      maxH: 2
+    };
+  }
+};
+
+// Helper function to create default layouts for all breakpoints
+const createDefaultLayoutsForWidgets = (
+  widgets: Widget[]
+): { [key: string]: LayoutItem[] } => {
+  const newLayouts: { [key: string]: LayoutItem[] } = {};
+  
+  // For each breakpoint, create layout items for all widgets
+  Object.keys(breakpoints).forEach(breakpoint => {
+    const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
+    
+    // Create layout items for each widget, using smart positioning based on breakpoint
+    newLayouts[breakpoint] = widgets.map((widget, index) => 
+      createDefaultLayoutItem(widget.id, index, colsForBreakpoint, breakpoint)
+    );
+  });
+  
+  return newLayouts;
+};
+
+// Helper to prepare widget config for saving (remove functions)
+const prepareWidgetConfigForSave = (config: Record<string, unknown>): Record<string, unknown> => {
+  // Create a copy of the config without function properties
+  const configToSave = { ...config };
+  delete configToSave.onDelete;
+  delete configToSave.onUpdate;
+  return configToSave;
+};
+
+// Helper to load from localStorage
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+  if (typeof window === 'undefined') return defaultValue;
+  
+  try {
+    const savedItem = localStorage.getItem(key);
+    if (savedItem) {
+      return JSON.parse(savedItem);
+    }
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+  }
+  
+  return defaultValue;
+};
+
 function App() {
   // Add a class to the body for theme styling
   useEffect(() => {
     document.body.className = 'app-background min-h-screen';
-
-    return () => {
-      document.body.className = '';
-    };
+    return () => { document.body.className = ''; };
   }, []);
+  
+  // Default layouts configuration
+  const getDefaultLayouts = () => ({
+    lg: [
+      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'default-notes', x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    md: [
+      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'default-notes', x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    sm: [
+      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: 'default-weather', x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'default-notes', x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    xs: [
+      { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
+    ],
+    xxs: [
+      { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
+    ]
+  });
+
+  // Default widgets
+  const getDefaultWidgets = (): Widget[] => [
+    {
+      id: 'default-todo',
+      type: 'todo',
+      config: getWidgetConfigByType('todo') || {}
+    },
+    {
+      id: 'default-weather',
+      type: 'weather',
+      config: getWidgetConfigByType('weather') || {}
+    },
+    {
+      id: 'default-quick-links',
+      type: 'quick-links',
+      config: getWidgetConfigByType('quick-links') || {}
+    },
+    {
+      id: 'default-notes',
+      type: 'notes',
+      config: getWidgetConfigByType('notes') || {}
+    }
+  ];
+  
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
-      // Check system preference if no theme is set
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme) return savedTheme as 'light' | 'dark';
       
-      // Use system preference as default if available
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       return prefersDark ? 'dark' : 'light';
     }
     return 'light'
-  })
+  });
   
   const [layouts, setLayouts] = useState<{ [key: string]: LayoutItem[] }>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        // Try to load saved layouts
-        const savedLayouts = localStorage.getItem('boxento-layouts');
-        if (savedLayouts) {
-          const parsedLayouts = JSON.parse(savedLayouts);
-          
-          // Validate all breakpoint layouts
-          const validatedLayouts: { [key: string]: LayoutItem[] } = {};
-          
-          // Ensure all breakpoints have layouts with minimum dimensions
-          Object.keys(breakpoints).forEach(breakpoint => {
-            if (!parsedLayouts[breakpoint] || !Array.isArray(parsedLayouts[breakpoint])) {
-              validatedLayouts[breakpoint] = []; // Default to empty layout
-            } else {
-              // Validate each layout item
-              validatedLayouts[breakpoint] = parsedLayouts[breakpoint].map((item: LayoutItem) => ({
-                ...item,
-                w: Math.max(item.w, 2),
-                h: Math.max(item.h, 2),
-                minW: Math.max(item.minW || 1, 2),
-                minH: Math.max(item.minH || 1, 2)
-              }));
-            }
-          });
-          
-          return validatedLayouts;
-        }
-      } catch (error) {
-        console.error('Error initializing layouts:', error);
+    try {
+      const savedLayouts = loadFromLocalStorage('boxento-layouts', {});
+      if (Object.keys(savedLayouts).length > 0) {
+        return validateLayouts(savedLayouts);
       }
+    } catch (error) {
+      console.error('Error initializing layouts:', error);
     }
     
     // Default layout for all breakpoints with default widgets
-    const defaultLayout = {
-      lg: [
-        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-        { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-        { i: 'default-notes', x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
-      ],
-      md: [
-        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-        { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-        { i: 'default-notes', x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-      ],
-      sm: [
-        { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-        { i: 'default-weather', x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
-        { i: 'default-notes', x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-      ],
-      xs: [
-        { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-      ],
-      xxs: [
-        { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-        { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-      ]
-    };
-    return defaultLayout;
+    return getDefaultLayouts();
   });
   
   const [widgets, setWidgets] = useState<Widget[]>(() => {
     if (typeof window !== 'undefined') {
-      const savedWidgets = localStorage.getItem('boxento-widgets')
-      const widgetsFromStorage = savedWidgets ? JSON.parse(savedWidgets) : []
+      const savedWidgets = loadFromLocalStorage('boxento-widgets', []);
       
       // Only use default widgets if we're not logged in and no widgets in storage
-      if (widgetsFromStorage.length === 0 && !auth.currentUser) {
-        // Add default widgets if no widgets exist and user is not logged in
-        return [
-          {
-            id: 'default-todo',
-            type: 'todo',
-            config: getWidgetConfigByType('todo') || {}
-          },
-          {
-            id: 'default-weather',
-            type: 'weather',
-            config: getWidgetConfigByType('weather') || {}
-          },
-          {
-            id: 'default-quick-links',
-            type: 'quick-links',
-            config: getWidgetConfigByType('quick-links') || {}
-          },
-          {
-            id: 'default-notes',
-            type: 'notes',
-            config: getWidgetConfigByType('notes') || {}
-          }
-        ];
+      if (savedWidgets.length === 0 && !auth.currentUser) {
+        return getDefaultWidgets();
       }
       
       // Load each widget's configuration from configManager
-      return widgetsFromStorage.map((widget: Widget) => {
+      return savedWidgets.map((widget: Widget) => {
         if (widget.id) {
           const savedConfig = configManager.getWidgetConfig(widget.id);
           if (savedConfig) {
@@ -181,11 +286,13 @@ function App() {
       });
     }
     return []
-  })
+  });
   
-  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200)
-  const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false)
-  const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg')
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200);
+  const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false);
+  const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const widgetCategories: WidgetCategory = (() => {
     // Group widgets by category
     const categories: WidgetCategory = {};
@@ -201,57 +308,82 @@ function App() {
     return categories;
   })();
   
-  // Save widgets and layout to localStorage when they change
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('boxento-widgets', JSON.stringify(widgets))
-      
-      // Save each widget's configuration separately using configManager
-      widgets.forEach(widget => {
-        if (widget.config && widget.id) {
-          // Extract config without function properties
-          const { ...configToSave } = widget.config;
-          
-          // Remove function properties that shouldn't be serialized
-          delete configToSave.onDelete;
-          delete configToSave.onUpdate;
-          
-          configManager.saveWidgetConfig(widget.id, configToSave);
-        }
-      });
-      
-      // Save widgets to Firestore when user is logged in
-      if (auth.currentUser) {
-        // Use a debounce pattern to prevent too many Firestore writes
+  // Reference for debouncing layout updates
+  const layoutUpdateTimeout = useRef<number | null>(null);
+  
+  // Get sync status from context
+  const { isSyncing, syncStatus } = useSync();
+  
+  // Save widgets to storage (localStorage and Firestore if logged in)
+  const saveWidgets = async (updatedWidgets: Widget[]): Promise<void> => {
+    setWidgets(updatedWidgets);
+    
+    // Save to localStorage
+    localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
+    
+    // Save each widget's configuration separately using configManager
+    updatedWidgets.forEach(widget => {
+      if (widget.config && widget.id) {
+        const configToSave = prepareWidgetConfigForSave(widget.config);
+        configManager.saveWidgetConfig(widget.id, configToSave);
+      }
+    });
+    
+    // Save widgets to Firestore when user is logged in
+    if (auth.currentUser) {
+      try {
+        await userDashboardService.saveWidgets(updatedWidgets);
+        console.log('Saved widget metadata to Firestore');
+      } catch (error) {
+        console.error('Error saving widgets to Firestore:', error);
+      }
+    }
+  };
+  
+  // Save layouts to storage (localStorage and Firestore if logged in)
+  const saveLayouts = async (updatedLayouts: { [key: string]: LayoutItem[] }, debounce = true): Promise<void> => {
+    // Update state
+    setLayouts(updatedLayouts);
+    
+    // Save to localStorage
+    localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
+    
+    // Save to Firestore if logged in
+    if (auth.currentUser) {
+      if (debounce) {
         if (layoutUpdateTimeout.current !== null) {
           clearTimeout(layoutUpdateTimeout.current);
         }
         
         layoutUpdateTimeout.current = window.setTimeout(async () => {
           try {
-            // Save widget metadata to Firestore (without configs)
-            await userDashboardService.saveWidgets(widgets);
-            console.log('Saved widget metadata to Firestore');
-            
-            // Config is saved individually above using configManager.saveWidgetConfig
+            await userDashboardService.saveLayouts(updatedLayouts);
+            console.log('Saved layouts to Firestore');
           } catch (error) {
-            console.error('Error saving widgets to Firestore:', error);
+            console.error('Error saving layouts to Firestore:', error);
           }
-        }, 500); // 500ms debounce for Firestore updates
+        }, 500);
+      } else {
+        try {
+          await userDashboardService.saveLayouts(updatedLayouts);
+          console.log('Saved layouts to Firestore immediately');
+        } catch (error) {
+          console.error('Error saving layouts to Firestore:', error);
+        }
       }
     }
-  }, [widgets])
+  };
   
   // Apply theme to document
   useEffect(() => {
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark')
-      document.body.classList.add('dark')
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark')
-      document.body.classList.remove('dark')
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
     }
-  }, [theme])
+  }, [theme]);
   
   // Handle window resize
   useEffect(() => {
@@ -298,7 +430,6 @@ function App() {
   // Calculate row height based on window width to ensure square widgets
   const calculateRowHeight = (): number => {
     // Calculate the column width based on available width
-    // Total usable width = windowWidth - (containerPadding * 2) - (margin * (cols - 1))
     const totalPadding = 40; // containerPadding (20px * 2)
     const totalMargins = 10 * (12 - 1); // margin (10px) * (cols - 1)
     const usableWidth = windowWidth - totalPadding - totalMargins;
@@ -325,7 +456,7 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
   
-  // Update addWidget function to work with ResponsiveReactGridLayout
+  // Add widget function - refactored to reduce duplication
   const addWidget = (type: string): void => {
     // Generate unique ID for this widget instance
     const widgetId = `${type}-${Date.now()}`;
@@ -339,7 +470,6 @@ function App() {
     
     // Add new widget to state
     const updatedWidgets = [...widgets, newWidget];
-    setWidgets(updatedWidgets);
     
     // For each breakpoint, create a layout item
     const updatedLayouts = { ...layouts };
@@ -354,7 +484,6 @@ function App() {
       const colCount = cols[breakpoint as keyof typeof cols];
       
       // Create default layout item based on the breakpoint
-      const isMobile = breakpoint === 'xs' || breakpoint === 'xxs';
       const defaultItem = createDefaultLayoutItem(
         widgetId, 
         updatedLayouts[breakpoint].length, 
@@ -362,7 +491,8 @@ function App() {
         breakpoint
       );
       
-      // If on mobile, force 2x2 grid size
+      // Force 2x2 grid size for mobile
+      const isMobile = breakpoint === 'xs' || breakpoint === 'xxs';
       if (isMobile) {
         defaultItem.w = 2;
         defaultItem.h = 2;
@@ -373,22 +503,13 @@ function App() {
       updatedLayouts[breakpoint].push(defaultItem);
     });
     
-    // Update layout state
+    // Update states and save data
+    setWidgets(updatedWidgets);
     setLayouts(updatedLayouts);
     
-    // If user is logged in, save widgets and layouts to Firestore
-    if (auth.currentUser) {
-      (async () => {
-        try {
-          // Save the updated widget list to Firestore
-          await userDashboardService.saveWidgets(updatedWidgets);
-          await userDashboardService.saveLayouts(updatedLayouts);
-          console.log('Saved new widget to Firestore:', widgetId);
-        } catch (error) {
-          console.error('Error saving new widget to Firestore:', error);
-        }
-      })();
-    }
+    // Save changes
+    saveWidgets(updatedWidgets);
+    saveLayouts(updatedLayouts, false);
     
     // Close the widget selector if it's open
     if (widgetSelectorOpen) {
@@ -396,134 +517,81 @@ function App() {
     }
   };
   
+  // Delete widget function - refactored to reduce duplication
   const deleteWidget = async (widgetId: string): Promise<void> => {
-    // Remove widget config from storage using the updated configManager
+    // Remove widget config from storage
     await configManager.clearConfig(widgetId);
     
     // Remove widget from state
     const updatedWidgets = widgets.filter(widget => widget.id !== widgetId);
-    setWidgets(updatedWidgets);
     
     // Remove layout item from all breakpoints
-    const newLayouts = { ...layouts };
-    Object.keys(newLayouts).forEach(breakpoint => {
-      newLayouts[breakpoint] = newLayouts[breakpoint].filter(item => item.i !== widgetId);
+    const updatedLayouts = { ...layouts };
+    Object.keys(updatedLayouts).forEach(breakpoint => {
+      updatedLayouts[breakpoint] = updatedLayouts[breakpoint].filter(item => item.i !== widgetId);
     });
-    setLayouts(newLayouts);
     
-    // Save to localStorage as fallback
-    localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
+    // Update state and save
+    setWidgets(updatedWidgets);
+    setLayouts(updatedLayouts);
     
-    // If user is logged in, save to Firestore
-    if (auth.currentUser) {
-      try {
-        await userDashboardService.saveWidgets(updatedWidgets);
-        await userDashboardService.saveLayouts(newLayouts);
-      } catch (error) {
-        console.error('Error saving to Firestore after widget deletion:', error);
-      }
-    }
+    // Save changes
+    saveWidgets(updatedWidgets);
+    saveLayouts(updatedLayouts, false);
   };
   
-  // Add this near the top of the App component along with other state variables
-  const layoutUpdateTimeout = React.useRef<number | null>(null);
-  
-  // Update handleLayoutChange function to handle all responsive layouts
+  // Update layout function - refactored to reduce duplication
   const handleLayoutChange = (currentLayout: LayoutItem[], allLayouts?: { [key: string]: LayoutItem[] }): void => {
-    const validatedLayout = currentLayout.map(item => ({
-      ...item,
-      w: Math.max(item.w, 2), // Minimum width of 2
-      h: Math.max(item.h, 2)  // Minimum height of 2
-    }));
+    const validatedLayout = validateLayout(currentLayout);
 
     // If we have all layouts from the responsive grid
     if (allLayouts) {
-      // Use a timeout to debounce the layout update to prevent excessive state updates
+      // Use a timeout to debounce the layout update
       if (layoutUpdateTimeout.current !== null) {
         clearTimeout(layoutUpdateTimeout.current);
       }
-      layoutUpdateTimeout.current = window.setTimeout(async () => {
+      
+      layoutUpdateTimeout.current = window.setTimeout(() => {
         // Create a validated copy to prevent mutating the input
-        const validatedLayouts = { ...allLayouts };
+        const validatedLayouts = validateLayouts(allLayouts);
         
-        // Ensure all breakpoints have layouts
-        Object.keys(breakpoints).forEach(breakpoint => {
-          if (!validatedLayouts[breakpoint]) {
-            validatedLayouts[breakpoint] = validatedLayout;
-          }
-          
-          // Enforce minimum sizes on all layouts
-          validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(item => {
-            return {
-              ...item,
-              w: Math.max(item.w, 2),
-              h: Math.max(item.h, 2)
-            };
-          });
-        });
-        
-        // Update layout state
+        // Update layout state and save
         setLayouts(validatedLayouts);
-        
-        // Save to localStorage as fallback
-        localStorage.setItem('boxento-layouts', JSON.stringify(validatedLayouts));
-        
-        // If user is logged in, save to Firestore
-        if (auth.currentUser) {
-          try {
-            await userDashboardService.saveLayouts(validatedLayouts);
-          } catch (error) {
-            console.error('Error saving layouts to Firestore:', error);
-          }
-        }
+        saveLayouts(validatedLayouts);
       }, 100); // 100ms debounce
     } else {
       // If we only have the current layout, update only the current breakpoint
       const updatedLayouts = { ...layouts };
       updatedLayouts[currentBreakpoint] = validatedLayout;
-      setLayouts(updatedLayouts);
-      localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
       
-      // Save to Firestore if user is logged in
-      if (auth.currentUser) {
-        (async () => {
-          try {
-            await userDashboardService.saveLayouts(updatedLayouts);
-          } catch (error) {
-            console.error('Error saving layouts to Firestore:', error);
-          }
-        })();
-      }
+      // Update state and save
+      setLayouts(updatedLayouts);
+      saveLayouts(updatedLayouts);
     }
   };
   
-  /**
-   * Updates a widget's configuration
-   * @param widgetId ID of the widget to update
-   * @param newConfig New configuration object
-   */
+  // Update widget config - refactored to be more maintainable
   const updateWidgetConfig = (widgetId: string, newConfig: Record<string, unknown>): void => {
     // Update widget in state
-    setWidgets(widgets.map(widget => 
+    const updatedWidgets = widgets.map(widget => 
       widget.id === widgetId 
         ? { ...widget, config: { ...widget.config, ...newConfig } }
         : widget
-    ));
+    );
+    
+    setWidgets(updatedWidgets);
     
     // Save to configManager - excluding function properties
-    const { ...configToSave } = newConfig as { 
-      onDelete?: () => void; 
-      onUpdate?: (config: Record<string, unknown>) => void;
-      [key: string]: unknown;
-    };
-    
-    // Remove function properties that shouldn't be serialized
-    delete configToSave.onDelete;
-    delete configToSave.onUpdate;
-    
+    const configToSave = prepareWidgetConfigForSave(newConfig);
     configManager.saveWidgetConfig(widgetId, configToSave);
+    
+    // Save to Firestore if logged in
+    if (auth.currentUser) {
+      saveWidgets(updatedWidgets);
+    }
   };
 
+  // Unified widget rendering function
   const renderWidget = (widget: Widget, isMobileView = false): React.ReactNode => {
     const WidgetComponent = getWidgetComponent(widget.type);
     
@@ -535,89 +603,59 @@ function App() {
       );
     }
     
-    // Check if we're in the middle of layout initialization
-    if (!isLayoutReady && layouts && Object.keys(layouts).length > 0) {
-      // If layouts are still initializing, use a temporary rendering with default dimensions
-      return (
-        <WidgetErrorBoundary children={
-          <WidgetComponent
-            width={isMobileView ? 2 : 3}
-            height={isMobileView ? 2 : 3}
-            config={{
-              ...widget.config,
-              onDelete: () => deleteWidget(widget.id),
-              onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
-            }}
-          />
-        } />
-      );
-    }
-    
-    // Find layout item for this widget
-    const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
-    
-    if (!layoutItem) {
-      // Silently create a temporary layout item for this widget
-      // This prevents the warning while still ensuring proper display
+    // Get widget dimensions
+    const getWidgetDimensions = () => {
+      // If layout isn't ready yet, use default dimensions
+      if (!isLayoutReady) {
+        return { width: isMobileView ? 2 : 3, height: isMobileView ? 2 : 3 };
+      }
       
-      // Create a default layout item based on the current breakpoint
-      const defaultWidth = isMobileView ? 2 : 3;
-      const defaultHeight = isMobileView ? 2 : 3;
+      // Find layout item for this widget
+      const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
       
-      // Return widget with these default dimensions
-      return (
-        <WidgetErrorBoundary children={
-          <WidgetComponent
-            width={defaultWidth}
-            height={defaultHeight}
-            config={{
-              ...widget.config,
-              onDelete: () => deleteWidget(widget.id),
-              onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
-            }}
-          />
-        } />
-      );
-    }
+      // If no layout item found, use default dimensions
+      if (!layoutItem) {
+        return { width: isMobileView ? 2 : 3, height: isMobileView ? 2 : 3 };
+      }
+      
+      // Use the layout item dimensions
+      return {
+        width: isMobileView ? 2 : layoutItem.w,
+        height: isMobileView ? 2 : layoutItem.h
+      };
+    };
     
-    // Use the layout item dimensions for the widget
+    const { width, height } = getWidgetDimensions();
+    
+    // Create widget config with callbacks
+    const widgetConfig = {
+      ...widget.config,
+      onDelete: () => deleteWidget(widget.id),
+      onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
+    };
+    
     return (
-      <WidgetErrorBoundary children={
+      <WidgetErrorBoundary>
         <WidgetComponent
-          width={isMobileView ? 2 : layoutItem.w}
-          height={isMobileView ? 2 : layoutItem.h}
-          config={{
-            ...widget.config,
-            onDelete: () => deleteWidget(widget.id),
-            onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
-          }}
+          width={width}
+          height={height}
+          config={widgetConfig}
         />
-      } />
+      </WidgetErrorBoundary>
     );
   };
   
-  // Add state to track dragging direction and current dragged widget
+  // Handle drag events - refactored to be more maintainable
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
   const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null);
   const lastMousePos = useRef<{ x: number, y: number } | null>(null);
   const dragThreshold = 5; // Minimum mouse movement to determine direction
   
-  // Update drag handlers to track direction
   const handleDragStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem, _placeholder: LayoutItem, event: MouseEvent): void => {
-    // Add a class to the body to indicate we're dragging
-    document.body.classList.add('dragging');
-    document.body.classList.add('react-grid-layout--dragging');
-    
-    // Store the widget ID being dragged
+    document.body.classList.add('dragging', 'react-grid-layout--dragging');
     setDraggedWidgetId(newItem.i);
-    
-    // Initialize mouse position
     lastMousePos.current = { x: event.clientX, y: event.clientY };
-    
-    // Reset direction at start
     setDragDirection(null);
-    
-    // Log for debugging
     console.log('Drag started');
   };
   
@@ -657,33 +695,16 @@ function App() {
       }
     }
     
-    // Reset direction and dragged widget
+    // Reset states
     setDragDirection(null);
     setDraggedWidgetId(null);
-    
-    // Reset last mouse position
     lastMousePos.current = null;
     
     // Remove classes
-    document.body.classList.remove('dragging');
-    document.body.classList.remove('react-grid-layout--dragging');
+    document.body.classList.remove('dragging', 'react-grid-layout--dragging');
     
-    // Force save the current layout state to ensure it's preserved
-    const currentLayoutSnapshot = { ...layouts };
-    localStorage.setItem('boxento-layouts', JSON.stringify(currentLayoutSnapshot));
-    
-    // If user is logged in, save to Firestore
-    if (auth.currentUser) {
-      (async () => {
-        try {
-          await userDashboardService.saveLayouts(currentLayoutSnapshot);
-        } catch (error) {
-          console.error('Error saving layouts to Firestore after drag:', error);
-        }
-      })();
-    }
-    
-    // Log for debugging
+    // Save the layout
+    saveLayouts(layouts, false);
     console.log('Drag completed, layout saved');
   };
   
@@ -703,146 +724,35 @@ function App() {
     }
   }, [draggedWidgetId, dragDirection]);
   
+  // Handle resize events
   const handleResizeStart = (): void => {
     document.body.classList.add('react-grid-layout--resizing');
   };
   
   const handleResizeStop = (): void => {
     document.body.classList.remove('react-grid-layout--resizing');
-    
-    // Force save after resize
-    const currentLayoutSnapshot = { ...layouts };
-    localStorage.setItem('boxento-layouts', JSON.stringify(currentLayoutSnapshot));
+    saveLayouts(layouts, false);
   };
   
+  // Toggle widget selector
   const toggleWidgetSelector = (): void => {
     setWidgetSelectorOpen(!widgetSelectorOpen);
-  }
-  
-  // Handle escape key to close any open modals
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        // Close any open modals
-        if (widgetSelectorOpen) {
-          setWidgetSelectorOpen(false);
-        }
-        // Add other modal closing logic here if needed in the future
-      }
-    };
-    
-    // Add event listener
-    document.addEventListener('keydown', handleEscapeKey);
-    
-    // Clean up
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [widgetSelectorOpen]);
-
-  // Add this function to create a default layout for a widget
-  const createDefaultLayoutItem = (
-    widgetId: string, 
-    index: number, 
-    colCount: number,
-    breakpoint: string
-  ): LayoutItem => {
-    // For desktop layouts (lg, md), create a grid layout
-    if (breakpoint === 'lg' || breakpoint === 'md') {
-      // Calculate a grid position that works well with vertical compacting
-      // Place widgets side by side in rows of 4 (for lg screens)
-      const maxItemsPerRow = Math.max(1, Math.floor(colCount / 3)); // 4 items per row for 12 cols
-      const col = index % maxItemsPerRow;
-      const row = Math.floor(index / maxItemsPerRow);
-      
-      return {
-        i: widgetId,
-        x: col * 3,
-        y: row * 3,   // Ensure sufficient y-spacing for vertical compacting
-        w: 3,         // Default width for desktop
-        h: 3,         // Default height for desktop
-        minW: 2,
-        minH: 2
-      };
-    } 
-    // For medium tablet layouts
-    else if (breakpoint === 'sm') {
-      // For tablet, use 2 items per row
-      const itemsPerRow = 2;
-      const col = index % itemsPerRow;
-      const row = Math.floor(index / itemsPerRow);
-      
-      return {
-        i: widgetId,
-        x: col * 3,
-        y: row * 3,
-        w: 3,
-        h: 3,
-        minW: 2,
-        minH: 2
-      };
-    }
-    // For mobile layouts (xs, xxs), force 2x2 grid size and stack vertically
-    else {
-      return {
-        i: widgetId,
-        x: 0,         // Stack in a single column
-        y: index * 2, // Position vertically based on index with a gap
-        w: 2,         // Enforce 2x2 grid size for all widgets on mobile
-        h: 2,         // Enforce 2x2 grid size for all widgets on mobile
-        minW: 2,
-        minH: 2,
-        maxW: 2,      // Add maximum width constraint for mobile
-        maxH: 2       // Add maximum height constraint for mobile
-      };
-    }
   };
-
-  // In the useEffect that runs on app initialization, add this:
-  // Ensure layouts exist for all widgets
-  useEffect(() => {
-    // Only run this if we have widgets but missing or empty layouts
-    if (widgets.length > 0 && 
-        (!layouts || 
-         Object.keys(layouts).length === 0 || 
-         Object.values(layouts).some(layout => layout.length === 0))) {
-      
-      console.log('Creating default layouts for widgets');
-      
-      // Create layouts for all breakpoints
-      const newLayouts: { [key: string]: LayoutItem[] } = {};
-      
-      // For each breakpoint, create layout items for all widgets
-      Object.keys(breakpoints).forEach(breakpoint => {
-        const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
-        
-        // Create layout items for each widget, using smart positioning based on breakpoint
-        newLayouts[breakpoint] = widgets.map((widget, index) => 
-          createDefaultLayoutItem(widget.id, index, colsForBreakpoint, breakpoint)
-        );
-      });
-      
-      // Update layouts state
-      setLayouts(newLayouts);
-      console.log('Default layouts created');
-    }
-  }, [widgets, layouts, breakpoints, cols]);
-
-  // Instead of memoized widgets, we'll optimize in a different way
+  
+  // Unified function to render widget items for the grid
   const renderWidgetItems = () => {
     return widgets.map(widget => {
-      // Find the layout data for this widget to pass as data-grid
+      // Find the layout data for this widget
       const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
       
-      // Always provide explicit positioning values
+      // Determine if mobile view
       const isMobile = currentBreakpoint === 'xs' || currentBreakpoint === 'xxs';
       
-      // If no layout item is found, create a temporary one with default values
-      // This prevents console warnings and ensures consistent rendering
+      // Set default dimensions
       const defaultWidth = isMobile ? 2 : 3;
       const defaultHeight = isMobile ? 2 : 3;
       
-      // For mobile, ensure widgets have appropriate height
+      // Create data-grid object with fallbacks
       const dataGrid = {
         i: widget.id,
         x: layoutItem?.x ?? 0,
@@ -870,66 +780,8 @@ function App() {
       );
     });
   };
-
-  // Add debug logging for layout issues
-  useEffect(() => {
-    // Log layout information when the app starts
-    console.log('Initial state - current breakpoint:', currentBreakpoint);
-    
-    // Check if layouts are properly defined for all breakpoints
-    const missingLayouts = Object.keys(breakpoints).filter(bp => 
-      !layouts[bp] || !Array.isArray(layouts[bp])
-    );
-    
-    if (missingLayouts.length > 0) {
-      console.warn(`Missing layouts for breakpoints: ${missingLayouts.join(', ')}`);
-    }
-    
-    // Check if widgets have corresponding layout items
-    const widgetsWithoutLayout = widgets.filter(widget => 
-      !layouts[currentBreakpoint]?.some(item => item.i === widget.id)
-    );
-    
-    if (widgetsWithoutLayout.length > 0) {
-      console.warn(`Widgets without layout items: ${widgetsWithoutLayout.map(w => w.id).join(', ')}`);
-    }
-  }, [layouts, widgets, currentBreakpoint]);
-
-  // Clean up orphaned layout items (layouts without corresponding widgets)
-  useEffect(() => {
-    // Only run cleanup if we have both widgets and layouts
-    if (widgets.length > 0 && layouts && Object.keys(layouts).length > 0) {
-      // Check if there are any orphaned layout items
-      let hasOrphanedItems = false;
-      const widgetIds = new Set(widgets.map(w => w.id));
-      const cleanedLayouts = { ...layouts };
-      
-      // For each breakpoint, filter out layout items without a corresponding widget
-      Object.keys(cleanedLayouts).forEach(breakpoint => {
-        const originalLength = cleanedLayouts[breakpoint]?.length || 0;
-        
-        if (cleanedLayouts[breakpoint] && Array.isArray(cleanedLayouts[breakpoint])) {
-          cleanedLayouts[breakpoint] = cleanedLayouts[breakpoint].filter(item => 
-            widgetIds.has(item.i)
-          );
-          
-          // Check if we removed any items
-          if (cleanedLayouts[breakpoint].length < originalLength) {
-            hasOrphanedItems = true;
-          }
-        }
-      });
-      
-      // If we found orphaned items, update the layouts
-      if (hasOrphanedItems) {
-        console.log('Cleaning up orphaned layout items');
-        setLayouts(cleanedLayouts);
-        localStorage.setItem('boxento-layouts', JSON.stringify(cleanedLayouts));
-      }
-    }
-  }, [widgets, layouts]);
-
-  // Inside the App function component, add a special mobile view renderer
+  
+  // Unified function to render mobile layout
   const renderMobileLayout = () => {
     return (
       <div className="mobile-widget-list">
@@ -944,64 +796,17 @@ function App() {
       </div>
     );
   };
-
-  // Add a loading state to control initial render
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
   
-  // Add effect to handle initial layout loading
-  useEffect(() => {
-    // Only show the grid once we have layouts and we're sure the measurements are done
-    if (layouts && Object.keys(layouts).length > 0 && widgets.length > 0) {
-      // Check if all widgets have layout items before marking layout as ready
-      let allWidgetsHaveLayouts = true;
-      
-      // Check if all widgets have layout items for the current breakpoint
-      if (currentBreakpoint) {
-        for (const widget of widgets) {
-          if (!layouts[currentBreakpoint]?.some(item => item.i === widget.id)) {
-            allWidgetsHaveLayouts = false;
-            console.log(`Widget ${widget.id} is missing a layout item for breakpoint ${currentBreakpoint}`);
-            break;
-          }
-        }
-      }
-      
-      // Add a longer delay if not all widgets have layouts yet
-      const delay = allWidgetsHaveLayouts ? 300 : 500;
-      
-      // Short delay to ensure the layout calculations are complete
-      const timer = setTimeout(() => {
-        setIsLayoutReady(true);
-        console.log('Layout is now ready for rendering');
-      }, delay);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [layouts, widgets, currentBreakpoint]);
-
-  // Add state for tracking user
-  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
-  
-  // Get sync status from context
-  const { isSyncing, syncStatus } = useSync();
-  
-  // Initialize auth listener
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // User is signed in, load their data from Firestore
-        await loadUserData();
-      } else {
-        // User is signed out, load from localStorage
-        loadLocalData();
-      }
-      
-      setIsDataLoaded(true);
-    });
+  // Load local data
+  const loadLocalData = () => {
+    // Load layouts from localStorage
+    const localLayouts = loadFromLocalStorage('boxento-layouts', getDefaultLayouts());
+    if (localLayouts) setLayouts(localLayouts);
     
-    // Cleanup subscription
-    return () => unsubscribe();
-  }, []);
+    // Load widgets from localStorage
+    const localWidgets = loadFromLocalStorage('boxento-widgets', getDefaultWidgets());
+    if (localWidgets) setWidgets(localWidgets);
+  };
   
   // Function to load user data from Firestore
   const loadUserData = async (): Promise<void> => {
@@ -1036,8 +841,7 @@ function App() {
           setWidgets(typedWidgets);
           userHasFirestoreData = true;
           
-          // 5. IMPORTANT: Before loading layouts, validate and fix them based on the widgets
-          // This ensures all widgets have layouts for all breakpoints
+          // 5. Validate and fix layouts based on the widgets
           console.log('Validating layouts to ensure they match widgets...');
           const validatedLayouts = await userDashboardService.validateAndFixLayouts(
             typedWidgets.map(w => ({ id: w.id, type: w.type }))
@@ -1051,33 +855,16 @@ function App() {
           localStorage.setItem('boxento-widgets', JSON.stringify(typedWidgets));
           localStorage.setItem('boxento-layouts', JSON.stringify(validatedLayouts));
         } else if (!userHasFirestoreData) {
-          // Only fall back to localStorage if we haven't found any Firestore data yet
-          const localWidgets = loadLocalWidgets();
-          if (localWidgets && localWidgets.length > 0) {
-            setWidgets(localWidgets);
-            
-            // Load layouts for these widgets
-            const localLayouts = loadLocalLayouts();
-            if (localLayouts && Object.keys(localLayouts).length > 0) {
-              setLayouts(localLayouts);
-            }
-            
-            // Migrate to Firestore - with new separation of concerns
+          // Fall back to localStorage if no Firestore data
+          loadLocalData();
+          
+          // Migrate to Firestore if logged in
+          if (auth.currentUser && widgets.length > 0) {
             try {
-              await userDashboardService.saveWidgets(localWidgets);
-              
-              // Also save each widget's configuration separately
-              for (const widget of localWidgets) {
-                if (widget.id && widget.config) {
-                  const { ...configToSave } = widget.config as Record<string, unknown>;
-                  delete configToSave.onDelete;
-                  delete configToSave.onUpdate;
-                  await configManager.saveWidgetConfig(widget.id, configToSave);
-                }
-              }
-            } catch (migrationError) {
-              console.error('Error migrating widgets to Firestore:', migrationError);
-              // Continue with local data even if migration fails
+              await saveWidgets(widgets);
+              await saveLayouts(layouts, false);
+            } catch (error) {
+              console.error('Error migrating to Firestore:', error);
             }
           }
         }
@@ -1085,11 +872,7 @@ function App() {
         console.error('Error loading widgets from Firestore:', error);
         // Only fall back to localStorage if we haven't loaded Firestore data
         if (!userHasFirestoreData) {
-          const localWidgets = loadLocalWidgets();
-          if (localWidgets) setWidgets(localWidgets);
-          
-          const localLayouts = loadLocalLayouts();
-          if (localLayouts) setLayouts(localLayouts);
+          loadLocalData();
         }
       }
     } catch (error) {
@@ -1099,96 +882,119 @@ function App() {
     }
   };
   
-  // Function to load from localStorage
-  const loadLocalData = () => {
-    const localLayouts = loadLocalLayouts();
-    if (localLayouts) setLayouts(localLayouts);
+  // Initialize auth listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // User is signed in, load their data from Firestore
+        await loadUserData();
+      } else {
+        // User is signed out, load from localStorage
+        loadLocalData();
+      }
+      
+      setIsDataLoaded(true);
+    });
     
-    const localWidgets = loadLocalWidgets();
-    if (localWidgets) setWidgets(localWidgets);
-  };
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, []);
   
-  // Helper to load layouts from localStorage
-  const loadLocalLayouts = () => {
-    try {
-      const savedLayouts = localStorage.getItem('boxento-layouts');
-      if (savedLayouts) {
-        return JSON.parse(savedLayouts);
-      }
-    } catch (error) {
-      console.error('Error loading layouts from localStorage:', error);
-    }
-    return null;
-  };
-  
-  // Helper to load widgets from localStorage
-  const loadLocalWidgets = () => {
-    try {
-      const savedWidgets = localStorage.getItem('boxento-widgets');
-      if (savedWidgets) {
-        const parsedWidgets = JSON.parse(savedWidgets);
-        // If we have widgets in localStorage, use them
-        if (Array.isArray(parsedWidgets) && parsedWidgets.length > 0) {
-          return parsedWidgets;
-        }
-      }
+  // Effect to handle initial layout loading
+  useEffect(() => {
+    // Only show the grid once layouts and widgets are loaded
+    if (layouts && Object.keys(layouts).length > 0 && widgets.length > 0) {
+      // Check if all widgets have layout items
+      let allWidgetsHaveLayouts = true;
       
-      // If there are no widgets in localStorage and user is not logged in,
-      // return default widgets
-      if (!auth.currentUser) {
-        return [
-          {
-            id: 'default-todo',
-            type: 'todo',
-            config: getWidgetConfigByType('todo') || {}
-          },
-          {
-            id: 'default-weather',
-            type: 'weather',
-            config: getWidgetConfigByType('weather') || {}
-          },
-          {
-            id: 'default-quick-links',
-            type: 'quick-links',
-            config: getWidgetConfigByType('quick-links') || {}
-          },
-          {
-            id: 'default-notes',
-            type: 'notes',
-            config: getWidgetConfigByType('notes') || {}
+      // Check current breakpoint
+      if (currentBreakpoint) {
+        for (const widget of widgets) {
+          if (!layouts[currentBreakpoint]?.some(item => item.i === widget.id)) {
+            allWidgetsHaveLayouts = false;
+            console.log(`Widget ${widget.id} is missing a layout item for breakpoint ${currentBreakpoint}`);
+            break;
           }
-        ];
+        }
       }
       
-      // For logged in users with no widgets, return an empty array
-      return [];
-    } catch (error) {
-      console.error('Error loading widgets from localStorage:', error);
-      return auth.currentUser ? [] : [
-        {
-          id: 'default-todo',
-          type: 'todo',
-          config: getWidgetConfigByType('todo') || {}
-        },
-        {
-          id: 'default-weather',
-          type: 'weather',
-          config: getWidgetConfigByType('weather') || {}
-        },
-        {
-          id: 'default-quick-links',
-          type: 'quick-links',
-          config: getWidgetConfigByType('quick-links') || {}
-        },
-        {
-          id: 'default-notes',
-          type: 'notes',
-          config: getWidgetConfigByType('notes') || {}
-        }
-      ];
+      // Add delay to ensure layout calculations are complete
+      const delay = allWidgetsHaveLayouts ? 300 : 500;
+      
+      const timer = setTimeout(() => {
+        setIsLayoutReady(true);
+        console.log('Layout is now ready for rendering');
+      }, delay);
+      
+      return () => clearTimeout(timer);
     }
-  };
-
+  }, [layouts, widgets, currentBreakpoint]);
+  
+  // Clean up orphaned layout items
+  useEffect(() => {
+    // Only run cleanup if we have both widgets and layouts
+    if (widgets.length > 0 && layouts && Object.keys(layouts).length > 0) {
+      // Check if there are any orphaned layout items
+      let hasOrphanedItems = false;
+      const widgetIds = new Set(widgets.map(w => w.id));
+      const cleanedLayouts = { ...layouts };
+      
+      // For each breakpoint, filter out layout items without a corresponding widget
+      Object.keys(cleanedLayouts).forEach(breakpoint => {
+        const originalLength = cleanedLayouts[breakpoint]?.length || 0;
+        
+        if (cleanedLayouts[breakpoint] && Array.isArray(cleanedLayouts[breakpoint])) {
+          cleanedLayouts[breakpoint] = cleanedLayouts[breakpoint].filter(item => 
+            widgetIds.has(item.i)
+          );
+          
+          // Check if we removed any items
+          if (cleanedLayouts[breakpoint].length < originalLength) {
+            hasOrphanedItems = true;
+          }
+        }
+      });
+      
+      // If we found orphaned items, update the layouts
+      if (hasOrphanedItems) {
+        console.log('Cleaning up orphaned layout items');
+        setLayouts(cleanedLayouts);
+        localStorage.setItem('boxento-layouts', JSON.stringify(cleanedLayouts));
+      }
+    }
+  }, [widgets, layouts]);
+  
+  // Ensure layouts exist for all widgets
+  useEffect(() => {
+    // Only run this if we have widgets but missing or empty layouts
+    if (widgets.length > 0 && 
+        (!layouts || 
+         Object.keys(layouts).length === 0 || 
+         Object.values(layouts).some(layout => layout.length === 0))) {
+      
+      console.log('Creating default layouts for widgets');
+      
+      // Create default layouts for all widgets
+      const newLayouts = createDefaultLayoutsForWidgets(widgets);
+      
+      // Update layouts state
+      setLayouts(newLayouts);
+      console.log('Default layouts created');
+    }
+  }, [widgets, layouts]);
+  
+  // Handle escape key to close modals
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && widgetSelectorOpen) {
+        setWidgetSelectorOpen(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [widgetSelectorOpen]);
+  
   // Only render the UI when data is loaded
   if (!isDataLoaded) {
     return (
@@ -1201,10 +1007,8 @@ function App() {
     );
   }
   
-  // In the app header, add a sync status indicator
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''} app-background`} data-theme={theme}>
-
       {/* Header */}
       <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
         <div className="px-4 py-3 flex items-center justify-between">
@@ -1212,7 +1016,7 @@ function App() {
             <a href="/" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-gray-700 transition-colors">
               <h1 className="text-lg font-semibold mr-3">Boxento</h1>
             </a>
-            {/* Sync indicator - show for all users, with different messages based on login status */}
+            {/* Sync indicator */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1298,7 +1102,7 @@ function App() {
             </div>
             
             <div className="desktop-view-container">
-              {/* Add a conditional rendering with opacity transition */}
+              {/* Conditional rendering with opacity transition */}
               <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
                 <ResponsiveReactGridLayout
                   className="layout"
@@ -1337,7 +1141,7 @@ function App() {
                   {renderWidgetItems()}
                 </ResponsiveReactGridLayout>
               </div>
-              {/* Add a loading indicator that shows only during initial layout calculation */}
+              {/* Loading indicator during initial layout calculation */}
               {!isLayoutReady && widgets.length > 0 && (
                 <div className="flex items-center justify-center p-12">
                   <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
