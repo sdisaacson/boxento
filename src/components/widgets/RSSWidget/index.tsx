@@ -13,6 +13,7 @@ import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * Size categories for widget content rendering
@@ -203,8 +204,11 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
   const truncateText = (text: string, maxLength: number): string => {
     if (!text) return '';
     
-    // Remove HTML tags
-    const strippedText = text.replace(/<[^>]*>?/gm, '');
+    // Remove unsafe HTML tags
+    const strippedText = sanitizeHtml(text, {
+      allowedTags: [],
+      allowedAttributes: {}
+    });
     
     if (strippedText.length <= maxLength) return strippedText;
     
