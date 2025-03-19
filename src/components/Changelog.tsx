@@ -10,10 +10,58 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ChangelogData } from '@/types/changelog';
-import { parseChangelog } from '@/utils/changelog';
 import { Bell, Sparkles } from 'lucide-react';
 
 const LAST_VIEWED_KEY = 'boxento-changelog-last-viewed';
+
+const parseChangelog = async (): Promise<ChangelogData> => {
+    try {
+        const response = await fetch('/CHANGELOG.md');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text();
+        
+        // Split the content by sections
+        const sections = text.split('\n## ').slice(1); // Skip the header
+        const versions = sections.map(section => {
+            const lines = section.split('\n');
+            const dateTitle = lines[0].trim(); // e.g., "March 19, 2025"
+            
+            const changes: { [key: string]: string[] } = {};
+            let currentCategory = '';
+            
+            lines.slice(1).forEach(line => {
+                if (line.startsWith('### ')) {
+                    currentCategory = line.replace('### ', '').trim();
+                    changes[currentCategory] = [];
+                } else if (line.startsWith('• ')) {
+                    const change = line.replace('• ', '').trim();
+                    if (currentCategory && change) {
+                        changes[currentCategory].push(change);
+                    }
+                } else if (line.startsWith('  - ')) {
+                    // Handle sub-bullets for widget list
+                    const change = line.replace('  - ', '').trim();
+                    if (currentCategory && change) {
+                        changes[currentCategory].push(change);
+                    }
+                }
+            });
+            
+            return {
+                version: dateTitle.split(' ')[0] + ' ' + dateTitle.split(' ')[1], // e.g., "March 19"
+                date: dateTitle,
+                changes
+            };
+        });
+        
+        return { versions };
+    } catch (error) {
+        console.error('Failed to load changelog:', error);
+        return { versions: [] };
+    }
+};
 
 export function Changelog() {
     const [changelog, setChangelog] = useState<ChangelogData>({ versions: [] });
