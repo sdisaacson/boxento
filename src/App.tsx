@@ -26,6 +26,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { PasteDetectionLayer } from '@/components/clipboard/PasteDetectionLayer'
+import { Toaster } from 'sonner'
+import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -314,6 +317,9 @@ function App() {
   // Get sync status from context
   const { isSyncing, syncStatus } = useSync();
   
+  // Track the last created widget for undo functionality
+  const [lastCreatedWidgetId, setLastCreatedWidgetId] = useState<string | null>(null);
+  
   // Save widgets to storage (localStorage and Firestore if logged in)
   const saveWidgets = async (updatedWidgets: Widget[]): Promise<void> => {
     setWidgets(updatedWidgets);
@@ -506,6 +512,7 @@ function App() {
     // Update states and save data
     setWidgets(updatedWidgets);
     setLayouts(updatedLayouts);
+    setLastCreatedWidgetId(widgetId);
     
     // Save changes
     saveWidgets(updatedWidgets);
@@ -995,6 +1002,89 @@ function App() {
     return () => document.removeEventListener('keydown', handleEscapeKey);
   }, [widgetSelectorOpen]);
   
+  // Handle URL detection
+  const handleUrlDetected = (result: UrlMatchResult) => {
+    let widgetId: string;
+    let newWidget: Widget;
+    let updatedWidgets: Widget[];
+    let updatedLayouts: { [key: string]: LayoutItem[] };
+
+    switch (result.type) {
+      case 'youtube':
+        // Create YouTube widget
+        widgetId = `youtube-${Date.now()}`;
+        newWidget = {
+          id: widgetId,
+          type: 'youtube',
+          config: {
+            ...getWidgetConfigByType('youtube'),
+            videoId: result.data.videoId
+          }
+        };
+        
+        // Add new widget to state
+        updatedWidgets = [...widgets, newWidget];
+        
+        // For each breakpoint, create a layout item
+        updatedLayouts = { ...layouts };
+        
+        // For each breakpoint, add a layout item
+        Object.keys(breakpoints).forEach((breakpoint) => {
+          if (!updatedLayouts[breakpoint]) {
+            updatedLayouts[breakpoint] = [];
+          }
+          
+          // Calculate column count for this breakpoint
+          const colCount = cols[breakpoint as keyof typeof cols];
+          
+          // Create default layout item based on the breakpoint
+          const defaultItem = createDefaultLayoutItem(
+            widgetId, 
+            updatedLayouts[breakpoint].length, 
+            colCount,
+            breakpoint
+          );
+          
+          // Set appropriate size for video content
+          if (breakpoint === 'lg' || breakpoint === 'md') {
+            defaultItem.w = 4; // Wider for better video viewing
+            defaultItem.h = 3; // 16:9 aspect ratio approximately
+          }
+          
+          updatedLayouts[breakpoint].push(defaultItem);
+        });
+        
+        // Update states
+        setWidgets(updatedWidgets);
+        setLayouts(updatedLayouts);
+        setLastCreatedWidgetId(widgetId);
+        
+        // Save changes
+        saveWidgets(updatedWidgets);
+        saveLayouts(updatedLayouts, false);
+        break;
+        
+      // Add more cases here for other URL types
+      // case 'sports':
+      //   // Create sports widget with result.data
+      //   break;
+      // case 'weather':
+      //   // Create weather widget with result.data
+      //   break;
+      
+      default:
+        console.log('Unsupported URL type:', result.type);
+    }
+  };
+  
+  // Handle undo of last widget creation
+  const handleUndoLastWidget = () => {
+    if (lastCreatedWidgetId) {
+      deleteWidget(lastCreatedWidgetId);
+      setLastCreatedWidgetId(null);
+    }
+  };
+  
   // Only render the UI when data is loaded
   if (!isDataLoaded) {
     return (
@@ -1009,6 +1099,20 @@ function App() {
   
   return (
     <div className={`app ${theme === 'dark' ? 'dark' : ''} app-background`} data-theme={theme}>
+      {/* Add Toaster */}
+      <Toaster 
+        position="bottom-right"
+        theme={theme}
+        closeButton
+      />
+      
+      {/* Add PasteDetectionLayer */}
+      <PasteDetectionLayer 
+        onUrlDetected={handleUrlDetected}
+        onUndo={handleUndoLastWidget}
+        className="z-0"
+      />
+      
       {/* Header */}
       <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
         <div className="px-4 py-3 flex items-center justify-between">
