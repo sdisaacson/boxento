@@ -29,6 +29,7 @@ import {
 import { PasteDetectionLayer } from '@/components/clipboard/PasteDetectionLayer'
 import { Toaster } from 'sonner'
 import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
+import { Changelog } from '@/components/Changelog'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -1179,6 +1180,8 @@ function App() {
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+            
+            <Changelog />
             
             <div className="flex items-center">
               <UserMenuButton className="h-9 cursor-pointer" />
