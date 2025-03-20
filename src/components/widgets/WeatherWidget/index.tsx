@@ -13,6 +13,7 @@ import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { faviconService } from '@/lib/services/favicon';
 
 /**
  * Weather Widget Component
@@ -802,6 +803,22 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       </div>
     );
   };
+
+  // Update favicon when weather data changes
+  useEffect(() => {
+    if (weather && !loading && !error) {
+      // Update favicon with current temperature
+      const unit = localConfig.units === 'imperial' ? 'F' : 'C';
+      faviconService.updateWeatherInfo(Math.round(weather.temperature), unit);
+    }
+  }, [weather, loading, error, localConfig.units]);
+
+  // Clean up favicon when component unmounts
+  useEffect(() => {
+    return () => {
+      faviconService.clearWeatherInfo();
+    };
+  }, []);
 
   return (
     <div ref={widgetRef} className="widget-container h-full flex flex-col">

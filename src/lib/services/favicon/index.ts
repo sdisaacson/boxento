@@ -1,0 +1,1 @@
+export { faviconService } from './FaviconService'; 

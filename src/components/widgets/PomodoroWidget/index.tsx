@@ -12,6 +12,7 @@ import { PomodoroWidgetConfig, PomodoroWidgetProps } from './types';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
+import { faviconService } from '@/lib/services/favicon';
 
 /**
  * Pomodoro Widget Component
@@ -83,6 +84,24 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
       }
     };
   }, [isActive]);
+
+  // Update favicon when timer state changes
+  useEffect(() => {
+    // Update favicon when timer state changes
+    if (isActive || timeLeft < (localConfig.workDuration || 25) * 60) {
+      faviconService.updatePomodoroFavicon(timeLeft, mode, isActive);
+    } else {
+      faviconService.resetToDefault();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      // Only reset if this is our widget
+      if (isActive || timeLeft < (localConfig.workDuration || 25) * 60) {
+        faviconService.resetToDefault();
+      }
+    };
+  }, [timeLeft, mode, isActive, localConfig.workDuration]);
 
   // Handle timer mode changes
   const handleTimerComplete = () => {
