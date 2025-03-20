@@ -5,6 +5,7 @@
 ### What's new
 • Smart Favicon: Dynamic browser icon that shows your Pomodoro timer, weather, or date in a sleek squircle design
 • Todoist Integration: Seamlessly manage your Todoist tasks right from your dashboard
+• Year Progress Widget: Visualize your progress through the year with a customizable grid of dots
 
 ## March 19, 2025
 
