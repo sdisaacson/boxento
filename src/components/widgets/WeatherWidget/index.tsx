@@ -808,8 +808,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   useEffect(() => {
     if (weather && !loading && !error) {
       // Update favicon with current temperature
-      const unit = localConfig.units === 'imperial' ? 'F' : 'C';
-      faviconService.updateWeatherInfo(Math.round(weather.temperature), unit);
+      faviconService.updateWeatherInfo(Math.round(weather.temperature));
     }
   }, [weather, loading, error, localConfig.units]);
 

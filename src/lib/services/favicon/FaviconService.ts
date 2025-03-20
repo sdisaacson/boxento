@@ -13,7 +13,6 @@ class FaviconService {
   private canvasSupported: boolean = false;
   private themeObserver: MutationObserver | null = null;
   private currentWeatherTemp: number | null = null;
-  private currentWeatherUnit: 'C' | 'F' | null = null;
 
   constructor() {
     // Defer initialization until the service is actually used
@@ -22,39 +21,6 @@ class FaviconService {
     // Set up theme observer if we're in the browser
     if (typeof window !== 'undefined') {
       this.setupThemeObserver();
-    }
-  }
-
-  /**
-   * Set up the theme observer to watch for theme changes
-   */
-  private setupThemeObserver() {
-    if (typeof document === 'undefined') return;
-
-    // Create a new observer instance
-    this.themeObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          // Theme has changed, update the favicon
-          this.updateWithCurrentTime();
-        }
-      });
-    });
-
-    // Start observing the document element for class changes
-    this.themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-  }
-
-  /**
-   * Clean up the theme observer
-   */
-  private cleanupThemeObserver() {
-    if (this.themeObserver) {
-      this.themeObserver.disconnect();
-      this.themeObserver = null;
     }
   }
 
@@ -97,6 +63,29 @@ class FaviconService {
     this.ctx = context;
     this.setupFaviconLink();
     this.initialized = true;
+  }
+
+  /**
+   * Set up the theme observer to watch for theme changes
+   */
+  private setupThemeObserver() {
+    if (typeof document === 'undefined') return;
+
+    // Create a new observer instance
+    this.themeObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          // Theme has changed, update the favicon
+          this.updateWithCurrentTime();
+        }
+      });
+    });
+
+    // Start observing the document element for class changes
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
   }
 
   /**
@@ -267,29 +256,11 @@ class FaviconService {
   }
 
   /**
-   * Reset favicon to the default
-   */
-  resetToDefault() {
-    if (!this.link) {
-      this.initialize();
-    }
-    
-    if (this.link) {
-      this.link.href = this.defaultFaviconPath;
-    }
-    
-    // Don't clean up theme observer on reset anymore
-    // We want to keep observing theme changes
-    // this.cleanupThemeObserver();
-  }
-
-  /**
    * Update the current weather temperature
    * Called by the weather widget when temperature changes
    */
-  updateWeatherInfo(temperature: number, unit: 'C' | 'F') {
+  updateWeatherInfo(temperature: number) {
     this.currentWeatherTemp = temperature;
-    this.currentWeatherUnit = unit; // We still store the unit even though we don't display it
     
     // Initialize theme observer if it's not already set up
     if (!this.themeObserver) {
@@ -300,12 +271,24 @@ class FaviconService {
   }
 
   /**
+   * Reset favicon to the default
+   */
+  resetToDefault() {
+    if (!this.link) {
+      this.initialize();
+    }
+    
+    if (this.link) {
+      this.link.href = this.defaultFaviconPath;
+    }
+  }
+
+  /**
    * Clear weather information
    * Called when weather widget is removed
    */
   clearWeatherInfo() {
     this.currentWeatherTemp = null;
-    this.currentWeatherUnit = null;
     this.updateWithCurrentTime(); // Refresh favicon
   }
 
