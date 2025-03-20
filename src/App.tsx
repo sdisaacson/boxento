@@ -30,6 +30,7 @@ import { PasteDetectionLayer } from '@/components/clipboard/PasteDetectionLayer'
 import { Toaster } from 'sonner'
 import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
 import { Changelog } from '@/components/Changelog'
+import { faviconService } from '@/lib/services/favicon'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -178,6 +179,20 @@ function App() {
   useEffect(() => {
     document.body.className = 'app-background min-h-screen';
     return () => { document.body.className = ''; };
+  }, []);
+  
+  // Setup default favicon with current time
+  useEffect(() => {
+    // Initialize with current time
+    faviconService.updateWithCurrentTime();
+    
+    // Update time every minute
+    const intervalId = setInterval(() => {
+      faviconService.updateWithCurrentTime();
+    }, 60000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
   
   // Default layouts configuration
