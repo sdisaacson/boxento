@@ -18,6 +18,7 @@ import GitHubStreakWidget from './GitHubStreakWidget/index';
 import FlightTrackerWidget from './FlightTrackerWidget/index';
 import GeographyQuizWidget from './GeographyQuizWidget/index';
 import TodoistWidget from './TodoistWidget/index';
+import YearProgressWidget from './YearProgressWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -38,6 +39,7 @@ export * from './GitHubStreakWidget/types';
 export * from './FlightTrackerWidget/types';
 export * from './GeographyQuizWidget/types';
 export * from './TodoistWidget/types';
+export * from './YearProgressWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -225,6 +227,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 4,
     category: 'Productivity',
     description: 'View and manage your Todoist tasks'
+  },
+  {
+    type: 'year-progress',
+    name: 'Year Progress',
+    icon: 'Calendar',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Information',
+    description: 'Visual representation of year progress with dots'
   }
 ];
 
@@ -275,6 +288,8 @@ export const getWidgetComponent = (type: string): React.ComponentType<WidgetProp
       return GeographyQuizWidget;
     case 'todoist':
       return TodoistWidget;
+    case 'year-progress':
+      return YearProgressWidget;
     // Template widget registration (commented as it's not for production use)
     // case 'template':
     //   return TemplateWidget;
