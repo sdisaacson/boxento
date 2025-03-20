@@ -69,6 +69,48 @@ bun run dev
 
 Visit [http://localhost:5173](http://localhost:5173) to see your personal dashboard.
 
+### Option 3: Docker Installation
+
+For those who prefer using Docker, we provide Docker support out of the box:
+
+**Prerequisites:**
+- Docker
+- Docker Compose (optional, but recommended)
+
+**Installation with Docker Compose (recommended):**
+```bash
+# Clone the repository
+git clone https://github.com/sushaantu/boxento.git
+cd boxento
+
+# Start the application
+docker compose up -d
+
+# To stop the application
+docker compose down
+```
+
+**Installation with Docker:**
+```bash
+# Clone the repository
+git clone https://github.com/sushaantu/boxento.git
+cd boxento
+
+# Build the Docker image
+docker build -t boxento .
+
+# Run the container
+docker run -d -p 5173:5173 --name boxento boxento
+```
+
+Visit [http://localhost:5173](http://localhost:5173) to see your personal dashboard.
+
+**Note:** The Docker setup includes:
+- Automatic container restart on failure
+- Health checks to ensure the application is running
+- Volume mounts for persistent data
+- Production-ready configuration
+
 ## 📖 Making Boxento Your Own
 
 ### Getting Started
