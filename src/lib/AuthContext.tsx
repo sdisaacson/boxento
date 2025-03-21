@@ -77,10 +77,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   function logout() {
-    // Function to clear all localStorage except theme
+    // Function to clear all localStorage except theme and app settings
     const clearAllStorage = () => {
-      // Save theme setting
+      // Save theme setting and app settings
       const theme = localStorage.getItem('theme');
+      const appSettings = localStorage.getItem('boxento-app-settings');
       
       // Clear ALL localStorage
       localStorage.clear();
@@ -88,6 +89,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Restore theme if available
       if (theme) {
         localStorage.setItem('theme', theme);
+      }
+      
+      // Restore app settings if available
+      if (appSettings) {
+        localStorage.setItem('boxento-app-settings', appSettings);
       }
       
       // Also clear sessionStorage just to be sure

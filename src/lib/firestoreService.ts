@@ -371,5 +371,44 @@ export const userDashboardService = {
     }
     
     return layouts;
+  },
+
+  // Save app settings
+  saveAppSettings: async (settings: Record<string, unknown>): Promise<void> => {
+    const userId = getCurrentUserId();
+    if (!userId) throw new Error('User not authenticated');
+    
+    try {
+      // Sanitize the settings object to remove undefined values
+      const sanitizedSettings = JSON.parse(JSON.stringify(settings));
+      
+      await setDoc(
+        doc(db, 'users', userId, 'dashboard', 'app-settings'),
+        { settings: sanitizedSettings },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error('Error saving app settings to Firestore:', error);
+      throw error;
+    }
+  },
+
+  // Load app settings
+  loadAppSettings: async (): Promise<Record<string, unknown> | null> => {
+    const userId = getCurrentUserId();
+    if (!userId) return null;
+    
+    try {
+      const docRef = doc(db, 'users', userId, 'dashboard', 'app-settings');
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return docSnap.data()?.settings || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading app settings from Firestore:', error);
+      throw error;
+    }
   }
 }; 

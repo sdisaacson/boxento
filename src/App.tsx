@@ -31,6 +31,8 @@ import { Toaster } from 'sonner'
 import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
 import { Changelog } from '@/components/Changelog'
 import { faviconService } from '@/lib/services/favicon'
+import { useAppSettings } from '@/context/AppSettingsContext'
+import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -284,6 +286,8 @@ function App() {
     }
   ];
   
+  const { settings, updateSettings } = useAppSettings();
+  
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
@@ -427,16 +431,30 @@ function App() {
     }
   };
   
-  // Apply theme to document
+  // Update theme based on settings
   useEffect(() => {
-    if (theme === 'dark') {
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let newTheme: 'light' | 'dark' = 'light';
+
+    // Set theme based on app settings
+    if (settings.themeMode === 'dark') {
+      newTheme = 'dark';
+    } else if (settings.themeMode === 'light') {
+      newTheme = 'light';
+    } else if (settings.themeMode === 'system') {
+      newTheme = prefersDarkMode ? 'dark' : 'light';
+    }
+
+    // Set the theme
+    setTheme(newTheme);
+
+    // Set the document class
+    if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
     }
-  }, [theme]);
+  }, [settings.themeMode]);
   
   // Handle window resize
   useEffect(() => {
@@ -504,9 +522,15 @@ function App() {
   const rowHeight = calculateRowHeight();
   
   const toggleTheme = (): void => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const newTheme: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
+    
+    // Also update app settings
+    const newThemeMode: 'light' | 'dark' | 'system' = newTheme === 'dark' ? 'dark' : 'light';
+    if (settings.themeMode !== newThemeMode) {
+      updateSettings({ themeMode: newThemeMode });
+    }
   };
   
   // Add widget function - refactored to reduce duplication
@@ -1039,15 +1063,29 @@ function App() {
   
   // Handle escape key to close modals
   useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Close widget selector with Escape
       if (event.key === 'Escape' && widgetSelectorOpen) {
         setWidgetSelectorOpen(false);
       }
+      
+      // Add Widget with Cmd+A or Ctrl+A
+      if ((event.metaKey || event.ctrlKey) && event.key === 'a' && !widgetSelectorOpen) {
+        event.preventDefault(); // Prevent select all default behavior
+        toggleWidgetSelector();
+      }
+      
+      // App Settings with Cmd+, or Ctrl+,
+      if ((event.metaKey || event.ctrlKey) && event.key === ',') {
+        event.preventDefault();
+        // We need to access the context menu's state, so we'll dispatch a custom event
+        document.dispatchEvent(new CustomEvent('boxento:openAppSettings'));
+      }
     };
     
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [widgetSelectorOpen]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [widgetSelectorOpen, toggleWidgetSelector]);
   
   // Handle URL detection
   const handleUrlDetected = (result: UrlMatchResult) => {
@@ -1260,44 +1298,46 @@ function App() {
             
             <div className="desktop-view-container">
               {/* Conditional rendering with opacity transition */}
-              <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
-                <ResponsiveReactGridLayout
-                  className="layout"
-                  layouts={layouts}
-                  breakpoints={breakpoints}
-                  cols={cols}
-                  rowHeight={rowHeight}
-                  onLayoutChange={handleLayoutChange}
-                  onBreakpointChange={(newBreakpoint: string, newCols: number) => {
-                    if (newBreakpoint !== currentBreakpoint) {
-                      console.log('Breakpoint changed:', newBreakpoint, newCols);
-                      setCurrentBreakpoint(newBreakpoint);
-                    }
-                  }}
-                  onDragStart={handleDragStart}
-                  onDrag={handleDrag}
-                  onDragStop={handleDragStop}
-                  onResizeStart={handleResizeStart}
-                  onResizeStop={handleResizeStop}
-                  margin={[15, 15]}
-                  containerPadding={[10, 10]}
-                  draggableHandle=".widget-drag-handle"
-                  draggableCancel=".settings-button"
-                  useCSSTransforms={true}
-                  measureBeforeMount={false}
-                  compactType="vertical"
-                  verticalCompact={true}
-                  preventCollision={false}
-                  isResizable={true}
-                  isDraggable={true}
-                  isBounded={false}
-                  autoSize={true}
-                  transformScale={1}
-                  style={{ width: '100%', minHeight: '100%' }}
-                >
-                  {renderWidgetItems()}
-                </ResponsiveReactGridLayout>
-              </div>
+              <DashboardContextMenu onAddWidget={toggleWidgetSelector}>
+                <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
+                  <ResponsiveReactGridLayout
+                    className="layout"
+                    layouts={layouts}
+                    breakpoints={breakpoints}
+                    cols={cols}
+                    rowHeight={rowHeight}
+                    onLayoutChange={handleLayoutChange}
+                    onBreakpointChange={(newBreakpoint: string, newCols: number) => {
+                      if (newBreakpoint !== currentBreakpoint) {
+                        console.log('Breakpoint changed:', newBreakpoint, newCols);
+                        setCurrentBreakpoint(newBreakpoint);
+                      }
+                    }}
+                    onDragStart={handleDragStart}
+                    onDrag={handleDrag}
+                    onDragStop={handleDragStop}
+                    onResizeStart={handleResizeStart}
+                    onResizeStop={handleResizeStop}
+                    margin={[15, 15]}
+                    containerPadding={[10, 10]}
+                    draggableHandle=".widget-drag-handle"
+                    draggableCancel=".settings-button"
+                    useCSSTransforms={true}
+                    measureBeforeMount={false}
+                    compactType="vertical"
+                    verticalCompact={true}
+                    preventCollision={false}
+                    isResizable={true}
+                    isDraggable={true}
+                    isBounded={false}
+                    autoSize={true}
+                    transformScale={1}
+                    style={{ width: '100%', minHeight: '100%' }}
+                  >
+                    {renderWidgetItems()}
+                  </ResponsiveReactGridLayout>
+                </div>
+              </DashboardContextMenu>
               {/* Loading indicator during initial layout calculation */}
               {!isLayoutReady && widgets.length > 0 && (
                 <div className="flex items-center justify-center p-12">
