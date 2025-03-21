@@ -19,6 +19,7 @@ There are no gatekeepers here - just bring your imagination, and we'll help you 
 - [What is Boxento?](#-what-is-boxento)
 - [Get Your Own Boxento](#-get-your-own-boxento)
 - [Making Boxento Your Own](#-making-boxento-your-own)
+- [Progressive Web App Support](#-progressive-web-app-support)
 - [For Developers and Tinkerers](#-for-developers-and-tinkerers)
 - [Community & Support](#-community--support)
 - [Roadmap](#️-roadmap)
@@ -209,3 +210,13 @@ Want to influence what we build next? Join our [Discord Community](https://disco
 Boxento is open source under the MIT License - free to use, modify, and share.
 
 ![Boxento Banner](./public/screenshot-darkmode.png)
+
+## 📱 Progressive Web App Support
+
+Boxento now includes Progressive Web App (PWA) support, allowing you to:
+
+- **Install on your device**: Add Boxento to your home screen on mobile or desktop
+- **Work offline**: Access your dashboard even without an internet connection
+- **Quick loading**: Faster startup times thanks to caching
+
+For detailed information about PWA features and how to optimize your experience, see our [PWA Support Guide](/docs/PWA_SUPPORT.md).

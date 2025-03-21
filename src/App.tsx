@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Moon, Sun, Cloud, Loader2 } from 'lucide-react'
+import { Plus, Moon, Sun, Cloud, CloudOff, Loader2 } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
 // @ts-expect-error - The types don't correctly represent the module structure
@@ -175,6 +175,37 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
 };
 
 function App() {
+  // Register service worker for PWA functionality
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            console.error('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+  }, []);
+
+  // Track online status for PWA functionality
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // Add a class to the body for theme styling
   useEffect(() => {
     document.body.className = 'app-background min-h-screen';
@@ -1141,7 +1172,9 @@ function App() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center">
-                    {auth.currentUser ? (
+                    {!isOnline ? (
+                      <CloudOff className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
+                    ) : auth.currentUser ? (
                       isSyncing ? (
                         <Loader2 className="h-5 w-5 text-green-500 dark:text-green-400" />
                       ) : syncStatus === 'success' ? (
@@ -1159,11 +1192,13 @@ function App() {
                 <TooltipContent side="bottom" sideOffset={5} className="max-w-[300px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div>
                     <p className="font-semibold">
-                      {auth.currentUser ? (
+                      {!isOnline ? (
+                        "You are offline. Some features may be limited."
+                      ) : auth.currentUser ? (
                         isSyncing ? "Syncing..." : 
                         syncStatus === 'success' ? "Everything is synced!" :
                         syncStatus === 'error' ? "Sync error" :
-                        "Offline"
+                        "Ready to sync"
                       ) : (
                         "Sign up to sync (saved locally for now)"
                       )}
