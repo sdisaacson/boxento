@@ -25,6 +25,27 @@ class FaviconService {
   }
 
   /**
+   * Check if smart favicon is enabled in app settings
+   */
+  private isSmartFaviconEnabled(): boolean {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const appSettings = localStorage.getItem('boxento-app-settings');
+      if (appSettings) {
+        const settings = JSON.parse(appSettings);
+        return settings.faviconMode === 'smart';
+      }
+    } catch (error) {
+      console.error('Error checking favicon mode:', error);
+    }
+
+    return false; // Default to simple favicon if settings not found
+  }
+
+  /**
    * Initialize the canvas and favicon link elements
    * Called on first use to avoid SSR issues
    */
@@ -182,6 +203,11 @@ class FaviconService {
    * @param isActive - Whether the timer is currently running
    */
   updatePomodoroFavicon(timeLeft: number, mode: string, isActive: boolean) {
+    // Check if smart favicon is enabled
+    if (!this.isSmartFaviconEnabled()) {
+      return; // Don't update if smart favicon is not enabled
+    }
+
     this.initialize();
     
     // If canvas is not supported, just use the default favicon
@@ -260,6 +286,11 @@ class FaviconService {
    * Called by the weather widget when temperature changes
    */
   updateWeatherInfo(temperature: number) {
+    // Check if smart favicon is enabled
+    if (!this.isSmartFaviconEnabled()) {
+      return; // Don't update if smart favicon is not enabled
+    }
+
     this.currentWeatherTemp = temperature;
     
     // Initialize theme observer if it's not already set up
@@ -297,6 +328,12 @@ class FaviconService {
    * Used when no widgets need to display in the favicon
    */
   updateWithCurrentTime() {
+    // Only show dynamic content if smart favicon is enabled
+    if (!this.isSmartFaviconEnabled()) {
+      this.resetToDefault();
+      return;
+    }
+
     this.initialize();
     
     // If canvas is not supported, just use the default favicon
