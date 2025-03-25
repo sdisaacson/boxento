@@ -91,6 +91,16 @@ docker compose up -d
 docker compose down
 ```
 
+**Accessing the Application:**
+- The application will be available on port 5173
+- Local Docker: http://localhost:5173
+- OrbStack: https://boxento.boxento.orb.local
+- Docker Desktop: Check Docker Desktop dashboard for the assigned URL
+- Other environments: Check your Docker environment's documentation for URL conventions
+
+**Note for OrbStack Users:**
+The application is configured to work out of the box with OrbStack's domain system. You should be able to access it at https://boxento.boxento.orb.local without any additional configuration.
+
 **Installation with Docker:**
 ```bash
 # Clone the repository

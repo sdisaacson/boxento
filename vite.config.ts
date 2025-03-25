@@ -19,7 +19,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/mindicador/, ''),
         secure: false
       }
-    }
+    },
+    host: true,
+    port: 5173,
+    strictPort: true,
+    cors: true,
+    allowedHosts: ['boxento.boxento.orb.local', 'localhost', '127.0.0.1']
   },
   css: {
     postcss: {
