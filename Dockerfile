@@ -1,10 +1,13 @@
 # Use the official Bun image
-FROM oven/bun:1.0
+FROM oven/bun:1
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and bun.lockb (if it exists)
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl
+
+# Copy package files
 COPY package.json bun.lockb* ./
 
 # Install dependencies
@@ -19,5 +22,5 @@ RUN bun run build
 # Expose the port (Vite default is 5173)
 EXPOSE 5173
 
-# Start the application
-CMD ["bun", "run", "dev", "--host"] 
+# Start the application in development mode with host configuration
+CMD ["bun", "run", "dev", "--host", "--port", "5173"] 
