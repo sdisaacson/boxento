@@ -20,7 +20,6 @@ WORKDIR /app
 # Copy source code and dependencies
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/bun.lockb ./bun.lockb
 
 # Build-time variables for Firebase configuration
 ARG VITE_FIREBASE_API_KEY
