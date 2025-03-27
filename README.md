@@ -94,12 +94,14 @@ docker run -d -p 5173:5173 -e VITE_ALLOWED_HOSTS=your-domain.com --name boxento 
 # docker-compose.yml
 services:
   boxento:
-    image: ghcr.io/sushaantu/boxento:v1.0.0
+    image: ghcr.io/sushaantu/boxento:1.0.0
+    container_name: boxento
+    restart: unless-stopped
     ports:
-      - "5173:5173"
-    # Optional: Add environment variables for custom domain
-    # environment:
-    #   - VITE_ALLOWED_HOSTS=your-domain.com
+      - "XXXX:XXXX"
+    environment:
+      - NODE_ENV=production
+      - VITE_ALLOWED_HOSTS=XXXXXX
 ```
 
 ```bash
