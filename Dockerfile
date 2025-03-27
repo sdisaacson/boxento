@@ -8,17 +8,19 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb* ./
+COPY package.json ./
 
-# Install dependencies (--frozen-lockfile ensures consistency)
-RUN bun install --frozen-lockfile
+# Install dependencies and generate lockfile
+RUN bun install
 
 # Stage 3: Builder
 FROM deps AS builder
 WORKDIR /app
 
-# Copy source code
+# Copy source code and dependencies
 COPY . .
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/bun.lockb ./bun.lockb
 
 # Build-time variables for Firebase configuration
 ARG VITE_FIREBASE_API_KEY
@@ -51,7 +53,6 @@ ENV NODE_ENV=production
 COPY --from=builder --chown=bun:bun /app/dist ./dist
 COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=builder --chown=bun:bun /app/package.json ./package.json
-COPY --from=builder --chown=bun:bun /app/bun.lockb ./bun.lockb
 # Copy Vite config to ensure preview server uses allowedHosts etc.
 COPY --from=builder --chown=bun:bun /app/vite.config.ts ./vite.config.ts
 # Copy tsconfig if needed by Vite/plugins during preview
