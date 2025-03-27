@@ -318,7 +318,7 @@ function App() {
       const savedWidgets = loadFromLocalStorage('boxento-widgets', []);
       
       // Only use default widgets if we're not logged in and no widgets in storage
-      if (savedWidgets.length === 0 && !auth.currentUser) {
+      if (savedWidgets.length === 0 && !auth?.currentUser) {
         return getDefaultWidgets();
       }
       
@@ -387,7 +387,7 @@ function App() {
     });
     
     // Save widgets to Firestore when user is logged in
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       try {
         await userDashboardService.saveWidgets(updatedWidgets);
         console.log('Saved widget metadata to Firestore');
@@ -406,7 +406,7 @@ function App() {
     localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
     
     // Save to Firestore if logged in
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       if (debounce) {
         if (layoutUpdateTimeout.current !== null) {
           clearTimeout(layoutUpdateTimeout.current);
@@ -664,7 +664,7 @@ function App() {
     configManager.saveWidgetConfig(widgetId, configToSave);
     
     // Save to Firestore if logged in
-    if (auth.currentUser) {
+    if (auth?.currentUser) {
       saveWidgets(updatedWidgets);
     }
   };
@@ -937,7 +937,7 @@ function App() {
           loadLocalData();
           
           // Migrate to Firestore if logged in
-          if (auth.currentUser && widgets.length > 0) {
+          if (auth?.currentUser && widgets.length > 0) {
             try {
               await saveWidgets(widgets);
               await saveLayouts(layouts, false);
@@ -962,6 +962,8 @@ function App() {
   
   // Initialize auth listener
   useEffect(() => {
+    if (!auth) return;
+    
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // User is signed in, load their data from Firestore
@@ -1212,7 +1214,7 @@ function App() {
                   <div className="flex items-center">
                     {!isOnline ? (
                       <CloudOff className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
-                    ) : auth.currentUser ? (
+                    ) : auth?.currentUser ? (
                       isSyncing ? (
                         <Loader2 className="h-5 w-5 text-green-500 dark:text-green-400" />
                       ) : syncStatus === 'success' ? (
@@ -1232,7 +1234,7 @@ function App() {
                     <p className="font-semibold">
                       {!isOnline ? (
                         "You are offline. Some features may be limited."
-                      ) : auth.currentUser ? (
+                      ) : auth?.currentUser ? (
                         isSyncing ? "Syncing..." : 
                         syncStatus === 'success' ? "Everything is synced!" :
                         syncStatus === 'error' ? "Sync error" :

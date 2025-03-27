@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useAuth, AuthContextType } from '@/lib/AuthContext';
+import { useAuth } from '@/lib/useAuth';
+import type { AuthContextType } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { User, LogOut, Mail } from 'lucide-react';
