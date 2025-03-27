@@ -79,6 +79,34 @@ For those who prefer using Docker, we provide Docker support out of the box:
 - Docker Compose
 - A `.env` file created in the project root (copy `.env.example` to `.env`) containing your Firebase project configuration. These credentials are baked into the production build.
 
+**Quick Start with Pre-built Image:**
+```bash
+# Pull the latest image from GitHub Container Registry
+docker pull ghcr.io/sushaantu/boxento:latest
+
+# Run the container
+docker run -d -p 5173:5173 \
+  -e VITE_ALLOWED_HOSTS=your-domain.com \
+  --name boxento \
+  ghcr.io/sushaantu/boxento:latest
+```
+
+Or with Docker Compose:
+```yaml
+# docker-compose.quickstart.yml
+services:
+  boxento:
+    image: ghcr.io/sushaantu/boxento:latest
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_ALLOWED_HOSTS=your-domain.com
+```
+
+```bash
+docker compose -f docker-compose.quickstart.yml up -d
+```
+
 **Development Setup (with Live Reloading):**
 ```bash
 # Clone the repository
