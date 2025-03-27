@@ -76,26 +76,89 @@ For those who prefer using Docker, we provide Docker support out of the box:
 
 **Prerequisites:**
 - Docker
-- Docker Compose (optional, but recommended)
+- Docker Compose
+- A `.env` file created in the project root (copy `.env.example` to `.env`) containing your Firebase project configuration. These credentials are baked into the production build.
 
-**Installation with Docker Compose (recommended):**
+**Quick Start with Pre-built Image:**
+```bash
+# Pull the latest image from GitHub Container Registry
+docker pull ghcr.io/sushaantu/boxento:latest
+
+# Run the container
+docker run -d -p 5173:5173 \
+  -e VITE_ALLOWED_HOSTS=your-domain.com \
+  --name boxento \
+  ghcr.io/sushaantu/boxento:latest
+```
+
+Or with Docker Compose:
+```yaml
+# docker-compose.quickstart.yml
+services:
+  boxento:
+    image: ghcr.io/sushaantu/boxento:latest
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_ALLOWED_HOSTS=your-domain.com
+```
+
+```bash
+docker compose -f docker-compose.quickstart.yml up -d
+```
+
+**Development Setup (with Live Reloading):**
 ```bash
 # Clone the repository
 git clone https://github.com/sushaantu/boxento.git
 cd boxento
 
-# Start the application
+# Start the development container
 docker compose up -d
 
-# To stop the application
+# Stop the container when done
 docker compose down
 ```
 
+**Production Deployment:**
+```bash
+# Create and configure environment variables
+cp .env.example .env
+# Edit .env with your Firebase configuration
+
+# Build and start the production container
+docker compose -f docker-compose.prod.yml up -d
+
+# Stop the production container
+docker compose -f docker-compose.prod.yml down
+```
+
 **Accessing the Application:**
-- The application will be available on port 5173
-- Local Docker: http://localhost:5173
-- OrbStack: https://boxento.boxento.orb.local
-- Docker Desktop: Check Docker Desktop dashboard for the assigned URL
+- The application will be available on port 5173 (e.g., `http://localhost:5173`).
+- Check your specific Docker environment (Docker Desktop, OrbStack, etc.) for the exact URL if not using `localhost`.
+
+**Custom Domain Configuration:**
+If you're using a custom domain or need to access the application through a specific hostname:
+
+1. For development:
+```bash
+VITE_ALLOWED_HOSTS=your-custom-domain.com,another-domain.com docker compose up -d
+```
+
+2. For production:
+```bash
+VITE_ALLOWED_HOSTS=your-custom-domain.com,another-domain.com docker compose -f docker-compose.prod.yml up -d
+```
+
+The application automatically allows:
+- localhost and 127.0.0.1
+- *.docker.internal (Docker Desktop)
+- *.orb.local (OrbStack)
+- Any domains specified in VITE_ALLOWED_HOSTS
+
+**Note on Custom Domains/Hosts:** If you access the container via a custom hostname (like OrbStack's `.orb.local` domains or other reverse proxies), you can add your domain to the `VITE_ALLOWED_HOSTS` environment variable as shown above.
+
+**Multi-Platform Builds (e.g., for Raspberry Pi):**
 - Other environments: Check your Docker environment's documentation for URL conventions
 
 **Note for OrbStack Users:**
