@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 import { 
   User,
   UserCredential,
@@ -14,7 +14,8 @@ import {
   FacebookAuthProvider,
   OAuthProvider,
   confirmPasswordReset,
-  updateProfile
+  updateProfile,
+  Auth
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { configManager } from './configManager';
@@ -39,10 +40,7 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export { AuthContext };
 
 export interface AuthProviderProps {
   children: ReactNode;
@@ -156,15 +154,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         clearAllStorage();
         
         // Attempt to clear Firestore only if user is logged in
-        if (auth!.currentUser) {
+        if (auth?.currentUser) {
           // We don't await this because we don't want to delay logout if it fails
           configManager.clearAllConfigs().catch(e => 
             console.warn('Failed to clear Firestore configs, continuing logout', e)
           );
         }
         
-        // Now sign out
-        signOut(auth!)
+        // Now sign out - we know auth is not null from the check at the start of the function
+        const authInstance = auth as Auth; // Type assertion since we checked !auth at start
+        signOut(authInstance)
           .then(() => {
             // Clear storage again after signout just to be absolutely sure
             clearAllStorage();

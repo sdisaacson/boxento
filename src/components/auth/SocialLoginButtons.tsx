@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { useAuth, AuthContextType } from '@/lib/AuthContext';
+import { useAuth } from '@/lib/useAuth';
+import type { AuthContextType } from '@/lib/AuthContext';
 
 const GoogleIcon = () => (
   <svg className="size-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

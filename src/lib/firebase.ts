@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -22,9 +22,9 @@ const hasValidConfig =
 
 // Initialize Firebase only if valid config is present
 const app = hasValidConfig ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
-const storage = app ? getStorage(app) : null;
+const auth: Auth | null = app ? getAuth(app) : null;
+const db: Firestore | null = app ? getFirestore(app) : null;
+const storage: FirebaseStorage | null = app ? getStorage(app) : null;
 
 // Export a flag to check if Firebase is initialized
 export const isFirebaseInitialized = Boolean(app);
