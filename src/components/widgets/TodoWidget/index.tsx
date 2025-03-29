@@ -79,8 +79,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       ? Math.max(...currentItems.map(item => item.sortOrder || 0)) 
       : -1;
     
+    // Generate a unique ID using timestamp and random number for broader compatibility
+    const newTodoId = 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+    console.log('[TodoWidget] Generated new todo ID:', newTodoId);
+
     const newTodo: TodoItem = {
-      id: crypto.randomUUID(),
+      id: newTodoId,
       text: newTodoText.trim(),
       completed: false,
       createdAt: new Date(),
