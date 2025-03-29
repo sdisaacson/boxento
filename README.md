@@ -81,12 +81,12 @@ We provide multiple ways to run Boxento using Docker, suitable for both developm
 #### Quick Start with Pre-built Image
 ```bash
 # Pull and run
-docker run -d -p 5173:5173 --name boxento ghcr.io/sushaantu/boxento:v1.0.0
+docker run -d -p 5173:5173 --name boxento ghcr.io/sushaantu/boxento:1.0.1
 ```
 
 Need to use a custom domain? Add the VITE_ALLOWED_HOSTS environment variable:
 ```bash
-docker run -d -p 5173:5173 -e VITE_ALLOWED_HOSTS=your-domain.com --name boxento ghcr.io/sushaantu/boxento:v1.0.0
+docker run -d -p 5173:5173 -e VITE_ALLOWED_HOSTS=your-domain.com --name boxento ghcr.io/sushaantu/boxento:1.0.1
 ```
 
 #### Using Docker Compose
@@ -94,7 +94,7 @@ docker run -d -p 5173:5173 -e VITE_ALLOWED_HOSTS=your-domain.com --name boxento 
 # docker-compose.yml
 services:
   boxento:
-    image: ghcr.io/sushaantu/boxento:1.0.0
+    image: ghcr.io/sushaantu/boxento:1.0.1
     container_name: boxento
     restart: unless-stopped
     ports:
