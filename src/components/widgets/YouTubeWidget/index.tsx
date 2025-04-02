@@ -519,7 +519,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
               <TabsTrigger value="playback">Playback Options</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="general" className="space-y-4 py-2">
+            <TabsContent value="general" className="space-y-4 py-4">
               {/* Title setting */}
               <div className="space-y-2">
                 <Label htmlFor="title-input">Widget Title</Label>
@@ -575,7 +575,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
               </div>
             </TabsContent>
             
-            <TabsContent value="playback" className="space-y-4 py-2">
+            <TabsContent value="playback" className="space-y-4 py-4">
               {/* Autoplay toggle */}
               <div className="flex items-center space-x-2">
                 <Checkbox

@@ -575,7 +575,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
             <DialogTitle>Geography Quiz Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-4">
             {/* Title setting */}
             <div className="space-y-2">
               <Label htmlFor="title-input">Widget Title</Label>

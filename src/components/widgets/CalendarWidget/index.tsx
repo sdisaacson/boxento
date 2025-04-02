@@ -1390,7 +1390,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           </Select>
         </div>
         
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="pt-4">
           <h3 className="text-sm font-medium mb-3">Google Calendar</h3>
           
           {isGoogleConnected ? (
@@ -1420,7 +1420,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
                     Your Calendars
                   </Label>
-                  <div className="space-y-2 mt-2">
+                  {/* Change space-y-2 to space-y-4 for consistency */}
+                  <div className="space-y-4 mt-2">
                     {localConfig.calendars.map((calendar: CalendarSource, index: number) => (
                       <div key={index} className="flex items-center">
                         {/* Replace native checkbox with shadcn/ui Checkbox */}

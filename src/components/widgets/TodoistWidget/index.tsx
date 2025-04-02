@@ -285,7 +285,8 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
           <DialogTitle>Todoist Settings</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-2">
+        {/* Change py-2 to py-4 */}
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>API Token</Label>
             <Input

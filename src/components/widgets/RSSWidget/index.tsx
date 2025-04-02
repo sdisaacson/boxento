@@ -545,7 +545,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
               <TabsTrigger value="examples">Examples</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="content" className="space-y-4 py-2">
+            <TabsContent value="content" className="space-y-4 py-4">
               {/* Widget Title */}
               <div className="space-y-2">
                 <Label htmlFor="title-input">Widget Title</Label>
@@ -600,7 +600,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
               </div>
             </TabsContent>
             
-            <TabsContent value="display" className="space-y-4 py-2">
+            <TabsContent value="display" className="space-y-4 py-4">
               {/* Display Mode */}
               <div className="space-y-2">
                 <Label>Display Mode</Label>
@@ -632,7 +632,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                 </div>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Label>Display Options</Label>
                 
                 {/* Show Images */}
@@ -687,7 +687,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
               </div>
             </TabsContent>
             
-            <TabsContent value="examples" className="space-y-4 py-2">
+            <TabsContent value="examples" className="space-y-4 py-4">
               <p className="text-sm">Click on any example to use it:</p>
               <div className="space-y-2">
                 <Button

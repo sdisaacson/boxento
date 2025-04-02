@@ -232,7 +232,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="general" className="space-y-4 pt-4">
+          <TabsContent value="general" className="space-y-4 py-4">
             <div className="space-y-4">
               <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="title-input">Widget Title</Label>
@@ -264,7 +264,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             </div>
           </TabsContent>
           
-          <TabsContent value="currencies" className="space-y-4 pt-4">
+          <TabsContent value="currencies" className="space-y-4 py-4">
             <div className="space-y-4">
               <div className="grid w-full items-center gap-1.5">
                 <div className="flex justify-between items-center">
@@ -310,7 +310,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             </div>
           </TabsContent>
           
-          <TabsContent value="advanced" className="space-y-4 pt-4">
+          <TabsContent value="advanced" className="space-y-4 py-4">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Switch

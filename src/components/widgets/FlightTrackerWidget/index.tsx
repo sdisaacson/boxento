@@ -1015,7 +1015,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="flight" className="space-y-4 py-2">
+            <TabsContent value="flight" className="space-y-4 py-4">
               {/* Demo Flights - Making this more prominent with Flighty-inspired design */}
               <Card className="border border-gray-200 dark:border-gray-800 overflow-hidden">
                 <CardHeader className="pb-2 bg-gray-50 dark:bg-gray-800 dark:bg-opacity-40 border-b border-gray-200 dark:border-gray-800">
@@ -1156,7 +1156,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
               </div>
             </TabsContent>
             
-            <TabsContent value="widget" className="space-y-4 py-2">
+            <TabsContent value="widget" className="space-y-4 py-4">
               {/* Widget Title */}
               <div className="space-y-2">
                 <Label htmlFor="widgetTitle" className="flex items-center text-sm font-medium">

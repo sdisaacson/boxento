@@ -828,7 +828,8 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             <DialogTitle>UF Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
+          {/* Change py-2 to py-4 */}
+          <div className="space-y-4 py-4">
             {/* Title setting */}
             <div className="space-y-1.5">
               {/* Replace native label with shadcn/ui Label */}
