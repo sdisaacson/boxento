@@ -1063,32 +1063,6 @@ function App() {
     }
   }, [widgets, layouts]);
   
-  // Handle escape key to close modals
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Close widget selector with Escape
-      if (event.key === 'Escape' && widgetSelectorOpen) {
-        setWidgetSelectorOpen(false);
-      }
-      
-      // Add Widget with Cmd+A or Ctrl+A
-      if ((event.metaKey || event.ctrlKey) && event.key === 'a' && !widgetSelectorOpen) {
-        event.preventDefault(); // Prevent select all default behavior
-        toggleWidgetSelector();
-      }
-      
-      // App Settings with Cmd+, or Ctrl+,
-      if ((event.metaKey || event.ctrlKey) && event.key === ',') {
-        event.preventDefault();
-        // We need to access the context menu's state, so we'll dispatch a custom event
-        document.dispatchEvent(new CustomEvent('boxento:openAppSettings'));
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [widgetSelectorOpen, toggleWidgetSelector]);
-  
   // Handle URL detection
   const handleUrlDetected = (result: UrlMatchResult) => {
     let widgetId: string;
