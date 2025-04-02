@@ -9,6 +9,10 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { GitHubStreakWidgetProps, GitHubStreakWidgetConfig } from './types';
 import { Button } from '../../ui/button';
+// Add imports for Input, Label, Checkbox
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Checkbox } from '../../ui/checkbox';
 
 /**
  * Size categories for widget content rendering
@@ -830,40 +834,46 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="title" className="text-right text-sm">
+              {/* Replace native label with shadcn/ui Label */}
+              <Label htmlFor="title" className="text-right text-sm">
                 Title
-              </label>
-              <input
+              </Label>
+              {/* Replace native input with shadcn/ui Input */}
+              <Input
                 id="title"
                 value={localConfig.title || ''}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="col-span-3 h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="username" className="text-right text-sm">
+              {/* Replace native label with shadcn/ui Label */}
+              <Label htmlFor="username" className="text-right text-sm">
                 GitHub Username
-              </label>
-              <input
+              </Label>
+              {/* Replace native input with shadcn/ui Input */}
+              <Input
                 id="username"
                 value={localConfig.username || ''}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="col-span-3 h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, username: e.target.value }))}
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="pat" className="text-right text-sm">
+              {/* Replace native label with shadcn/ui Label */}
+              <Label htmlFor="pat" className="text-right text-sm">
                 Personal Access Token
                 <span className="text-red-500 ml-0.5">*</span>
-              </label>
+              </Label>
               <div className="col-span-3">
-                <input
+                {/* Replace native input with shadcn/ui Input */}
+                <Input
                   id="pat"
                   type="password"
                   value={localConfig.personalAccessToken || ''}
-                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full h-10" // Ensure consistent height
                   onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
                   placeholder="Required for GitHub API access"
                 />
@@ -875,30 +885,33 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="daysToShow" className="text-right text-sm">
+              {/* Replace native label with shadcn/ui Label */}
+              <Label htmlFor="daysToShow" className="text-right text-sm">
                 Days to Show
-              </label>
-              <input
+              </Label>
+              {/* Replace native input with shadcn/ui Input */}
+              <Input
                 id="daysToShow"
                 type="number"
                 min="7"
                 max="365"
                 value={localConfig.daysToShow || 30}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="col-span-3 h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, daysToShow: parseInt(e.target.value, 10) }))}
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="showGraph" className="text-right text-sm">
+              {/* Replace native label with shadcn/ui Label */}
+              <Label htmlFor="showGraph" className="text-right text-sm">
                 Show Graph
-              </label>
-              <input
+              </Label>
+              {/* Replace native checkbox with shadcn/ui Checkbox */}
+              <Checkbox
                 id="showGraph"
-                type="checkbox"
                 checked={!!localConfig.showContributionGraph}
-                className="col-span-3"
-                onChange={e => setLocalConfig(prev => ({ ...prev, showContributionGraph: e.target.checked }))}
+                onCheckedChange={checked => setLocalConfig(prev => ({ ...prev, showContributionGraph: Boolean(checked) }))}
+                className="col-span-3 justify-self-start" // Align checkbox to the start
               />
             </div>
           </div>

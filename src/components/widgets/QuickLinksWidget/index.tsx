@@ -551,12 +551,12 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Widget Settings</DialogTitle>
+              <DialogTitle>Quick Links Settings</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-2 mt-2">
               <div className="space-y-2">
-                <Label htmlFor="widget-title">Widget Title</Label>
+                <Label htmlFor="widget-title">Title</Label>
                 <Input 
                   id="widget-title"
                   value={customTitle} 

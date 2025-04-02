@@ -18,6 +18,8 @@ import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
+// Add import for Checkbox
+import { Checkbox } from '../../ui/checkbox';
 
 // Add these interfaces at the top with other types
 interface GoogleCalendarEvent {
@@ -1421,14 +1423,14 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                   <div className="space-y-2 mt-2">
                     {localConfig.calendars.map((calendar: CalendarSource, index: number) => (
                       <div key={index} className="flex items-center">
-                        <input
-                          type="checkbox"
+                        {/* Replace native checkbox with shadcn/ui Checkbox */}
+                        <Checkbox
                           id={`calendar-${index}`}
                           checked={calendar.selected}
-                          onChange={() => toggleCalendar(index)}
-                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600"
+                          onCheckedChange={() => toggleCalendar(index)}
+                          className="rounded" // Apply shadcn styling
                         />
-                        <Label htmlFor={`calendar-${index}`} className="ml-2 text-sm flex items-center">
+                        <Label htmlFor={`calendar-${index}`} className="ml-2 text-sm flex items-center cursor-pointer">
                           <span 
                             className="w-3 h-3 rounded-full mr-2" 
                             style={{ backgroundColor: calendar.color }}

@@ -642,7 +642,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Widget Settings</DialogTitle>
+            <DialogTitle>To Do Settings</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
