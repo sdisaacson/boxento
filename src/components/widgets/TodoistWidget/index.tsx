@@ -316,15 +316,18 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <Label>Show Completed Tasks</Label>
+          {/* Change layout from justify-between to flex items-center space-x-2 */}
+          {/* Place Switch before Label */}
+          <div className="flex items-center space-x-2">
             <Switch
+              id="showCompleted"
               checked={localConfig?.showCompleted || false}
               onCheckedChange={(checked) => setLocalConfig({
                 ...localConfig,
                 showCompleted: checked
               })}
             />
+            <Label htmlFor="showCompleted">Show Completed Tasks</Label>
           </div>
 
           <div className="space-y-2">

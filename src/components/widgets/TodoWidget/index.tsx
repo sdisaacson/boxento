@@ -687,7 +687,8 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </div>
           
           <DialogFooter>
-            <div className="flex justify-between w-full pt-6 border-t border-gray-100 dark:border-gray-800">
+            {/* Remove pt-6 border-t border-gray-100 dark:border-gray-800 classes */}
+            <div className="flex justify-between w-full">
               {config?.onDelete && (
                 <Button
                   variant="destructive"
