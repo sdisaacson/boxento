@@ -642,7 +642,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Widget Settings</DialogTitle>
+            <DialogTitle>To Do Settings</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -687,7 +687,8 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </div>
           
           <DialogFooter>
-            <div className="flex justify-between w-full pt-6 border-t border-gray-100 dark:border-gray-800">
+            {/* Remove pt-6 border-t border-gray-100 dark:border-gray-800 classes */}
+            <div className="flex justify-between w-full">
               {config?.onDelete && (
                 <Button
                   variant="destructive"
@@ -697,7 +698,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               
@@ -705,7 +706,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 variant="default"
                 onClick={saveSettings}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>

@@ -9,6 +9,10 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { GitHubStreakWidgetProps, GitHubStreakWidgetConfig } from './types';
 import { Button } from '../../ui/button';
+// Add imports for Input, Label, Checkbox
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Checkbox } from '../../ui/checkbox';
 
 /**
  * Size categories for widget content rendering
@@ -828,78 +832,81 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
             <DialogTitle>GitHub Streak Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="title" className="text-right text-sm">
+          {/* Change layout from grid to space-y-4 */}
+          <div className="space-y-4 py-4">
+            {/* Title Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-sm font-medium">
                 Title
-              </label>
-              <input
+              </Label>
+              <Input
                 id="title"
                 value={localConfig.title || ''}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="username" className="text-right text-sm">
+          
+            {/* GitHub Username Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-medium">
                 GitHub Username
-              </label>
-              <input
+              </Label>
+              <Input
                 id="username"
                 value={localConfig.username || ''}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, username: e.target.value }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="pat" className="text-right text-sm">
+          
+            {/* Personal Access Token Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="pat" className="text-sm font-medium">
                 Personal Access Token
                 <span className="text-red-500 ml-0.5">*</span>
-              </label>
-              <div className="col-span-3">
-                <input
-                  id="pat"
-                  type="password"
-                  value={localConfig.personalAccessToken || ''}
-                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
-                  placeholder="Required for GitHub API access"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  <p>Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">github.com/settings/tokens</a></p>
-                  <p>Only needs <span className="font-medium">read-only</span> access to public repositories</p>
-                </div>
+              </Label>
+              <Input
+                id="pat"
+                type="password"
+                value={localConfig.personalAccessToken || ''}
+                className="w-full h-10" // Ensure consistent height
+                onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
+                placeholder="Required for GitHub API access"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                <p>Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">github.com/settings/tokens</a></p>
+                <p>Only needs <span className="font-medium">read-only</span> access to public repositories</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="daysToShow" className="text-right text-sm">
-                Days to Show
-              </label>
-              <input
+          
+            {/* Days to Show Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="daysToShow" className="text-sm font-medium">
+                Days to Show in Graph
+              </Label>
+              <Input
                 id="daysToShow"
                 type="number"
                 min="7"
                 max="365"
                 value={localConfig.daysToShow || 30}
-                className="col-span-3 flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, daysToShow: parseInt(e.target.value, 10) }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="showGraph" className="text-right text-sm">
-                Show Graph
-              </label>
-              <input
+          
+            {/* Show Graph Setting */}
+            {/* Use flex layout for checkbox and label */}
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox
                 id="showGraph"
-                type="checkbox"
                 checked={!!localConfig.showContributionGraph}
-                className="col-span-3"
-                onChange={e => setLocalConfig(prev => ({ ...prev, showContributionGraph: e.target.checked }))}
+                onCheckedChange={checked => setLocalConfig(prev => ({ ...prev, showContributionGraph: Boolean(checked) }))}
               />
+              <Label htmlFor="showGraph" className="text-sm font-medium">
+                Show Contribution Graph
+              </Label>
             </div>
           </div>
           
@@ -915,10 +922,10 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
                   }}
                   aria-label="Delete this widget"
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
-              <Button onClick={saveSettings}>Save changes</Button>
+              <Button onClick={saveSettings}>Save</Button>
             </div>
           </DialogFooter>
         </DialogContent>

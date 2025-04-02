@@ -1253,7 +1253,7 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full h-9 cursor-pointer transition-colors"
+              className="rounded-full h-9 transition-colors"
               size="sm"
               variant="outline"
             >
@@ -1263,7 +1263,7 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full h-9 w-9 p-0 flex items-center justify-center cursor-pointer transition-colors"
+              className="rounded-full h-9 w-9 p-0 flex items-center justify-center transition-colors"
               size="sm"
               aria-label="Toggle theme"
               variant="outline"
@@ -1274,7 +1274,7 @@ function App() {
             <Changelog />
             
             <div className="flex items-center">
-              <UserMenuButton className="h-9 cursor-pointer" />
+              <UserMenuButton className="h-9" />
             </div>
           </div>
         </div>

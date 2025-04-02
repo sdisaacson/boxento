@@ -12,6 +12,8 @@ import { Switch } from '../../ui/switch';
 import { Label } from '../../ui/label';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoistWidgetProps, TodoistTask } from './types';
+// Add import for Button
+import { Button } from '../../ui/button';
 
 // Memoized task content formatter
 const TaskContent = memo(({ content, completed }: { content: string; completed: boolean }) => {
@@ -283,7 +285,8 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
           <DialogTitle>Todoist Settings</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-2">
+        {/* Change py-2 to py-4 */}
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>API Token</Label>
             <Input
@@ -313,15 +316,18 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <Label>Show Completed Tasks</Label>
+          {/* Change layout from justify-between to flex items-center space-x-2 */}
+          {/* Place Switch before Label */}
+          <div className="flex items-center space-x-2">
             <Switch
+              id="showCompleted"
               checked={localConfig?.showCompleted || false}
               onCheckedChange={(checked) => setLocalConfig({
                 ...localConfig,
                 showCompleted: checked
               })}
             />
+            <Label htmlFor="showCompleted">Show Completed Tasks</Label>
           </div>
 
           <div className="space-y-2">
@@ -340,25 +346,29 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
         </div>
         
         <DialogFooter>
-          {config?.onDelete && (
-            <button
-              className="px-4 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 rounded-lg text-sm font-medium transition-colors"
-              onClick={config.onDelete}
+          {/* Replace native button with shadcn/ui Button */}
+          <div className="flex justify-between w-full">
+            {config?.onDelete && (
+              <Button
+                variant="destructive"
+                onClick={config.onDelete}
+              >
+                Delete
+              </Button>
+            )}
+            {/* Ensure the Save button is pushed to the right if Delete is not present */}
+            {!config?.onDelete && <div />}
+            <Button
+              onClick={() => {
+                if (config?.onUpdate) {
+                  config.onUpdate(localConfig);
+                }
+                setShowSettings(false);
+              }}
             >
-              Delete Widget
-            </button>
-          )}
-          <button
-            onClick={() => {
-              if (config?.onUpdate) {
-                config.onUpdate(localConfig);
-              }
-              setShowSettings(false);
-            }}
-            className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Save
-          </button>
+              Save
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

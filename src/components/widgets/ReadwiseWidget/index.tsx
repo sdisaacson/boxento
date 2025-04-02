@@ -616,7 +616,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
             <DialogTitle>Readwise Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-4">
             {/* Title setting */}
             <div className="space-y-2">
               <Label htmlFor="title-input">Widget Title</Label>
@@ -664,8 +664,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
             </div>
             
             {/* Show book info toggle */}
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-book-info-toggle">Show Book Information</Label>
+            <div className="flex items-center space-x-2">
               <Switch
                 id="show-book-info-toggle"
                 checked={localConfig.showBookInfo || false}
@@ -673,11 +672,11 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                   setLocalConfig({...localConfig, showBookInfo: checked})
                 }
               />
+              <Label htmlFor="show-book-info-toggle">Show Book Information</Label>
             </div>
             
             {/* Show tags toggle */}
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-tags-toggle">Show Tags</Label>
+            <div className="flex items-center space-x-2">
               <Switch
                 id="show-tags-toggle"
                 checked={localConfig.showTags || false}
@@ -685,6 +684,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                   setLocalConfig({...localConfig, showTags: checked})
                 }
               />
+              <Label htmlFor="show-tags-toggle">Show Tags</Label>
             </div>
           </div>
           
@@ -699,7 +699,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               
@@ -707,7 +707,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                 variant="default"
                 onClick={saveSettings}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>
