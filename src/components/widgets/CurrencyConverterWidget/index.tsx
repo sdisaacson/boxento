@@ -385,14 +385,14 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 onClick={handleDelete}
                 aria-label="Delete this widget"
               >
-                Delete Widget
+                Delete
               </Button>
             )}
             <Button
               variant="default"
               onClick={saveSettings}
             >
-              Save Changes
+              Save
             </Button>
           </div>
         </DialogFooter>

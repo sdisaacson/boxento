@@ -699,7 +699,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               
@@ -707,7 +707,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                 variant="default"
                 onClick={saveSettings}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>

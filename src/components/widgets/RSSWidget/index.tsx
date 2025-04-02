@@ -749,7 +749,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               
@@ -761,7 +761,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
                 }}
                 disabled={!isValidUrl}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>

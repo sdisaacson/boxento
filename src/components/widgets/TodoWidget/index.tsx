@@ -698,7 +698,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               
@@ -706,7 +706,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 variant="default"
                 onClick={saveSettings}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>

@@ -772,7 +772,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             }}
             aria-label="Delete this widget"
           >
-            Delete Widget
+            Delete
           </Button>
         )}
         

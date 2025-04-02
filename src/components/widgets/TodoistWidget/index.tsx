@@ -353,7 +353,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
                 variant="destructive"
                 onClick={config.onDelete}
               >
-                Delete Widget
+                Delete
               </Button>
             )}
             {/* Ensure the Save button is pushed to the right if Delete is not present */}

@@ -897,7 +897,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
                   }}
                   aria-label="Delete this widget"
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               <Button

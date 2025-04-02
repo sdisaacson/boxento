@@ -512,7 +512,7 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
                   }}
                   aria-label="Delete this widget"
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               <Button

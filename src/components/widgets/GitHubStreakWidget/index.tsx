@@ -922,10 +922,10 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
                   }}
                   aria-label="Delete this widget"
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
-              <Button onClick={saveSettings}>Save changes</Button>
+              <Button onClick={saveSettings}>Save</Button>
             </div>
           </DialogFooter>
         </DialogContent>

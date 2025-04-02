@@ -667,7 +667,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
                     }
                   }}
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               <Button
@@ -677,7 +677,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
                   setShowSettings(false);
                 }}
               >
-                Save Changes
+                Save
               </Button>
             </div>
           </DialogFooter>

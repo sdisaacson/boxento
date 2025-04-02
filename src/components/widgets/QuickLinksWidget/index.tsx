@@ -609,7 +609,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                         }
                       }}
                     >
-                      Delete Widget
+                      Delete
                     </Button>
                   )}
                 </div>
@@ -617,7 +617,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
                   variant="default"
                   onClick={saveSettings}
                 >
-                  Save Changes
+                  Save
                 </Button>
               </div>
             </DialogFooter>

@@ -384,7 +384,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
                   }
                 }}
               >
-                Delete Widget
+                Delete
               </Button>
             )}
             <Button

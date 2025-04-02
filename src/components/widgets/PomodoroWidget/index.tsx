@@ -469,7 +469,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                   }}
                   aria-label="Delete this widget"
                 >
-                  Delete Widget
+                  Delete
                 </Button>
               )}
               <Button
