@@ -832,87 +832,81 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
             <DialogTitle>GitHub Streak Widget Settings</DialogTitle>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              {/* Replace native label with shadcn/ui Label */}
-              <Label htmlFor="title" className="text-right text-sm">
+          {/* Change layout from grid to space-y-4 */}
+          <div className="space-y-4 py-4">
+            {/* Title Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-sm font-medium">
                 Title
               </Label>
-              {/* Replace native input with shadcn/ui Input */}
               <Input
                 id="title"
                 value={localConfig.title || ''}
-                className="col-span-3 h-10" // Ensure consistent height
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              {/* Replace native label with shadcn/ui Label */}
-              <Label htmlFor="username" className="text-right text-sm">
+          
+            {/* GitHub Username Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-medium">
                 GitHub Username
               </Label>
-              {/* Replace native input with shadcn/ui Input */}
               <Input
                 id="username"
                 value={localConfig.username || ''}
-                className="col-span-3 h-10" // Ensure consistent height
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, username: e.target.value }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              {/* Replace native label with shadcn/ui Label */}
-              <Label htmlFor="pat" className="text-right text-sm">
+          
+            {/* Personal Access Token Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="pat" className="text-sm font-medium">
                 Personal Access Token
                 <span className="text-red-500 ml-0.5">*</span>
               </Label>
-              <div className="col-span-3">
-                {/* Replace native input with shadcn/ui Input */}
-                <Input
-                  id="pat"
-                  type="password"
-                  value={localConfig.personalAccessToken || ''}
-                  className="w-full h-10" // Ensure consistent height
-                  onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
-                  placeholder="Required for GitHub API access"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  <p>Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">github.com/settings/tokens</a></p>
-                  <p>Only needs <span className="font-medium">read-only</span> access to public repositories</p>
-                </div>
+              <Input
+                id="pat"
+                type="password"
+                value={localConfig.personalAccessToken || ''}
+                className="w-full h-10" // Ensure consistent height
+                onChange={e => setLocalConfig(prev => ({ ...prev, personalAccessToken: e.target.value }))}
+                placeholder="Required for GitHub API access"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                <p>Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">github.com/settings/tokens</a></p>
+                <p>Only needs <span className="font-medium">read-only</span> access to public repositories</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              {/* Replace native label with shadcn/ui Label */}
-              <Label htmlFor="daysToShow" className="text-right text-sm">
-                Days to Show
+          
+            {/* Days to Show Setting */}
+            <div className="space-y-2">
+              <Label htmlFor="daysToShow" className="text-sm font-medium">
+                Days to Show in Graph
               </Label>
-              {/* Replace native input with shadcn/ui Input */}
               <Input
                 id="daysToShow"
                 type="number"
                 min="7"
                 max="365"
                 value={localConfig.daysToShow || 30}
-                className="col-span-3 h-10" // Ensure consistent height
+                className="h-10" // Ensure consistent height
                 onChange={e => setLocalConfig(prev => ({ ...prev, daysToShow: parseInt(e.target.value, 10) }))}
               />
             </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              {/* Replace native label with shadcn/ui Label */}
-              <Label htmlFor="showGraph" className="text-right text-sm">
-                Show Graph
-              </Label>
-              {/* Replace native checkbox with shadcn/ui Checkbox */}
+          
+            {/* Show Graph Setting */}
+            {/* Use flex layout for checkbox and label */}
+            <div className="flex items-center space-x-2 pt-2">
               <Checkbox
                 id="showGraph"
                 checked={!!localConfig.showContributionGraph}
                 onCheckedChange={checked => setLocalConfig(prev => ({ ...prev, showContributionGraph: Boolean(checked) }))}
-                className="col-span-3 justify-self-start" // Align checkbox to the start
               />
+              <Label htmlFor="showGraph" className="text-sm font-medium">
+                Show Contribution Graph
+              </Label>
             </div>
           </div>
           
