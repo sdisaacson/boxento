@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { Check, Loader2, CalendarIcon, ExternalLink } from 'lucide-react';
+// Add CheckSquare import
+import { Check, Loader2, CalendarIcon, ExternalLink, CheckSquare } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -234,12 +235,24 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
   const renderContent = () => {
     if (!localConfig?.apiToken) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Please configure your Todoist API token</p>
+        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+          {/* Use CheckSquare icon from Lucide with consistent styling */}
+          <CheckSquare size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          {/* Consistent text styling */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Please configure your Todoist API token.
+          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
+            Configure Token
+          </Button>
         </div>
       );
     }
-
+  
     if (loading && tasks.length === 0) {
       return (
         <div className="flex items-center justify-center h-full">

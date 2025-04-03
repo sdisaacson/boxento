@@ -1523,6 +1523,27 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    * @returns The appropriate view for the current dimensions
    */
   const renderContent = () => {
+    // Add check for Google Calendar connection
+    if (!isGoogleConnected) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+          {/* Use CalendarIcon from Lucide with consistent styling */}
+          <CalendarIcon size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          {/* Consistent text styling */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Connect Google Calendar to see events.
+          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setIsSettingsOpen(true)}
+          >
+            Connect Calendar
+          </Button>
+        </div>
+      );
+    }
+
     // Choose the appropriate view based on widget dimensions
     if ((width >= 4 && height >= 3) || (width >= 3 && height >= 4)) {
       return renderExpandedCalendar()

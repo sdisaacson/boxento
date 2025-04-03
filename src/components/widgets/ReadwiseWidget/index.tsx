@@ -244,22 +244,28 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
   
   /**
    * No API token state
-   */
-  const renderNoApiTokenState = () => {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-center mb-3 font-serif text-lg">Please set your Readwise API token in settings</div>
-        <button 
-          onClick={() => setShowSettings(true)}
-          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm"
-        >
-          Settings
-        </button>
-      </div>
-    );
-  };
-  
-  /**
+ */
+const renderNoApiTokenState = () => {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center p-4">
+      {/* Use BookOpen icon from Lucide with consistent styling */}
+      <Book size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+      {/* Consistent text styling */}
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Please add your Readwise API token.
+      </p>
+      {/* Consistent button styling */}
+      <Button
+        size="sm"
+        onClick={() => setShowSettings(true)}
+      >
+        Configure Token
+      </Button>
+    </div>
+  );
+};
+
+/**
    * Empty state
    */
   const renderEmptyState = () => {

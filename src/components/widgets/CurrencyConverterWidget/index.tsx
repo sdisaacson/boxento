@@ -16,6 +16,8 @@ import { Switch } from "../../ui/switch";
 import { Checkbox } from "../../ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import type { CurrencyConverterWidgetProps, CurrencyConverterWidgetConfig } from './types';
+// Add DollarSign icon import
+import { DollarSign } from 'lucide-react';
 
 // Comprehensive currency database
 // This includes all currencies supported by Open Exchange Rates
@@ -668,9 +670,27 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
       />
       
       <div className="flex-grow overflow-hidden">
-        {error ? (
+        {error && (error.includes('API key is required') || error.includes('Invalid API key')) ? (
+          // Specific view for API key error
+          <div className="h-full flex flex-col items-center justify-center text-center p-4">
+            {/* Use DollarSign icon from Lucide with consistent styling (warning color) */}
+            <DollarSign size={40} className="text-amber-500 dark:text-amber-400 mb-3" strokeWidth={1.5} />
+            {/* Consistent text styling */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              {error.includes('Invalid') ? 'Invalid API key.' : 'API key required for exchange rates.'}
+            </p>
+            {/* Consistent button styling */}
+            <Button
+              size="sm"
+              onClick={() => setShowSettings(true)}
+            >
+              Configure API Key
+            </Button>
+          </div>
+        ) : error ? (
+          // General error view
           <div className="flex items-center justify-center h-full p-4">
-            <div className="text-destructive text-center">
+            <div className="text-destructive text-center text-sm">
               {error}
             </div>
           </div>

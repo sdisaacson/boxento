@@ -13,6 +13,8 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
+// Add Github and Shield icons import
+import { Github, Shield } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -437,27 +439,44 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
   const renderSmallView = () => {
     if (!localConfig.username) {
       return (
-        <div className="h-full flex flex-col items-center justify-center">
-          <p className="text-gray-500 dark:text-gray-400 text-center">
-            Configure your GitHub username in settings
+        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+          {/* Use Github icon from Lucide with consistent styling */}
+          <Github size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          {/* Consistent text styling */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Add your GitHub username in settings.
           </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
+            Configure Username
+          </Button>
         </div>
       );
     }
 
     if (!localConfig.personalAccessToken) {
       return (
-        <div className="h-full flex flex-col items-center justify-center p-1">
-          <p className="text-amber-500 dark:text-amber-400 text-center text-xs mb-1 font-medium">
-            Personal Access Token Required
+        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+          {/* Use Shield icon from Lucide with consistent styling (warning color) */}
+          <Shield size={40} className="text-amber-500 dark:text-amber-400 mb-3" strokeWidth={1.5} />
+          {/* Consistent text styling */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            GitHub API requires a Personal Access Token.
           </p>
-          <p className="text-gray-500 dark:text-gray-400 text-center text-xs">
-            GitHub API requires authentication. Click settings to add a token.
-          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
+            Add Token
+          </Button>
         </div>
       );
     }
-    
+
     if (githubData.loading) {
       return (
         <div className="h-full flex flex-col items-center justify-center">

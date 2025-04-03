@@ -14,6 +14,8 @@ import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
+// Add Rss icon import
+import { Rss } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -366,25 +368,23 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
   const renderEmptyState = () => {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-4">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 mb-4">
-          <path d="M4 11a9 9 0 0 1 9 9"></path>
-          <path d="M4 4a16 16 0 0 1 16 16"></path>
-          <circle cx="5" cy="19" r="1"></circle>
-        </svg>
-        <h3 className="text-lg font-medium">No RSS Feed Configured</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Click the settings icon to add an RSS feed URL
+        {/* Use Rss icon from Lucide with consistent styling */}
+        <Rss size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+        {/* Consistent text styling */}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          No RSS feed configured.
         </p>
-        <button 
+        {/* Consistent button styling */}
+        <Button
+          size="sm"
           onClick={() => setShowSettings(true)} 
-          className="mt-4 px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
         >
-          Configure Widget
-        </button>
+          Configure Feed
+        </Button>
       </div>
     );
   };
-  
+
   /**
    * Render error state
    */

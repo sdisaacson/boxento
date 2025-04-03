@@ -505,29 +505,27 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   };
 
   // Render initial setup view
-  const renderSetupView = () => {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
-        <div className="p-3 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:from-opacity-30 dark:to-indigo-900 dark:to-opacity-30">
-          <Plane className="h-8 w-8 text-blue-500" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-1">Track Your Flight</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Enter your flight details to get real-time updates and information
-          </p>
-          <Button 
-            onClick={() => setShowSettings(true)}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium"
-          >
-            Configure Flight Tracker
-          </Button>
-        </div>
-      </div>
-    );
-  };
+const renderSetupView = () => {
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-center p-4">
+      {/* Use Plane icon from Lucide with consistent styling */}
+      <Plane size={40} className="text-gray-400 mb-3" strokeWidth={1.5}/>
+      {/* Consistent text styling */}
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Enter flight details to start tracking.
+      </p>
+      {/* Consistent button styling */}
+      <Button
+        size="sm"
+        onClick={() => setShowSettings(true)}
+      >
+        Configure Flight
+      </Button>
+    </div>
+  );
+};
 
-  // Render error state
+// Render error state
   const renderErrorState = () => {
     return (
       <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
