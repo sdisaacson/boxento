@@ -505,59 +505,52 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   };
 
   // Render initial setup view
-  const renderSetupView = () => {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
-        <div className="p-3 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:from-opacity-30 dark:to-indigo-900 dark:to-opacity-30">
-          <Plane className="h-8 w-8 text-blue-500" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-1">Track Your Flight</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Enter your flight details to get real-time updates and information
-          </p>
-          <Button 
-            onClick={() => setShowSettings(true)}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium"
-          >
-            Configure Flight Tracker
-          </Button>
-        </div>
-      </div>
-    );
-  };
+const renderSetupView = () => {
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-center">
+      {/* Use Plane icon from Lucide with consistent styling */}
+      <Plane size={24} className="text-gray-400 mb-3" strokeWidth={1.5}/>
+      {/* Consistent text styling */}
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Enter flight details to start tracking.
+      </p>
+      {/* Consistent button styling */}
+      <Button
+        size="sm"
+        onClick={() => setShowSettings(true)}
+        variant="outline"
+      >
+        Configure Widget
+      </Button>
+    </div>
+  );
+};
 
-  // Render error state
+// Render error state
   const renderErrorState = () => {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-4 space-y-4 text-center">
-        <div className="p-3 rounded-full bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900 dark:from-opacity-30 dark:to-red-900 dark:to-opacity-20">
-          <AlertCircle className="h-8 w-8 text-red-500" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-1">Unable to Track Flight</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            {error || "There was an error retrieving flight information"}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Please check your flight number and API key
-          </p>
-          <div className="flex space-x-3 justify-center">
-            <Button 
-              onClick={() => setShowSettings(true)}
-              variant="outline"
-              className="border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
-            >
-              Settings
-            </Button>
-            <Button 
-              onClick={handleManualRefresh}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-            >
-              Retry
-            </Button>
-          </div>
-        </div>
+      <div className="h-full flex flex-col items-center justify-center text-center p-4">
+        {/* Use AlertCircle icon for errors */}
+        <AlertCircle size={40} className="text-red-500 mb-3" strokeWidth={1.5} />
+        {/* Consistent error text styling */}
+        <p className="text-sm text-red-500 dark:text-red-400 mb-3">
+          {error || "There was an error retrieving flight information"}
+        </p>
+        {/* Consistent button styling */}
+        <Button
+          size="sm"
+          onClick={handleManualRefresh}
+          className="mr-2" // Add margin if needed
+        >
+          Retry
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowSettings(true)}
+        >
+          Settings
+        </Button>
       </div>
     );
   };

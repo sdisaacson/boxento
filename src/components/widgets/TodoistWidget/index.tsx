@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { Check, Loader2, CalendarIcon, ExternalLink } from 'lucide-react';
+// Add CheckSquare import
+// Add AlertCircle import
+import { Check, Loader2, CalendarIcon, ExternalLink, CheckSquare, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -234,12 +236,25 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
   const renderContent = () => {
     if (!localConfig?.apiToken) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Please configure your Todoist API token</p>
+        <div className="h-full flex flex-col items-center justify-center text-center">
+          {/* Use CheckSquare icon from Lucide with consistent styling */}
+          <CheckSquare size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          {/* Consistent text styling */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Please configure your Todoist API token.
+          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setShowSettings(true)}
+            variant="outline"
+          >
+            Configure Widget
+          </Button>
         </div>
       );
     }
-
+  
     if (loading && tasks.length === 0) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -250,8 +265,20 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
 
     if (error && tasks.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-red-500">{error}</p>
+        <div className="h-full flex flex-col items-center justify-center text-center">
+          {/* Use AlertCircle icon for errors */}
+          <AlertCircle size={24} className="text-red-500 mb-3" strokeWidth={1.5} />
+          {/* Consistent error text styling */}
+          <p className="text-sm text-red-500 dark:text-red-400 mb-3">
+            {error}
+          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={fetchTasks} // Add a retry button
+          >
+            Retry
+          </Button>
         </div>
       );
     }
