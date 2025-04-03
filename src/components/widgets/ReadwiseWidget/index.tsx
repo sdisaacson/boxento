@@ -7,7 +7,8 @@ import {
   DialogFooter
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
-import { RefreshCw, Book, Quote } from 'lucide-react';
+// Add AlertCircle import
+import { RefreshCw, Quote, AlertCircle, BookOpen, Book } from 'lucide-react';
 import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -230,14 +231,20 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
    */
   const renderErrorState = () => {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-red-500 mb-3 text-center font-serif">Error: {error}</div>
-        <button 
+      <div className="h-full flex flex-col items-center justify-center text-center p-4">
+        {/* Use AlertCircle icon for errors */}
+        <AlertCircle size={40} className="text-red-500 mb-3" strokeWidth={1.5} />
+        {/* Consistent error text styling */}
+        <p className="text-sm text-red-500 dark:text-red-400 mb-3">
+          {error}
+        </p>
+        {/* Consistent button styling */}
+        <Button
+          size="sm"
           onClick={fetchRandomHighlight}
-          className="px-3 py-2 bg-blue-500 text-white rounded-md text-sm"
         >
           Try Again
-        </button>
+        </Button>
       </div>
     );
   };
@@ -247,9 +254,9 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
  */
 const renderNoApiTokenState = () => {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center p-4">
+    <div className="h-full flex flex-col items-center justify-center text-center">
       {/* Use BookOpen icon from Lucide with consistent styling */}
-      <Book size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+      <BookOpen size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
       {/* Consistent text styling */}
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
         Please add your Readwise API token.
@@ -313,7 +320,7 @@ const renderNoApiTokenState = () => {
         
         {localConfig.showBookInfo && highlight?.book_title && (
           <div className="text-xs text-gray-500 mt-2 flex items-center">
-            <Book size={12} className="mr-1" />
+            <BookOpen size={12} className="mr-1" />
             <span className="truncate">{highlight.book_title}</span>
           </div>
         )}
@@ -337,7 +344,7 @@ const renderNoApiTokenState = () => {
           <div className="mt-2">
             {highlight?.book_title && (
               <div className="text-xs text-gray-500 flex items-center">
-                <Book size={12} className="mr-1" />
+                <BookOpen size={12} className="mr-1" />
                 <span className="truncate">{highlight.book_title}</span>
               </div>
             )}
@@ -377,7 +384,7 @@ const renderNoApiTokenState = () => {
             <div className="mb-2">
               {highlight?.book_title && (
                 <div className="text-sm text-gray-500 flex items-center">
-                  <Book size={12} className="mr-1" />
+                  <BookOpen size={12} className="mr-1" />
                   <span className="truncate font-medium">{highlight.book_title}</span>
                 </div>
               )}
@@ -496,7 +503,7 @@ const renderNoApiTokenState = () => {
             <div className="mb-2">
               {highlight?.book_title && (
                 <div className="text-sm text-gray-500 flex items-center">
-                  <Book size={14} className="mr-1" />
+                  <BookOpen size={14} className="mr-1" />
                   <span className="truncate font-medium">{highlight.book_title}</span>
                 </div>
               )}
@@ -558,7 +565,7 @@ const renderNoApiTokenState = () => {
             <div className="mb-3">
               {highlight?.book_title && (
                 <div className="text-base flex items-center">
-                  <Book size={16} className="mr-2 text-blue-500" />
+                  <BookOpen size={16} className="mr-2 text-blue-500" />
                   <span className="font-medium">{highlight.book_title}</span>
                 </div>
               )}

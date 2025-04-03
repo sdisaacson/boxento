@@ -13,8 +13,8 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
-// Add Github and Shield icons import
-import { Github, Shield } from 'lucide-react';
+// Add Github, Shield, and AlertCircle icons import
+import { AlertCircle, Github, Shield } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -439,9 +439,9 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
   const renderSmallView = () => {
     if (!localConfig.username) {
       return (
-        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+        <div className="h-full flex flex-col items-center justify-center text-center">
           {/* Use Github icon from Lucide with consistent styling */}
-          <Github size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <Github size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Add your GitHub username in settings.
@@ -487,8 +487,20 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     
     if (githubData.error) {
       return (
-        <div className="h-full flex flex-col items-center justify-center p-1">
-          <p className="text-red-500 text-center text-xs">{githubData.error}</p>
+        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+          {/* Use AlertCircle icon for errors */}
+          <AlertCircle size={40} className="text-red-500 mb-3" strokeWidth={1.5} />
+          {/* Consistent error text styling */}
+          <p className="text-sm text-red-500 dark:text-red-400 mb-3">
+            {githubData.error}
+          </p>
+          {/* Consistent button styling */}
+          <Button
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
+            Check Settings
+          </Button>
         </div>
       );
     }

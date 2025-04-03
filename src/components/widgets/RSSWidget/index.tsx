@@ -15,7 +15,8 @@ import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
 // Add Rss icon import
-import { Rss } from 'lucide-react';
+// Add AlertCircle import
+import { Rss, AlertCircle } from 'lucide-react';
 
 /**
  * Size categories for widget content rendering
@@ -367,9 +368,9 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
    */
   const renderEmptyState = () => {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-4">
+      <div className="h-full flex flex-col items-center justify-center text-center">
         {/* Use Rss icon from Lucide with consistent styling */}
-        <Rss size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+        <Rss size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
         {/* Consistent text styling */}
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
           No RSS feed configured.
@@ -391,29 +392,27 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
   const renderErrorState = () => {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-4">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 mb-4">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <h3 className="text-lg font-medium">Error Loading Feed</h3>
-        <p className="text-sm text-red-500 dark:text-red-400 mt-1">
+        {/* Use AlertCircle icon for errors */}
+        <AlertCircle size={24} className="text-red-500 mb-3" strokeWidth={1.5} />
+        {/* Consistent error text styling */}
+        <p className="text-sm text-red-500 dark:text-red-400 mb-3">
           {error}
         </p>
-        <div className="flex flex-col space-y-2 mt-4">
-          <button 
-            onClick={fetchRSSFeed} 
-            className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Try Again
-          </button>
-          <button 
-            onClick={() => setShowSettings(true)} 
-            className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            Change Feed URL
-          </button>
-        </div>
+        {/* Consistent button styling */}
+        <Button
+          size="sm"
+          onClick={fetchRSSFeed}
+          className="mr-2" // Add margin if needed
+        >
+          Try Again
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowSettings(true)}
+        >
+          Settings
+        </Button>
       </div>
     );
   };

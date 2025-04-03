@@ -215,9 +215,9 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
   const renderSmallView = () => {
     if (!quizActive) {
       return (
-        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+        <div className="h-full flex flex-col justify-center items-center text-center">
           {/* Use Globe icon from Lucide with consistent styling */}
-          <Globe size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <Globe size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Ready for a geography challenge?
@@ -284,9 +284,9 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
   const renderWideSmallView = () => {
     if (!quizActive) {
       return (
-        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+        <div className="h-full flex flex-col justify-center items-center text-center">
           {/* Use Globe icon from Lucide with consistent styling */}
-          <Globe size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <Globe size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Test your geography knowledge!
@@ -379,9 +379,9 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
   const renderTallSmallView = () => {
     if (!quizActive) {
       return (
-        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+        <div className="h-full flex flex-col justify-center items-center text-center">
           {/* Use Globe icon from Lucide with consistent styling */}
-          <Globe size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <Globe size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Test your geography knowledge!
@@ -470,9 +470,9 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
   const renderMediumView = () => {
     if (!quizActive) {
       return (
-        <div className="h-full flex flex-col justify-center items-center text-center p-4">
+        <div className="h-full flex flex-col justify-center items-center text-center">
           {/* Use Globe icon from Lucide with consistent styling */}
-          <Globe size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <Globe size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           <h2 className="text-lg font-semibold">Geography Quiz</h2>
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">

@@ -1526,9 +1526,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     // Add check for Google Calendar connection
     if (!isGoogleConnected) {
       return (
-        <div className="h-full flex flex-col items-center justify-center text-center p-4">
+        <div className="h-full flex flex-col items-center justify-center text-center">
           {/* Use CalendarIcon from Lucide with consistent styling */}
-          <CalendarIcon size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
+          <CalendarIcon size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Connect Google Calendar to see events.
