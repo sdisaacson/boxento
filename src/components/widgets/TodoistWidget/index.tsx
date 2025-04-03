@@ -247,6 +247,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
           <Button
             size="sm"
             onClick={() => setShowSettings(true)}
+            variant="outline"
           >
             Configure Widget
           </Button>

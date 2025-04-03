@@ -450,6 +450,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           <Button
             size="sm"
             onClick={() => setShowSettings(true)}
+            variant="outline"
           >
             Configure Username
           </Button>
@@ -470,6 +471,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           <Button
             size="sm"
             onClick={() => setShowSettings(true)}
+            variant="outline"
           >
             Add Token
           </Button>
@@ -498,6 +500,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           <Button
             size="sm"
             onClick={() => setShowSettings(true)}
+            variant="outline"
           >
             Check Settings
           </Button>

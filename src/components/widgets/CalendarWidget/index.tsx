@@ -1537,6 +1537,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           <Button
             size="sm"
             onClick={() => setIsSettingsOpen(true)}
+            variant="outline"
           >
             Configure Calendar
           </Button>

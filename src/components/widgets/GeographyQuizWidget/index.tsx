@@ -226,6 +226,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
           <Button
             size="sm"
             onClick={startQuiz}
+            variant="outline"
           >
             Start Quiz
           </Button>
@@ -295,6 +296,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
           <Button
             size="sm"
             onClick={startQuiz}
+            variant="outline"
           >
             Start Quiz
           </Button>
@@ -390,6 +392,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
           <Button
             size="sm"
             onClick={startQuiz}
+            variant="outline"
           >
             Start Quiz
           </Button>
@@ -473,7 +476,6 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
         <div className="h-full flex flex-col justify-center items-center text-center">
           {/* Use Globe icon from Lucide with consistent styling */}
           <Globe size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
-          <h2 className="text-lg font-semibold">Geography Quiz</h2>
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Test your knowledge of world geography!
@@ -482,6 +484,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
           <Button
             size="sm"
             onClick={startQuiz}
+            variant="outline"
           >
             Start Quiz
           </Button>

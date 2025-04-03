@@ -684,6 +684,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             <Button
               size="sm"
               onClick={() => setShowSettings(true)}
+              variant="outline"
             >
               Configure API Key
             </Button>

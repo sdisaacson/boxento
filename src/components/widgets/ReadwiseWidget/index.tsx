@@ -265,6 +265,7 @@ const renderNoApiTokenState = () => {
       <Button
         size="sm"
         onClick={() => setShowSettings(true)}
+        variant="outline"
       >
         Configure Widget
       </Button>
