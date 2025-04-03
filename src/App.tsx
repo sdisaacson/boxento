@@ -184,7 +184,8 @@ const AppFooter = () => {
     <footer className="py-4 sm:py-6 px-4 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-4 sm:gap-6">
         {/* Mobile layout (stacked) */}
-        <div className="flex flex-col items-center gap-4 sm:hidden">
+        {/* Reduced gap from gap-4 to gap-3 for tighter mobile spacing */}
+        <div className="flex flex-col items-center gap-3 sm:hidden">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Built by{' '}
             <a 
@@ -1315,10 +1316,10 @@ function App() {
       
       {/* Header */}
       <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
-        <div className="px-4 py-3 flex items-center justify-between">
+        <div className="px-2 sm:px-4 py-3 flex items-center justify-between"> {/* Use px-2 for xs, px-4 for sm+ */}
           <div className="flex items-center">
             <a href="/" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-gray-700 transition-colors">
-              <h1 className="text-lg font-semibold mr-3">Boxento</h1>
+              <h1 className="text-lg font-semibold mr-2 sm:mr-3">Boxento</h1> {/* Use mr-2 for xs, mr-3 for sm+ */}
             </a>
             {/* Sync indicator */}
             <TooltipProvider>
@@ -1361,8 +1362,8 @@ function App() {
               </Tooltip>
             </TooltipProvider>
           </div>
-          
-          <div className="flex items-center space-x-2">
+
+          <div className="flex items-center space-x-1 sm:space-x-2"> {/* Use space-x-1 for xs, space-x-2 for sm+ */}
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
@@ -1370,8 +1371,8 @@ function App() {
               size="sm"
               variant="outline"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              <span>Add Widget</span>
+              <Plus className="h-4 w-4 sm:mr-2" /> {/* Remove margin on xs */}
+              <span className="hidden sm:inline">Add Widget</span> {/* Hide text on xs */}
             </Button>
 
             <Button
@@ -1385,8 +1386,9 @@ function App() {
             </Button>
             
             <Changelog />
-            
+
             <div className="flex items-center">
+              {/* UserMenuButton is now responsive internally */}
               <UserMenuButton className="h-9" />
             </div>
           </div>

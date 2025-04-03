@@ -55,14 +55,16 @@ export function SocialLoginButtons() {
   } = useAuth() as AuthContextType;
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    // Reduced gap on xs screens
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
       <Button 
         variant="outline" 
         onClick={googleSignIn}
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <GoogleIcon />
-        <span className="dark:text-gray-300">Google</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">Google</span>
       </Button>
       <Button 
         variant="outline" 
@@ -70,7 +72,8 @@ export function SocialLoginButtons() {
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <GithubIcon />
-        <span className="dark:text-gray-300">GitHub</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">GitHub</span>
       </Button>
       <Button 
         variant="outline" 
@@ -78,7 +81,8 @@ export function SocialLoginButtons() {
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <TwitterIcon />
-        <span className="dark:text-gray-300">Twitter</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">Twitter</span>
       </Button>
       <Button 
         variant="outline" 
@@ -86,7 +90,8 @@ export function SocialLoginButtons() {
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <FacebookIcon />
-        <span className="dark:text-gray-300">Facebook</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">Facebook</span>
       </Button>
       <Button 
         variant="outline" 
@@ -94,7 +99,8 @@ export function SocialLoginButtons() {
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <AppleIcon />
-        <span className="dark:text-gray-300">Apple</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">Apple</span>
       </Button>
       <Button 
         variant="outline" 
@@ -102,7 +108,8 @@ export function SocialLoginButtons() {
         className="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900 border dark:border-gray-800"
       >
         <MicrosoftIcon />
-        <span className="dark:text-gray-300">Microsoft</span>
+        {/* Hide text on xs */}
+        <span className="dark:text-gray-300 hidden sm:inline">Microsoft</span>
       </Button>
     </div>
   );
