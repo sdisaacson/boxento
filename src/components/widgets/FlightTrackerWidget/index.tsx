@@ -519,7 +519,7 @@ const renderSetupView = () => {
         size="sm"
         onClick={() => setShowSettings(true)}
       >
-        Configure Flight
+        Configure Widget
       </Button>
     </div>
   );

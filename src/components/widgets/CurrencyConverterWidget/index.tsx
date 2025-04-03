@@ -673,8 +673,8 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
         {error && (error.includes('API key is required') || error.includes('Invalid API key')) ? (
           // Specific view for API key error
           <div className="h-full flex flex-col items-center justify-center text-center p-4">
-            {/* Use DollarSign icon from Lucide with consistent styling (warning color) */}
-            <DollarSign size={40} className="text-amber-500 dark:text-amber-400 mb-3" strokeWidth={1.5} />
+            {/* Use DollarSign icon from Lucide with consistent styling (gray color) */}
+            <DollarSign size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
             {/* Consistent text styling */}
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
               {error.includes('Invalid') ? 'Invalid API key.' : 'API key required for exchange rates.'}

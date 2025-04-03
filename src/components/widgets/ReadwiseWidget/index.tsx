@@ -259,7 +259,7 @@ const renderNoApiTokenState = () => {
         size="sm"
         onClick={() => setShowSettings(true)}
       >
-        Configure Token
+        Configure Widget
       </Button>
     </div>
   );

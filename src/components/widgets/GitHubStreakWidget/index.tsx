@@ -460,8 +460,8 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     if (!localConfig.personalAccessToken) {
       return (
         <div className="h-full flex flex-col items-center justify-center text-center p-4">
-          {/* Use Shield icon from Lucide with consistent styling (warning color) */}
-          <Shield size={40} className="text-amber-500 dark:text-amber-400 mb-3" strokeWidth={1.5} />
+          {/* Use Shield icon from Lucide with consistent styling (gray color) */}
+          <Shield size={40} className="text-gray-400 mb-3" strokeWidth={1.5} />
           {/* Consistent text styling */}
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             GitHub API requires a Personal Access Token.

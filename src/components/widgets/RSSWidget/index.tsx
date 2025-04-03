@@ -379,7 +379,7 @@ const RSSWidget: React.FC<RSSWidgetProps> = ({ width, height, config }) => {
           size="sm"
           onClick={() => setShowSettings(true)} 
         >
-          Configure Feed
+          Configure Widget
         </Button>
       </div>
     );
