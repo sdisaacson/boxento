@@ -745,58 +745,59 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height, onC
             </TabsContent>
             
             <TabsContent value="examples" className="space-y-4 py-4">
-              <div className="space-y-4">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Select from popular RSS feeds to get started:
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Select from popular RSS feeds to get started:
+              </div>
+              <div className="space-y-2">
+                {/* Example Feed Item: Hacker News */}
+                <div
+                  className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setExampleFeed('https://news.ycombinator.com/rss', 'Hacker News')}
+                >
+                  <div className="flex-shrink-0 rounded-md bg-orange-100 dark:bg-orange-900/20 p-2 text-orange-600 dark:text-orange-400">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 19.7778H22L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">Hacker News</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">Tech news and discussions</div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400 dark:text-gray-500"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
-                <div className="grid gap-3">
-                  <Button
-                    variant="outline"
-                    className="flex items-start gap-3 h-auto p-3 text-left font-normal"
-                    onClick={() => setExampleFeed('https://news.ycombinator.com/rss', 'Hacker News')}
-                  >
-                    <div className="rounded-md bg-orange-100 dark:bg-orange-900/20 p-2 text-orange-600 dark:text-orange-400">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 19.7778H22L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Hacker News</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tech news and discussions from Y Combinator's community</div>
-                    </div>
-                  </Button>
 
-                  <Button
-                    variant="outline"
-                    className="flex items-start gap-3 h-auto p-3 text-left font-normal"
-                    onClick={() => setExampleFeed('https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', 'New York Times')}
-                  >
-                    <div className="rounded-md bg-gray-100 dark:bg-gray-900/40 p-2 text-gray-600 dark:text-gray-400">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">New York Times</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Breaking news, reviews and opinion from The New York Times</div>
-                    </div>
-                  </Button>
+                {/* Example Feed Item: New York Times */}
+                <div
+                  className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setExampleFeed('https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', 'New York Times')}
+                >
+                  <div className="flex-shrink-0 rounded-md bg-gray-100 dark:bg-gray-900/40 p-2 text-gray-600 dark:text-gray-400">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">New York Times</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">Breaking news and opinion</div>
+                  </div>
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400 dark:text-gray-500"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
 
-                  <Button
-                    variant="outline"
-                    className="flex items-start gap-3 h-auto p-3 text-left font-normal"
-                    onClick={() => setExampleFeed('https://www.wired.com/feed/rss', 'Wired')}
-                  >
-                    <div className="rounded-md bg-purple-100 dark:bg-purple-900/20 p-2 text-purple-600 dark:text-purple-400">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 3V21M21 12H3M18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">Wired</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Latest technology news, reviews and features from Wired</div>
-                    </div>
-                  </Button>
+                {/* Example Feed Item: Wired */}
+                 <div
+                  className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setExampleFeed('https://www.wired.com/feed/rss', 'Wired')}
+                >
+                  <div className="flex-shrink-0 rounded-md bg-purple-100 dark:bg-purple-900/20 p-2 text-purple-600 dark:text-purple-400">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3V21M21 12H3M18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">Wired</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">Latest technology news and features</div>
+                  </div>
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400 dark:text-gray-500"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
               </div>
             </TabsContent>
