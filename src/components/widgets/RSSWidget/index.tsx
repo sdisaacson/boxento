@@ -40,7 +40,7 @@ enum WidgetSizeCategory {
  * @param {RSSWidgetProps} props - Component props
  * @returns {React.ReactElement} Widget component
  */
-export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height, onConfigChange }) => {
+export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) => {
   // Default configuration
   const defaultConfig = useMemo<RSSWidgetConfig>(() => ({
     title: 'RSS Feed',
@@ -477,8 +477,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height, onC
     console.log('Saving settings with config:', localConfig);
     
     // Call onUpdate to persist changes
-    if (onConfigChange && typeof onConfigChange === 'function') {
-      onConfigChange(localConfig);
+    if (config?.onUpdate && typeof config.onUpdate === 'function') {
+      config.onUpdate(localConfig);
     }
     
     setShowSettings(false);
