@@ -108,6 +108,34 @@ services:
 docker compose up -d
 ```
 
+### Operating Modes
+
+Boxento supports two operating modes:
+
+#### 🏠 Local-Only Mode (Default)
+- **No authentication required** - Start using immediately
+- **All data stored locally** in your browser's localStorage
+- **No external dependencies** - Works completely offline
+- **Privacy focused** - Your data never leaves your device
+
+When running in local-only mode, you'll see "Local Mode" in the top-right corner instead of a login button.
+
+#### ☁️ Cloud Sync Mode (Optional)
+- **Firebase authentication** - Secure login with Google, GitHub, email/password
+- **Cross-device sync** - Access your dashboard from multiple devices
+- **Data backup** - Your settings are stored in Firestore
+- **Requires setup** - Need to configure Firebase environment variables
+
+To enable cloud sync mode, set up Firebase environment variables:
+```bash
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+# ... other Firebase config
+```
+
+**Note**: If you see "Firebase: Error (auth/api-key-not-valid)" - either run in local-only mode by removing all Firebase env vars, or set up valid Firebase credentials.
+
 ### Development Setup
 
 #### Local Development with Docker
