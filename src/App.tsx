@@ -512,7 +512,14 @@ function App() {
   // Track the last created widget for undo functionality
   const [lastCreatedWidgetId, setLastCreatedWidgetId] = useState<string | null>(null);
   
-  // Save widgets to storage (localStorage and Firestore if logged in)
+  /**
+   * Save widgets to storage (localStorage and Firestore if logged in)
+   *
+   * @param updatedWidgets - Array of widgets to save
+   * @param debounce - If true, Firestore save is scheduled for 500ms later and function returns immediately.
+   *                   If false, waits for Firestore save to complete before returning.
+   *                   Use debounce=false when sequential operation order matters (e.g., during migration).
+   */
   const saveWidgets = async (updatedWidgets: Widget[], debounce = true): Promise<void> => {
     setWidgets(updatedWidgets);
 
@@ -529,62 +536,69 @@ function App() {
 
     // Save widgets to Firestore when user is logged in
     if (auth?.currentUser) {
+      // Extract Firestore save logic to avoid duplication
+      const saveToFirestore = async () => {
+        try {
+          await userDashboardService.saveWidgets(updatedWidgets);
+          // Widget metadata saved to Firestore
+        } catch (error) {
+          console.error('Error saving widgets to Firestore:', error);
+        }
+      };
+
       if (debounce) {
         // Clear any existing timeout to debounce rapid updates
         if (widgetUpdateTimeout.current !== null) {
           clearTimeout(widgetUpdateTimeout.current);
         }
 
-        widgetUpdateTimeout.current = window.setTimeout(async () => {
-          try {
-            await userDashboardService.saveWidgets(updatedWidgets);
-            // Widget metadata saved to Firestore
-          } catch (error) {
-            console.error('Error saving widgets to Firestore:', error);
-          }
-        }, 500);
+        // Schedule save for later (returns immediately)
+        widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
       } else {
-        // Save immediately without debouncing
-        try {
-          await userDashboardService.saveWidgets(updatedWidgets);
-          // Widget metadata saved to Firestore immediately
-        } catch (error) {
-          console.error('Error saving widgets to Firestore:', error);
-        }
+        // Save immediately and wait for completion
+        await saveToFirestore();
       }
     }
   };
   
-  // Save layouts to storage (localStorage and Firestore if logged in)
+  /**
+   * Save layouts to storage (localStorage and Firestore if logged in)
+   *
+   * @param updatedLayouts - Layout configuration for all breakpoints
+   * @param debounce - If true, Firestore save is scheduled for 500ms later and function returns immediately.
+   *                   If false, waits for Firestore save to complete before returning.
+   *                   Use debounce=false when sequential operation order matters (e.g., during migration).
+   */
   const saveLayouts = async (updatedLayouts: { [key: string]: LayoutItem[] }, debounce = true): Promise<void> => {
     // Update state
     setLayouts(updatedLayouts);
-    
+
     // Save to localStorage
     localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
-    
+
     // Save to Firestore if logged in
     if (auth?.currentUser) {
-      if (debounce) {
-        if (layoutUpdateTimeout.current !== null) {
-          clearTimeout(layoutUpdateTimeout.current);
-        }
-        
-        layoutUpdateTimeout.current = window.setTimeout(async () => {
-          try {
-            await userDashboardService.saveLayouts(updatedLayouts);
-            // Layouts saved to Firestore
-          } catch (error) {
-            console.error('Error saving layouts to Firestore:', error);
-          }
-        }, 500);
-      } else {
+      // Extract Firestore save logic to avoid duplication
+      const saveToFirestore = async () => {
         try {
           await userDashboardService.saveLayouts(updatedLayouts);
-          // Layouts saved to Firestore immediately
+          // Layouts saved to Firestore
         } catch (error) {
           console.error('Error saving layouts to Firestore:', error);
         }
+      };
+
+      if (debounce) {
+        // Clear any existing timeout to debounce rapid updates
+        if (layoutUpdateTimeout.current !== null) {
+          clearTimeout(layoutUpdateTimeout.current);
+        }
+
+        // Schedule save for later (returns immediately)
+        layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
+      } else {
+        // Save immediately and wait for completion
+        await saveToFirestore();
       }
     }
   };
@@ -1164,7 +1178,8 @@ function App() {
           // Migrate to Firestore if logged in
           if (auth?.currentUser && widgets.length > 0) {
             try {
-              await saveWidgets(widgets);
+              // Use debounce=false to ensure sequential saves complete before proceeding
+              await saveWidgets(widgets, false);
               await saveLayouts(layouts, false);
             } catch (error) {
               console.error('Error migrating to Firestore:', error);
