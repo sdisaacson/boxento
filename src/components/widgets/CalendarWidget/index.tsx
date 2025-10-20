@@ -67,21 +67,35 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   const [date, setDate] = useState<Date>(new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   
-  // Update the initialization to load from localStorage first
-  const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(() => {
-    // Try to load saved config from localStorage
-    const savedConfig = localStorage.getItem(`calendar-widget-config-${config?.id || 'default'}`);
-    if (savedConfig) {
-      try {
-        return JSON.parse(savedConfig);
-      } catch (e) {
-        console.error('Failed to parse saved calendar config', e);
-      }
+  // Initialize from props - single source of truth
+  const [localConfig, setLocalConfig] = useState<CalendarWidgetConfig>(
+    config || { id: '' }
+  );
+
+  // Sync config prop changes to localConfig
+  useEffect(() => {
+    if (config) {
+      setLocalConfig(config);
     }
-    // Fall back to props or default
-    return config || { id: '' };
-  });
-  
+  }, [config]);
+
+  /**
+   * Helper function to update config and notify parent
+   * This ensures the parent component always knows about config changes
+   */
+  const updateConfig = React.useCallback((newConfig: CalendarWidgetConfig | ((prev: CalendarWidgetConfig) => CalendarWidgetConfig)) => {
+    setLocalConfig(prevConfig => {
+      const updatedConfig = typeof newConfig === 'function' ? newConfig(prevConfig) : newConfig;
+
+      // Notify parent component of the change
+      if (config?.onUpdate) {
+        config.onUpdate(updatedConfig);
+      }
+
+      return updatedConfig;
+    });
+  }, [config]);
+
   // Helper function to format time ranges more compactly
   const formatTimeRange = (timeRange?: string): React.ReactNode => {
     if (!timeRange?.includes(' - ')) return timeRange || 'All day';
@@ -137,17 +151,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    * Generates a random state string for OAuth security
    */
   const generateStateParam = () => {
-    return Math.random().toString(36).substring(2, 15) + 
+    return Math.random().toString(36).substring(2, 15) +
            Math.random().toString(36).substring(2, 15);
   };
-  
-  // Add an effect to save localConfig when it changes
-  useEffect(() => {
-    if (localConfig && localConfig.id) {
-      localStorage.setItem(`calendar-widget-config-${localConfig.id}`, JSON.stringify(localConfig));
-    }
-  }, [localConfig]);
-  
+
   /**
    * Get widget-specific token keys
    */
@@ -187,16 +194,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     
     // Update state
     setIsGoogleConnected(false);
-    setLocalConfig({
+    updateConfig({
       ...localConfig,
       googleCalendarConnected: false,
       calendars: []
     });
     setEvents([]);
-    
-    // Clear the saved widget config for this connection
-    localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
-  }, [localConfig, getTokenKeys])
+  }, [localConfig, getTokenKeys, updateConfig])
   
   /**
    * Refreshes the access token when it expires
@@ -507,26 +511,21 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       }
       
       
-      const updatedConfig = {
+      updateConfig({
         ...localConfig,
         googleCalendarConnected: true,
         calendars: calendars,
-      };
-      
-      setLocalConfig(updatedConfig);
-      
-      // Make sure to save the updated config right away
-      localStorage.setItem(`calendar-widget-config-${localConfig.id || 'default'}`, JSON.stringify(updatedConfig));
-      
+      });
+
       // Fetch initial events
       fetchEvents();
-      
+
       setIsLoading(false);
     } catch (err) {
       console.error('Failed to handle OAuth callback', err);
       setIsLoading(false);
     }
-  }, [localConfig, fetchEvents]);
+  }, [localConfig, fetchEvents, updateConfig]);
   
   // Check for OAuth callback in URL
   useEffect(() => {
@@ -591,18 +590,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               if (validToken) {
                 try {
                   const calendars = await fetchCalendars(validToken);
-                  setLocalConfig(prevConfig => {
-                    const updatedConfig = {
-                      ...prevConfig,
-                      googleCalendarConnected: true,
-                      calendars: calendars
-                    };
-                    
-                    // Save the updated config
-                    localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
-                    
-                    return updatedConfig;
-                  });
+                  updateConfig(prevConfig => ({
+                    ...prevConfig,
+                    googleCalendarConnected: true,
+                    calendars: calendars
+                  }));
                 } catch (e) {
                   console.error('Failed to fetch calendars during initialization', e);
                 }
@@ -621,17 +613,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
         } else if (isConnectedInConfig) {
           // Config says connected but no tokens found
           setIsGoogleConnected(false);
-          setLocalConfig(prevConfig => {
-            const updatedConfig = {
-              ...prevConfig,
-              googleCalendarConnected: false
-            };
-            
-            // Save the updated config
-            localStorage.setItem(`calendar-widget-config-${prevConfig.id || 'default'}`, JSON.stringify(updatedConfig));
-            
-            return updatedConfig;
-          });
+          updateConfig(prevConfig => ({
+            ...prevConfig,
+            googleCalendarConnected: false
+          }));
         }
       } catch (err) {
         console.error('Error checking tokens:', err);
@@ -705,8 +690,8 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     
     const updatedCalendars = [...localConfig.calendars];
     updatedCalendars[index].selected = !updatedCalendars[index].selected;
-    
-    setLocalConfig({
+
+    updateConfig({
       ...localConfig,
       calendars: updatedCalendars
     });
@@ -1481,14 +1466,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           <Button
             variant="default"
             onClick={() => {
-              // Save the configuration
+              // Save the configuration by notifying parent
               if (config && config.onUpdate) {
                 config.onUpdate(localConfig)
               }
-              
-              // Make sure we save to localStorage as well
-              localStorage.setItem(`calendar-widget-config-${localConfig.id || 'default'}`, JSON.stringify(localConfig));
-              
+
               setIsSettingsOpen(false)
             }}
           >
