@@ -243,7 +243,9 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         controller = null;
       }
     }
-  }, [retryCount, maxRetries, fallbackUfData]);
+    // fallbackUfData is intentionally excluded from deps as it's a static memoized constant
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryCount, maxRetries]);
 
   // Update local config when props config changes
   useEffect(() => {

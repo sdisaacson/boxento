@@ -502,22 +502,30 @@ function App() {
     return categories;
   })();
   
-  // Reference for debouncing layout updates
+  // References for debouncing updates
   const layoutUpdateTimeout = useRef<number | null>(null);
-  
+  const widgetUpdateTimeout = useRef<number | null>(null);
+
   // Get sync status from context
   const { isSyncing, syncStatus } = useSync();
   
   // Track the last created widget for undo functionality
   const [lastCreatedWidgetId, setLastCreatedWidgetId] = useState<string | null>(null);
   
-  // Save widgets to storage (localStorage and Firestore if logged in)
-  const saveWidgets = async (updatedWidgets: Widget[]): Promise<void> => {
+  /**
+   * Save widgets to storage (localStorage and Firestore if logged in)
+   *
+   * @param updatedWidgets - Array of widgets to save
+   * @param debounce - If true, Firestore save is scheduled for 500ms later and function returns immediately.
+   *                   If false, waits for Firestore save to complete before returning.
+   *                   Use debounce=false when sequential operation order matters (e.g., during migration).
+   */
+  const saveWidgets = async (updatedWidgets: Widget[], debounce = true): Promise<void> => {
     setWidgets(updatedWidgets);
-    
-    // Save to localStorage
+
+    // Save to localStorage immediately
     localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
-    
+
     // Save each widget's configuration separately using configManager
     updatedWidgets.forEach(widget => {
       if (widget.config && widget.id) {
@@ -525,48 +533,72 @@ function App() {
         configManager.saveWidgetConfig(widget.id, configToSave);
       }
     });
-    
+
     // Save widgets to Firestore when user is logged in
     if (auth?.currentUser) {
-      try {
-        await userDashboardService.saveWidgets(updatedWidgets);
-        // Widget metadata saved to Firestore
-      } catch (error) {
-        console.error('Error saving widgets to Firestore:', error);
+      // Extract Firestore save logic to avoid duplication
+      const saveToFirestore = async () => {
+        try {
+          await userDashboardService.saveWidgets(updatedWidgets);
+          // Widget metadata saved to Firestore
+        } catch (error) {
+          console.error('Error saving widgets to Firestore:', error);
+        }
+      };
+
+      if (debounce) {
+        // Clear any existing timeout to debounce rapid updates
+        if (widgetUpdateTimeout.current !== null) {
+          clearTimeout(widgetUpdateTimeout.current);
+        }
+
+        // Schedule save for later (returns immediately)
+        widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
+      } else {
+        // Save immediately and wait for completion
+        await saveToFirestore();
       }
     }
   };
   
-  // Save layouts to storage (localStorage and Firestore if logged in)
+  /**
+   * Save layouts to storage (localStorage and Firestore if logged in)
+   *
+   * @param updatedLayouts - Layout configuration for all breakpoints
+   * @param debounce - If true, Firestore save is scheduled for 500ms later and function returns immediately.
+   *                   If false, waits for Firestore save to complete before returning.
+   *                   Use debounce=false when sequential operation order matters (e.g., during migration).
+   */
   const saveLayouts = async (updatedLayouts: { [key: string]: LayoutItem[] }, debounce = true): Promise<void> => {
     // Update state
     setLayouts(updatedLayouts);
-    
+
     // Save to localStorage
     localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
-    
+
     // Save to Firestore if logged in
     if (auth?.currentUser) {
-      if (debounce) {
-        if (layoutUpdateTimeout.current !== null) {
-          clearTimeout(layoutUpdateTimeout.current);
-        }
-        
-        layoutUpdateTimeout.current = window.setTimeout(async () => {
-          try {
-            await userDashboardService.saveLayouts(updatedLayouts);
-            // Layouts saved to Firestore
-          } catch (error) {
-            console.error('Error saving layouts to Firestore:', error);
-          }
-        }, 500);
-      } else {
+      // Extract Firestore save logic to avoid duplication
+      const saveToFirestore = async () => {
         try {
           await userDashboardService.saveLayouts(updatedLayouts);
-          // Layouts saved to Firestore immediately
+          // Layouts saved to Firestore
         } catch (error) {
           console.error('Error saving layouts to Firestore:', error);
         }
+      };
+
+      if (debounce) {
+        // Clear any existing timeout to debounce rapid updates
+        if (layoutUpdateTimeout.current !== null) {
+          clearTimeout(layoutUpdateTimeout.current);
+        }
+
+        // Schedule save for later (returns immediately)
+        layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
+      } else {
+        // Save immediately and wait for completion
+        await saveToFirestore();
       }
     }
   };
@@ -1020,12 +1052,56 @@ function App() {
     // Load layouts from localStorage
     const localLayouts = loadFromLocalStorage('boxento-layouts', getDefaultLayouts());
     if (localLayouts) setLayouts(localLayouts);
-    
+
     // Load widgets from localStorage
     const localWidgets = loadFromLocalStorage('boxento-widgets', getDefaultWidgets());
     if (localWidgets) setWidgets(localWidgets);
   };
-  
+
+  /**
+   * Migrate widget-specific localStorage keys to unified storage
+   * This cleans up old Calendar widget configs that were stored with widget-specific keys
+   */
+  const migrateWidgetSpecificConfigs = () => {
+    try {
+      const unifiedConfigs = configManager.getConfigsFromLocalStorage();
+      let hasChanges = false;
+
+      // Find all widget-specific keys (e.g., calendar-widget-config-{id})
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('calendar-widget-config-')) {
+          try {
+            const widgetId = key.replace('calendar-widget-config-', '');
+            const widgetConfigStr = localStorage.getItem(key);
+
+            if (widgetConfigStr) {
+              const widgetConfig = JSON.parse(widgetConfigStr);
+
+              // Merge into unified config (prefer existing unified config if present)
+              if (!unifiedConfigs[widgetId]) {
+                unifiedConfigs[widgetId] = widgetConfig;
+                hasChanges = true;
+              }
+
+              // Remove old widget-specific key
+              localStorage.removeItem(key);
+            }
+          } catch (e) {
+            console.error(`Error migrating widget config for key ${key}:`, e);
+          }
+        }
+      });
+
+      // Save back to unified storage if we made changes
+      if (hasChanges) {
+        localStorage.setItem('boxento-widget-configs', JSON.stringify(unifiedConfigs));
+        console.log('Migrated widget-specific localStorage keys to unified storage');
+      }
+    } catch (e) {
+      console.error('Error during widget config migration:', e);
+    }
+  };
+
   // Function to load user data from Firestore
   const loadUserData = async (): Promise<void> => {
     try {
@@ -1042,30 +1118,53 @@ function App() {
         if (firestoreWidgets !== null && firestoreWidgets !== undefined) {
           // Widget metadata loaded from Firestore
           
-          // 2. Load all widget configurations
-          const allConfigs = await configManager.getConfigs(true);
-          
-          // 3. Merge the widget metadata with their respective configurations
+          // 2. Load all widget configurations from Firestore
+          const firestoreConfigs = await configManager.getConfigs(true);
+
+          // 3. Also load localStorage configs in case there are unsaved local changes
+          const localConfigs = configManager.getConfigsFromLocalStorage();
+
+          // 4. Merge configs: prefer local over Firestore for each widget
+          // This handles the case where user made changes but refreshed before debounce completed
+          const mergedConfigs: Record<string, Record<string, unknown>> = {};
+
+          // Start with Firestore configs as base
+          Object.keys(firestoreConfigs).forEach(widgetId => {
+            mergedConfigs[widgetId] = firestoreConfigs[widgetId];
+          });
+
+          // Merge in local configs (will override Firestore if exists)
+          Object.keys(localConfigs).forEach(widgetId => {
+            if (mergedConfigs[widgetId]) {
+              // Merge local changes over Firestore config
+              mergedConfigs[widgetId] = { ...mergedConfigs[widgetId], ...localConfigs[widgetId] };
+            } else {
+              // Use local config if no Firestore config exists
+              mergedConfigs[widgetId] = localConfigs[widgetId];
+            }
+          });
+
+          // 5. Merge the widget metadata with their respective configurations
           const typedWidgets = Array.isArray(firestoreWidgets) ? firestoreWidgets.map(widget => {
             const widgetId = widget.id as string;
             return {
               id: widgetId || '',
               type: widget.type as string || '',
-              config: widgetId ? (allConfigs[widgetId] || {}) : {}
+              config: widgetId ? (mergedConfigs[widgetId] || {}) : {}
             } as Widget;
           }) : [];
-          
-          // 4. Set the merged widgets in state
+
+          // 6. Set the merged widgets in state
           setWidgets(typedWidgets);
           userHasFirestoreData = true;
-          
-          // 5. Validate and fix layouts based on the widgets
+
+          // 7. Validate and fix layouts based on the widgets
           // Validating layouts to ensure they match widgets
           const validatedLayouts = await userDashboardService.validateAndFixLayouts(
             typedWidgets.map(w => ({ id: w.id, type: w.type }))
           );
-          
-          // 6. Set the validated layouts in state
+
+          // 8. Set the validated layouts in state
           setLayouts(validatedLayouts);
           // Validated layouts set
           
@@ -1079,7 +1178,8 @@ function App() {
           // Migrate to Firestore if logged in
           if (auth?.currentUser && widgets.length > 0) {
             try {
-              await saveWidgets(widgets);
+              // Use debounce=false to ensure sequential saves complete before proceeding
+              await saveWidgets(widgets, false);
               await saveLayouts(layouts, false);
             } catch (error) {
               console.error('Error migrating to Firestore:', error);
@@ -1103,7 +1203,10 @@ function App() {
   // Initialize auth listener
   useEffect(() => {
     if (!auth) return;
-    
+
+    // Migrate any widget-specific localStorage keys before loading data
+    migrateWidgetSpecificConfigs();
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // User is signed in, load their data from Firestore
@@ -1112,10 +1215,10 @@ function App() {
         // User is signed out, load from localStorage
         loadLocalData();
       }
-      
+
       setIsDataLoaded(true);
     });
-    
+
     // Cleanup subscription
     return () => unsubscribe();
   }, []);
