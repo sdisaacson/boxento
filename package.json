@@ -7,7 +7,7 @@
     "dev": "bunx --bun vite",
     "sync-changelog": "cp CHANGELOG.md public/CHANGELOG.md",
     "build": "bun run build:types && bunx --bun vite build",
-    "build:types": "bun tsc -b",
+    "build:types": "bunx tsc -b",
     "lint": "bun eslint .",
     "preview": "bunx --bun vite preview",
     "deploy": "bun run build && firebase deploy --only hosting"
