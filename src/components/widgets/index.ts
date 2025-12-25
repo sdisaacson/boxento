@@ -251,51 +251,38 @@ export const WIDGET_CATEGORIES = [
   { id: 'entertainment', name: 'Entertainment' }
 ];
 
+// Widget component type
+type WidgetComponent = React.ComponentType<WidgetProps<Record<string, unknown>>>;
+
+/**
+ * Widget component registry - maps widget types to their components.
+ * To add a new widget, simply add an entry here (follows Open/Closed Principle).
+ */
+const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
+  'calendar': CalendarWidget,
+  'weather': WeatherWidget,
+  'world-clocks': WorldClocksWidget,
+  'quick-links': QuickLinksWidget as WidgetComponent,
+  'notes': NotesWidget,
+  'todo': TodoWidget,
+  'pomodoro': PomodoroWidget,
+  'currency-converter': CurrencyConverterWidget,
+  'readwise': ReadwiseWidget,
+  'uf-chile': UFWidget,
+  'youtube': YouTubeWidget,
+  'rss': RSSWidget as WidgetComponent,
+  'github-streak': GitHubStreakWidget,
+  'flight-tracker': FlightTrackerWidget,
+  'geography-quiz': GeographyQuizWidget,
+  'todoist': TodoistWidget,
+  'year-progress': YearProgressWidget,
+};
+
 /**
  * Get widget component by type
  */
-export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<Record<string, unknown>>> | null => {
-  switch (type) {
-    case 'calendar':
-      return CalendarWidget;
-    case 'weather':
-      return WeatherWidget;
-    case 'world-clocks':
-      return WorldClocksWidget;
-    case 'quick-links':
-      return QuickLinksWidget as unknown as React.ComponentType<WidgetProps<Record<string, unknown>>>;
-    case 'notes':
-      return NotesWidget;
-    case 'todo':
-      return TodoWidget;
-    case 'pomodoro':
-      return PomodoroWidget;
-    case 'currency-converter':
-      return CurrencyConverterWidget;
-    case 'readwise':
-      return ReadwiseWidget;
-    case 'uf-chile':
-      return UFWidget;
-    case 'youtube':
-      return YouTubeWidget;
-    case 'rss':
-      return RSSWidget as unknown as React.ComponentType<WidgetProps<Record<string, unknown>>>;
-    case 'github-streak':
-      return GitHubStreakWidget;
-    case 'flight-tracker':
-      return FlightTrackerWidget;
-    case 'geography-quiz':
-      return GeographyQuizWidget;
-    case 'todoist':
-      return TodoistWidget;
-    case 'year-progress':
-      return YearProgressWidget;
-    // Template widget registration (commented as it's not for production use)
-    // case 'template':
-    //   return TemplateWidget;
-    default:
-      return null;
-  }
+export const getWidgetComponent = (type: string): WidgetComponent | null => {
+  return WIDGET_COMPONENTS[type] ?? null;
 };
 
 /**
