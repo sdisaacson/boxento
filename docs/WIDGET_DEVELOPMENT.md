@@ -247,13 +247,13 @@ Create a README.md file for your widget with usage instructions and examples:
 Update the widget registry in `src/components/widgets/index.ts`:
 
 ```typescript
-// Add import at the top
+// 1. Add import at the top
 import MyWidget from './MyWidget/index';
 
-// Add types export
+// 2. Add types export
 export * from './MyWidget/types';
 
-// Add to WIDGET_REGISTRY array
+// 3. Add to WIDGET_REGISTRY array (for metadata)
 export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   // ... existing widgets
   {
@@ -269,17 +269,14 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   }
 ];
 
-// Add to getWidgetComponent function
-export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<any>> | null => {
-  switch (type) {
-    // ... existing cases
-    case 'my-widget':
-      return MyWidget;
-    default:
-      return null;
-  }
+// 4. Add to WIDGET_COMPONENTS map (for component lookup)
+const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
+  // ... existing widgets
+  'my-widget': MyWidget,
 };
 ```
+
+> **Note**: The `WIDGET_COMPONENTS` map follows the Open/Closed Principle - adding a new widget only requires adding one entry to each registry, no switch statements to modify.
 
 ## Widget Requirements
 
