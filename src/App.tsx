@@ -1563,7 +1563,7 @@ function App() {
               <DashboardContextMenu onAddWidget={toggleWidgetSelector}>
                 <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
                   <ResponsiveReactGridLayout
-                    className="layout"
+                    className={`layout ${!isLayoutReady ? 'layout-loading' : ''}`}
                     layouts={layouts}
                     breakpoints={breakpoints}
                     cols={cols}

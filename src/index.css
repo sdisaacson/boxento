@@ -239,6 +239,15 @@ body.drag-complete .react-grid-item {
   -webkit-user-drag: none;
 }
 
+/* Disable transitions during initial layout load to prevent widgets animating from (0,0) */
+.react-grid-layout.layout-loading .react-grid-item {
+  transition: none !important;
+}
+
+.react-grid-layout.layout-loading .react-grid-item.cssTransforms {
+  transition: none !important;
+}
+
 /* Grid Container */
 .grid-item-container {
   @apply p-0 bg-transparent h-full w-full;
