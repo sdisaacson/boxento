@@ -47,6 +47,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
 
   const widgetRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
   
   // Detect dark mode using useMemo to reduce recomputation
   const theme = useMemo(() => {
@@ -151,15 +152,17 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
     const target = e.target as SVGElement;
     if (target.tagName === 'circle') {
       const day = parseInt(target.getAttribute('data-day') || '0', 10);
-      if (day > 0) {
-        const rect = target.getBoundingClientRect();
+      if (day > 0 && svgContainerRef.current) {
+        const circleRect = target.getBoundingClientRect();
+        const containerRect = svgContainerRef.current.getBoundingClientRect();
+        // Calculate position relative to the container with position:relative
         setTooltip({
           show: true,
           content: `Day ${day} of ${progress.total}`,
           date: dateCache[day - 1],
           day,
-          x: rect.left + rect.width / 2,
-          y: rect.top
+          x: circleRect.left - containerRect.left + circleRect.width / 2,
+          y: circleRect.top - containerRect.top
         });
       }
     }
@@ -393,7 +396,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
       
       <div className="flex-grow p-1 overflow-hidden">
         <div className="h-full flex flex-col justify-between">
-          <div className="flex-grow flex items-center justify-center relative">
+          <div ref={svgContainerRef} className="flex-grow flex items-center justify-center relative">
             <svg
               ref={svgRef}
               viewBox={gridLayout.viewBox}
