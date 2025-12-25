@@ -75,7 +75,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
     return () => observer.disconnect();
   }, [theme]);
 
-  // Cached progress calculation - computing once on mount
+  // Cached progress calculation - recalculates at midnight via _updateKey
   const progress = useMemo(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), 0, 1);
@@ -88,7 +88,8 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
       percentage: (daysPassed / daysInYear) * 100,
       year: now.getFullYear()
     };
-  }, []); // Empty dependency array - only compute once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localConfig._updateKey]); // Recalculate when _updateKey changes (at midnight)
   
   // Update progress at midnight without full rerender
   const progressRef = useRef(progress);
@@ -145,25 +146,28 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
     };
   }, [progress.total, width]);
 
-  // Handle tooltip display on hover - optimized to avoid recreating functions
-  const handleDotEvents = useMemo(() => ({
-    onMouseEnter: (e: React.MouseEvent<SVGCircleElement>, day: number) => {
-      const target = e.currentTarget;
-      const rect = target.getBoundingClientRect();
-      
-      setTooltip({
-        show: true,
-        content: `Day ${day} of ${progress.total}`,
-        date: dateCache[day - 1],
-        day,
-        x: rect.left + window.scrollX,
-        y: rect.top + window.scrollY
-      });
-    },
-    onMouseLeave: () => {
-      setTooltip(prev => ({ ...prev, show: false }));
+  // Handle tooltip display on hover - using event delegation on SVG parent
+  const handleSvgMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    const target = e.target as SVGElement;
+    if (target.tagName === 'circle') {
+      const day = parseInt(target.getAttribute('data-day') || '0', 10);
+      if (day > 0) {
+        const rect = target.getBoundingClientRect();
+        setTooltip({
+          show: true,
+          content: `Day ${day} of ${progress.total}`,
+          date: dateCache[day - 1],
+          day,
+          x: rect.left + rect.width / 2,
+          y: rect.top
+        });
+      }
     }
-  }), [dateCache, progress.total]);
+  }, [dateCache, progress.total]);
+
+  const handleSvgMouseLeave = useCallback(() => {
+    setTooltip(prev => ({ ...prev, show: false }));
+  }, []);
 
   // Virtualization for dots - only render visible dots for smaller screen sizes
   const updateVisibility = useCallback(() => {
@@ -176,104 +180,84 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
     return () => {};
   }, [updateVisibility, width]);
 
-  // Generate dots - optimized but ensure all dots are visible
+  // Generate dots - optimized: no individual event handlers, minimal classes
   const dots = useMemo(() => {
     const { cols, radius, spacing } = gridLayout;
     const totalDays = progress.total;
-    const dotElements = [];
-    
-    // Pre-calculate dot classes for reuse
-    const passedClass = "transition-colors duration-300 filter drop-shadow-sm";
-    const futureClass = "transition-colors duration-300";
-    
-    // Batch SVG element creation
+    const passedCount = progress.passed;
+
+    // Build SVG path data for better performance than individual circles
+    // Group dots by color to minimize DOM elements
+    const passedDots: string[] = [];
+    const futureDots: string[] = [];
+
     for (let i = 0; i < totalDays; i++) {
-      const day = i + 1;
-      const isPassed = i < progress.passed;
-      
-      // Calculate position in the grid
       const col = i % cols;
       const row = Math.floor(i / cols);
-      
-      // Calculate coordinates
       const cx = (col * spacing) + radius + 1;
       const cy = (row * spacing) + radius + 1;
-      
-      // Determine fill color - simplified without color schemes
-      const fill = isPassed ? colors.passed : colors.future;
-      
-      // Create the dot element - using direct createElement for performance
-      // Ensure visibility by removing any opacity manipulation
-      dotElements.push(
-        <circle
-          key={day}
-          cx={cx}
-          cy={cy}
-          r={radius}
-          fill={fill}
-          className={isPassed ? passedClass : futureClass}
-          data-day={day}
-          data-date={dateCache[i]}
-          onMouseEnter={(e) => handleDotEvents.onMouseEnter(e, day)}
-          onMouseLeave={handleDotEvents.onMouseLeave}
-          role="presentation"
-          aria-hidden="true"
-        />
-      );
+
+      // Create circle element string for the appropriate group
+      if (i < passedCount) {
+        passedDots.push(`M${cx - radius},${cy}a${radius},${radius} 0 1,0 ${radius * 2},0a${radius},${radius} 0 1,0 -${radius * 2},0`);
+      } else {
+        futureDots.push(`M${cx - radius},${cy}a${radius},${radius} 0 1,0 ${radius * 2},0a${radius},${radius} 0 1,0 -${radius * 2},0`);
+      }
     }
-    
-    return dotElements;
-  }, [gridLayout, colors, progress.passed, progress.total, dateCache, handleDotEvents]);
 
-  // Update at midnight without full rerender
+    // Return two path elements instead of 365 circles
+    return (
+      <>
+        <path d={futureDots.join(' ')} fill={colors.future} />
+        <path d={passedDots.join(' ')} fill={colors.passed} />
+        {/* Invisible circles for hover detection only */}
+        {Array.from({ length: totalDays }, (_, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const cx = (col * spacing) + radius + 1;
+          const cy = (row * spacing) + radius + 1;
+          return (
+            <circle
+              key={i + 1}
+              cx={cx}
+              cy={cy}
+              r={radius + 1}
+              fill="transparent"
+              data-day={i + 1}
+              style={{ cursor: 'pointer' }}
+            />
+          );
+        })}
+      </>
+    );
+  }, [gridLayout, colors, progress.passed, progress.total]);
+
+  // Update at midnight - simple state trigger to recalculate progress
   useEffect(() => {
-    const updateMidnight = () => {
-      const now = new Date();
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-      
-      return setTimeout(() => {
-        // Update progress reference
-        const newNow = new Date();
-        const newStart = new Date(newNow.getFullYear(), 0, 1);
-        const daysPassed = (newNow.getTime() - newStart.getTime()) / (1000 * 60 * 60 * 24);
-        
-        // Manually update SVG elements without full rerender
-        if (svgRef.current) {
-          const passedCount = Math.floor(daysPassed);
-          const circles = svgRef.current.querySelectorAll('circle');
-          
-          // Only update the dot that changes state
-          if (circles[passedCount - 1]) {
-            circles[passedCount - 1].setAttribute('fill', colors.passed);
-            circles[passedCount - 1].classList.add('filter', 'drop-shadow-sm');
-          }
-        }
-        
-        // Schedule next update
-        updateMidnight();
-        
-        // Only force rerender if stats are shown
-        if (localConfig.showDaysLeft || localConfig.showPercentage) {
-          setLocalConfig(prev => ({ ...prev, _updateKey: Date.now() }));
-        }
-      }, timeUntilMidnight);
-    };
-    
-    const midnightTimer = updateMidnight();
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const midnightTimer = setTimeout(() => {
+      // Trigger re-render to update progress
+      setLocalConfig(prev => ({ ...prev, _updateKey: Date.now() }));
+    }, timeUntilMidnight);
+
     return () => clearTimeout(midnightTimer);
-  }, [colors.passed, localConfig.showDaysLeft, localConfig.showPercentage]);
+  }, [localConfig._updateKey]);
 
-  // Sync config updates
+  // Sync config updates - only update when specific config values change
   useEffect(() => {
-    if (JSON.stringify(config) !== JSON.stringify(localConfig)) {
+    if (config?.showPercentage !== localConfig.showPercentage ||
+        config?.showDaysLeft !== localConfig.showDaysLeft) {
       setLocalConfig(prev => ({
         ...prev,
-        ...config
+        showPercentage: config?.showPercentage ?? prev.showPercentage,
+        showDaysLeft: config?.showDaysLeft ?? prev.showDaysLeft
       }));
     }
-  }, [config]);
+  }, [config?.showPercentage, config?.showDaysLeft]);
 
   // Memoized stats with caching for performance
   const stats = useMemo(() => {
@@ -410,13 +394,15 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
       <div className="flex-grow p-1 overflow-hidden">
         <div className="h-full flex flex-col justify-between">
           <div className="flex-grow flex items-center justify-center relative">
-            <svg 
+            <svg
               ref={svgRef}
               viewBox={gridLayout.viewBox}
               className="w-full h-full"
               preserveAspectRatio="xMidYMid meet"
               aria-label={`Year progress visualization showing ${progress.passed} days passed out of ${progress.total} days in ${progress.year}`}
               role="img"
+              onMouseMove={handleSvgMouseMove}
+              onMouseLeave={handleSvgMouseLeave}
             >
               {dots}
             </svg>
