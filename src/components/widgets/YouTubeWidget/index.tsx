@@ -208,30 +208,67 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
     // Regular YouTube URL pattern - remove unnecessary escapes
     const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
     const match = url.match(regExp);
-    
+
     return (match && match[2].length === 11) ? match[2] : null;
   };
+
+  // Fetch video title from YouTube oEmbed API
+  const fetchVideoTitle = React.useCallback(async (videoId: string): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&format=json`
+      );
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.title || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Auto-fetch video title when videoId changes
+  useEffect(() => {
+    const updateTitle = async () => {
+      if (!localConfig.videoId) return;
+
+      // Only fetch if title is default or empty
+      if (!localConfig.title || localConfig.title === 'YouTube Video' || localConfig.title === defaultConfig.title) {
+        const title = await fetchVideoTitle(localConfig.videoId);
+        if (title) {
+          const updatedConfig = { ...localConfig, title };
+          setLocalConfig(updatedConfig);
+          // Persist the title to parent
+          if (config?.onUpdate) {
+            config.onUpdate(updatedConfig);
+          }
+        }
+      }
+    };
+
+    updateTitle();
+  }, [localConfig.videoId]); // Only run when videoId changes
   
   // Process YouTube URL input
   const handleYouTubeUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
     setIsLoading(true);
-    
+
     // Clear any previous errors when changing the URL
     setEmbedError(null);
-    
+
     // If it looks like a URL, try to extract the ID
     if (url.includes('youtu')) {
       const id = extractYouTubeId(url);
       if (id) {
-        setLocalConfig({...localConfig, videoId: id});
+        // Reset title to default so auto-fetch will update it
+        setLocalConfig({...localConfig, videoId: id, title: 'YouTube Video'});
       } else {
         // If not a valid URL but might be direct ID, just use the value
-        setLocalConfig({...localConfig, videoId: url});
+        setLocalConfig({...localConfig, videoId: url, title: 'YouTube Video'});
       }
     } else {
       // If not YouTube URL format, assume it's a direct video ID
-      setLocalConfig({...localConfig, videoId: url});
+      setLocalConfig({...localConfig, videoId: url, title: 'YouTube Video'});
     }
   };
 
