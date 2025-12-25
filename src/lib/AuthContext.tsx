@@ -20,6 +20,7 @@ import {
 import { auth } from './firebase';
 import { configManager } from './configManager';
 import { isFirebaseInitialized } from './firebase';
+import { setUserKey } from './encryption';
 
 export interface AuthContextType {
   currentUser: User | null;
@@ -58,6 +59,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Set encryption key based on user state
+      // When logged in: use user UID for cross-device encryption consistency
+      // When logged out: encryption will fall back to device key
+      setUserKey(user?.uid ?? null);
+
       setCurrentUser(user);
       setLoading(false);
     });
@@ -161,6 +167,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           );
         }
         
+        // Clear encryption key before signing out
+        setUserKey(null);
+
         // Now sign out - we know auth is not null from the check at the start of the function
         const authInstance = auth as Auth; // Type assertion since we checked !auth at start
         signOut(authInstance)
