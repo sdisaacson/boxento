@@ -1028,7 +1028,6 @@ function App() {
       // Save back to unified storage if we made changes
       if (hasChanges) {
         localStorage.setItem('boxento-widget-configs', JSON.stringify(unifiedConfigs));
-        console.log('Migrated widget-specific localStorage keys to unified storage');
       }
     } catch (e) {
       console.error('Error during widget config migration:', e);

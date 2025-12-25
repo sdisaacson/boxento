@@ -240,11 +240,8 @@ export const userDashboardService = {
         
         // Check if layouts are nested under 'layouts' property (old format)
         if (data && 'layouts' in data && typeof data.layouts === 'object' && !Array.isArray(data.layouts)) {
-          console.log('Migrating legacy layout structure...');
-          
           // Save layouts directly without the wrapper
           await setDoc(docRef, data.layouts, { merge: true });
-          console.log('Layout data structure migration complete');
         }
       }
     } catch (error) {
@@ -261,7 +258,6 @@ export const userDashboardService = {
     try {
       // Check if localStorage is available
       if (typeof window === 'undefined' || !window.localStorage) {
-        console.log('localStorage is not available');
         return;
       }
 
@@ -297,7 +293,6 @@ export const userDashboardService = {
         await userDashboardService.saveAllWidgetConfigs(configs);
       }
       
-      console.log('Migration from localStorage to Firestore completed');
     } catch (error) {
       console.error('Error migrating data from localStorage to Firestore:', error);
       throw error;
@@ -333,22 +328,19 @@ export const userDashboardService = {
           );
           layouts[breakpoint].push(newItem);
           layoutsNeedUpdate = true;
-          console.log(`Created missing layout for widget ${widget.id} in breakpoint ${breakpoint}`);
         }
       });
-      
+
       // Remove layouts for widgets that don't exist
       const initialLength = layouts[breakpoint]?.length ?? 0;
       layouts[breakpoint] = (layouts[breakpoint] ?? []).filter(item => widgetIds.has(item.i));
       if (layouts[breakpoint].length !== initialLength) {
         layoutsNeedUpdate = true;
-        console.log(`Removed ${initialLength - layouts[breakpoint].length} orphaned layouts from breakpoint ${breakpoint}`);
       }
     });
-    
+
     // Save updated layouts if needed
     if (layoutsNeedUpdate) {
-      console.log('Updating layouts to ensure all widgets have layout items');
       await userDashboardService.saveLayouts(layouts);
     }
     

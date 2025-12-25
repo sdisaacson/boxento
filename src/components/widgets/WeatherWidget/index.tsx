@@ -255,7 +255,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       
       // Only update if there's a real change and not just a re-render
       if (configSignature !== configRef.current) {
-        console.log(`[WeatherWidget] Config changed to ${config.location}`);
         configRef.current = configSignature;
         setLocalConfig(config);
       }
@@ -775,16 +774,14 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             onClick={() => {
               // Save settings via onUpdate callback (will use configManager in App.tsx)
               if (config?.onUpdate) {
-                console.log('[WeatherWidget] Saving local config to parent component');
                 config.onUpdate(localConfig);
               }
-              
+
               // Apply the local config settings
               setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
               setIsSettingsOpen(false);
-              
+
               // Trigger a weather refresh with new settings
-              console.log('[WeatherWidget] Triggering weather refresh with new settings');
               setLoading(true);
               
               // Short delay to ensure all state updates are processed

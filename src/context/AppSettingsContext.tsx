@@ -150,7 +150,6 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
           // Convert AppSettings to Record<string, unknown> to match Firestore service
           const settingsRecord = { ...newSettings } as unknown as Record<string, unknown>;
           await userDashboardService.saveAppSettings(settingsRecord);
-          console.log('App settings saved to Firestore');
         } catch (error) {
           console.error('Error saving app settings to Firestore:', error);
         }
