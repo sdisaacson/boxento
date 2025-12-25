@@ -191,10 +191,27 @@ export const configManager = {
   /**
    * Migrate all stored configs to use proper encryption
    * Call this on app startup to upgrade legacy Base64 encoded data
+   *
+   * For logged-in users: loads from both Firestore AND localStorage,
+   * merges them (Firestore takes precedence for conflicts), migrates all,
+   * then saves back to both storages.
    */
   migrateToSecureEncryption: async (): Promise<void> => {
     try {
-      const configs = configManager.getConfigsFromLocalStorage();
+      // Start with localStorage data
+      const localConfigs = configManager.getConfigsFromLocalStorage();
+
+      // If user is logged in, also load from Firestore and merge
+      let configs: WidgetConfigStore = { ...localConfigs };
+
+      if (auth?.currentUser) {
+        const firestoreConfigs = await userDashboardService.loadAllWidgetConfigs();
+        if (firestoreConfigs) {
+          // Merge: Firestore data takes precedence (it's the source of truth for logged-in users)
+          // but localStorage might have data not yet synced
+          configs = { ...localConfigs, ...firestoreConfigs };
+        }
+      }
 
       if (Object.keys(configs).length === 0) return;
 
@@ -219,6 +236,7 @@ export const configManager = {
       }
 
       if (needsSave) {
+        // Save to localStorage
         localStorage.setItem('boxento-widget-configs', JSON.stringify(configs));
 
         // Also update Firestore if logged in

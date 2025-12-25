@@ -199,8 +199,9 @@ export const encryptionUtils = {
       // Return with prefix to identify as encrypted
       return ENCRYPTED_PREFIX + arrayBufferToBase64(combined.buffer);
     } catch (e) {
-      console.error('Encryption failed:', e);
-      return '';
+      // Re-throw to allow proper error handling upstream
+      // Silent failures can cause data loss
+      throw new Error(`Encryption failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   },
 
@@ -251,8 +252,9 @@ export const encryptionUtils = {
       const decoder = new TextDecoder();
       return decoder.decode(decryptedBuffer);
     } catch (e) {
-      console.error('Decryption failed:', e);
-      return '';
+      // Re-throw to allow proper error handling upstream
+      // Silent failures can mask data corruption or key mismatches
+      throw new Error(`Decryption failed: ${e instanceof Error ? e.message : String(e)}`);
     }
   },
 
