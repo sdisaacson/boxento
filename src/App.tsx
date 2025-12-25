@@ -33,32 +33,26 @@ import { Changelog } from '@/components/Changelog'
 import { faviconService } from '@/lib/services/favicon'
 import { useAppSettings } from '@/context/AppSettingsContext'
 import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
+import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
 }
 
-// Define breakpoints
-const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-const cols = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
-
 // Create responsive grid layout with width provider - once, outside the component
 // This is important for performance as it prevents recreation on each render
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
-// Helper function to validate layout items
 const validateLayoutItem = (item: LayoutItem): LayoutItem => ({
   ...item,
   w: Math.max(item.w, 2), // Minimum width of 2
   h: Math.max(item.h, 2)  // Minimum height of 2
 });
 
-// Helper function to validate a layout
 const validateLayout = (layout: LayoutItem[]): LayoutItem[] => {
   return layout.map(validateLayoutItem);
 };
 
-// Helper function to validate all layouts for all breakpoints
 const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: string]: LayoutItem[] } => {
   const validatedLayouts = { ...layouts };
   
@@ -75,64 +69,6 @@ const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: stri
   return validatedLayouts;
 };
 
-// Helper function to create a default layout item
-const createDefaultLayoutItem = (
-  widgetId: string, 
-  index: number, 
-  colCount: number,
-  breakpoint: string
-): LayoutItem => {
-  // For desktop layouts (lg, md), create a grid layout
-  if (breakpoint === 'lg' || breakpoint === 'md') {
-    // Calculate a grid position that works well with vertical compacting
-    const maxItemsPerRow = Math.max(1, Math.floor(colCount / 3));
-    const col = index % maxItemsPerRow;
-    const row = Math.floor(index / maxItemsPerRow);
-    
-    return {
-      i: widgetId,
-      x: col * 3,
-      y: row * 3,
-      w: 3,
-      h: 3,
-      minW: 2,
-      minH: 2
-    };
-  } 
-  // For medium tablet layouts
-  else if (breakpoint === 'sm') {
-    // For tablet, use 2 items per row
-    const itemsPerRow = 2;
-    const col = index % itemsPerRow;
-    const row = Math.floor(index / itemsPerRow);
-    
-    return {
-      i: widgetId,
-      x: col * 3,
-      y: row * 3,
-      w: 3,
-      h: 3,
-      minW: 2,
-      minH: 2
-    };
-  }
-  // For mobile layouts (xs, xxs), stack vertically
-  else {
-    return {
-      i: widgetId,
-      x: 0,
-      y: index * 2,
-      w: 2,
-      h: 2,
-      minW: 2,
-      minH: 2,
-      maxW: 2,
-      maxH: 2
-    };
-  }
-};
-
-// Helper function to create default layouts for all breakpoints
 const createDefaultLayoutsForWidgets = (
   widgets: Widget[]
 ): { [key: string]: LayoutItem[] } => {
@@ -151,7 +87,6 @@ const createDefaultLayoutsForWidgets = (
   return newLayouts;
 };
 
-// Helper to prepare widget config for saving (remove functions)
 const prepareWidgetConfigForSave = (config: Record<string, unknown>): Record<string, unknown> => {
   // Create a copy of the config without function properties
   const configToSave = { ...config };
@@ -160,7 +95,6 @@ const prepareWidgetConfigForSave = (config: Record<string, unknown>): Record<str
   return configToSave;
 };
 
-// Helper to load from localStorage
 const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
   
@@ -184,7 +118,6 @@ const AppFooter = () => {
     <footer className="py-4 sm:py-6 px-4 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-4 sm:gap-6">
         {/* Mobile layout (stacked) */}
-        {/* Reduced gap from gap-4 to gap-3 for tighter mobile spacing */}
         <div className="flex flex-col items-center gap-3 sm:hidden">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Built by{' '}

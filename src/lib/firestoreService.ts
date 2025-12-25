@@ -1,9 +1,9 @@
 import { db, auth, isFirebaseInitialized } from './firebase';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  collection, 
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
   getDocs,
   deleteDoc,
   writeBatch,
@@ -11,12 +11,8 @@ import {
 } from 'firebase/firestore';
 import { WidgetConfigStore } from './configManager';
 import { LayoutItem } from '@/types';
+import { breakpoints, cols, createDefaultLayoutItem } from './layoutUtils';
 
-// Breakpoints and columns configuration - must match App.tsx
-const breakpoints = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-const cols = { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 };
-
-// Helper function to check if Firebase is initialized and return a non-null Firestore instance
 const checkFirebase = (): Firestore => {
   if (!isFirebaseInitialized || !db) {
     throw new Error('Firebase is not initialized');
@@ -24,64 +20,6 @@ const checkFirebase = (): Firestore => {
   return db;
 };
 
-// Helper function to create a default layout item for a widget
-const createDefaultLayoutItem = (
-  widgetId: string, 
-  index: number, 
-  colCount: number,
-  breakpoint: string
-): LayoutItem => {
-  // For desktop layouts (lg, md), create a grid layout
-  if (breakpoint === 'lg' || breakpoint === 'md') {
-    // Calculate a grid position that works well with vertical compacting
-    const maxItemsPerRow = Math.max(1, Math.floor(colCount / 3)); 
-    const col = index % maxItemsPerRow;
-    const row = Math.floor(index / maxItemsPerRow);
-    
-    return {
-      i: widgetId,
-      x: col * 3,
-      y: row * 3,
-      w: 3,
-      h: 3,
-      minW: 2,
-      minH: 2
-    };
-  } 
-  // For medium tablet layouts
-  else if (breakpoint === 'sm') {
-    // For tablet, use 2 items per row
-    const itemsPerRow = 2;
-    const col = index % itemsPerRow;
-    const row = Math.floor(index / itemsPerRow);
-    
-    return {
-      i: widgetId,
-      x: col * 3,
-      y: row * 3,
-      w: 3,
-      h: 3,
-      minW: 2,
-      minH: 2
-    };
-  }
-  // For mobile layouts (xs, xxs), force 2x2 grid size and stack vertically
-  else {
-    return {
-      i: widgetId,
-      x: 0,
-      y: index * 2,
-      w: 2,
-      h: 2,
-      minW: 2,
-      minH: 2,
-      maxW: 2,
-      maxH: 2
-    };
-  }
-};
-
-// Get the current user ID
 const getCurrentUserId = (): string | null => {
   if (!isFirebaseInitialized || !auth) return null;
   return auth.currentUser?.uid || null;

@@ -69,7 +69,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }));
   }, [config]);
 
-  // Add a new todo item
   const addTodo = () => {
     if (!newTodoText.trim()) return;
     
@@ -109,7 +108,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     setNewTodoText('');
   };
 
-  // Toggle todo completion
   const toggleTodo = (id: string) => {
     const updatedItems = (localConfig.items || []).map(item => {
       if (item.id === id) {
@@ -132,7 +130,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }
   };
 
-  // Delete a todo item
   const deleteTodo = (id: string) => {
     const updatedItems = (localConfig.items || []).filter(item => item.id !== id);
     
@@ -150,7 +147,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }
   };
 
-  // Handle title change
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setLocalConfig(prev => ({
@@ -159,7 +155,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }));
   };
 
-  // Handle show completed items change
   const handleShowCompletedChange = (checked: boolean) => {
     setLocalConfig(prev => ({
       ...prev,
@@ -167,7 +162,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }));
   };
 
-  // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLLIElement>, item: TodoItem) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -179,7 +173,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }
   };
 
-  // Handle drag end
   const handleDragEnd = (e: React.DragEvent<HTMLLIElement>) => {
     setDraggedItem(null);
     setDragOverItemId(null);
@@ -187,7 +180,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     e.currentTarget.style.opacity = '1';
   };
 
-  // Handle drag over
   const handleDragOver = (e: React.DragEvent<HTMLLIElement>, overItem: TodoItem) => {
     e.preventDefault();
     
@@ -215,7 +207,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     return false;
   };
 
-  // Handle drop
   const handleDrop = (e: React.DragEvent<HTMLLIElement>, targetItem: TodoItem) => {
     e.preventDefault();
     
@@ -289,7 +280,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }
   };
 
-  // Helper to get drop zone class
   const getDropZoneClass = (itemId: string) => {
     if (draggedItem && dragOverItemId === itemId) {
       if (dragDirection === 'up') {
@@ -301,7 +291,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     return '';
   };
 
-  // Handle sort order change
   const handleSortOrderChange = (value: 'created' | 'alphabetical' | 'completed' | 'manual') => {
     setLocalConfig(prev => ({
       ...prev,
@@ -309,7 +298,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     }));
   };
 
-  // Save settings
   const saveSettings = () => {
     if (config?.onUpdate) {
       config.onUpdate(localConfig);
@@ -317,7 +305,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     setShowSettings(false);
   };
 
-  // Get filtered and sorted todo items
   const getFilteredAndSortedItems = () => {
     let items = [...(localConfig.items || [])];
     

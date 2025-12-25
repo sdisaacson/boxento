@@ -18,9 +18,7 @@ import {
   CardTitle,
 } from '../../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
-// Add imports for Select components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-// Adjust paths for UI components based on the project structure
 import WidgetHeader from '../common/WidgetHeader';
 import { 
   FlightTrackerWidgetProps, 
