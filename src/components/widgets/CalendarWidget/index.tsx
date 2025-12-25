@@ -556,19 +556,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
     
     const checkTokens = async () => {
-      // Only log during initial run or debugging
-      if (isInitialRun.current) {
-      }
-      
       try {
         const { accessTokenKey, refreshTokenKey } = getTokenKeys();
         const accessToken = localStorage.getItem(accessTokenKey);
         const refreshToken = localStorage.getItem(refreshTokenKey);
-        
-        // Only log during initial run or debugging
-        if (isInitialRun.current) {
-        }
-        
+
         // Check stored config for Google Calendar connection status
         const isConnectedInConfig = localConfig.googleCalendarConnected === true;
         
