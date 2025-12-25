@@ -3,6 +3,10 @@
  *
  * Uses Web Crypto API with AES-GCM for secure encryption of sensitive data.
  * This provides authenticated encryption with proper key derivation.
+ *
+ * Key Strategy:
+ * - When user is logged in: key derived from user UID (consistent across devices)
+ * - When user is logged out: device-specific key (localStorage only, no sync needed)
  */
 
 // Constants for encryption
@@ -16,9 +20,28 @@ const ITERATIONS = 100000; // PBKDF2 iterations
 const ENCRYPTED_PREFIX = 'enc:v1:';
 const LEGACY_PREFIX_CHECK = /^[A-Za-z0-9+/]+=*$/; // Base64 pattern
 
+// Module-level state for user key
+let currentUserKey: string | null = null;
+
+/**
+ * Set the current user's key for encryption.
+ * Call this when user logs in (with user.uid) or logs out (with null).
+ *
+ * @param userId - The user's UID from Firebase Auth, or null when logged out
+ */
+export const setUserKey = (userId: string | null): void => {
+  currentUserKey = userId;
+};
+
+/**
+ * Get the current user key (for testing/debugging)
+ */
+export const getUserKey = (): string | null => currentUserKey;
+
 /**
  * Get or create a device-specific encryption key stored in localStorage.
  * This key is unique per browser/device and persists across sessions.
+ * Only used when user is NOT logged in.
  */
 const getDeviceKey = (): string => {
   const DEVICE_KEY_STORAGE = 'boxento-device-key';
@@ -33,6 +56,21 @@ const getDeviceKey = (): string => {
   }
 
   return deviceKey;
+};
+
+/**
+ * Get the encryption key to use.
+ * - If user is logged in: returns user UID (consistent across devices)
+ * - If user is logged out: returns device key (local only)
+ */
+const getEncryptionKey = (): string => {
+  if (currentUserKey) {
+    // User is logged in - use their UID for cross-device consistency
+    // Add a prefix to distinguish from device keys
+    return `user:${currentUserKey}`;
+  }
+  // User is logged out - use device key (localStorage only anyway)
+  return `device:${getDeviceKey()}`;
 };
 
 /**
@@ -133,14 +171,14 @@ export const encryptionUtils = {
     if (!text) return '';
 
     try {
-      const deviceKey = getDeviceKey();
+      const encryptionKey = getEncryptionKey();
 
       // Generate random salt and IV
       const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
       const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
       // Derive the encryption key
-      const key = await deriveKey(deviceKey, salt);
+      const key = await deriveKey(encryptionKey, salt);
 
       // Encrypt the text
       const encoder = new TextEncoder();
@@ -188,7 +226,7 @@ export const encryptionUtils = {
         return encryptedText;
       }
 
-      const deviceKey = getDeviceKey();
+      const encryptionKey = getEncryptionKey();
 
       // Remove prefix and decode
       const data = encryptedText.slice(ENCRYPTED_PREFIX.length);
@@ -200,7 +238,7 @@ export const encryptionUtils = {
       const encryptedData = combined.slice(SALT_LENGTH + IV_LENGTH);
 
       // Derive the key
-      const key = await deriveKey(deviceKey, salt);
+      const key = await deriveKey(encryptionKey, salt);
 
       // Decrypt
       const decryptedBuffer = await crypto.subtle.decrypt(

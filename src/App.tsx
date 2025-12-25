@@ -1137,28 +1137,43 @@ function App() {
   useEffect(() => {
     if (!auth) return;
 
-    // Migrate any widget-specific localStorage keys before loading data
-    migrateWidgetSpecificConfigs();
+    let unsubscribe: (() => void) | undefined;
 
-    // Migrate legacy Base64 "encryption" to real AES-GCM encryption
-    configManager.migrateToSecureEncryption().catch(err => {
-      console.error('Failed to migrate encryption:', err);
-    });
+    // Use async IIFE to properly await migrations before loading data
+    const initializeApp = async () => {
+      // Migrate any widget-specific localStorage keys before loading data
+      migrateWidgetSpecificConfigs();
 
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // User is signed in, load their data from Firestore
-        await loadUserData();
-      } else {
-        // User is signed out, load from localStorage
-        loadLocalData();
+      // Migrate legacy Base64 "encryption" to real AES-GCM encryption
+      // IMPORTANT: Must complete before loading data to prevent race conditions
+      try {
+        await configManager.migrateToSecureEncryption();
+      } catch (err) {
+        console.error('Failed to migrate encryption:', err);
       }
 
-      setIsDataLoaded(true);
-    });
+      // Now set up auth listener after migrations are complete
+      unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          // User is signed in, load their data from Firestore
+          await loadUserData();
+        } else {
+          // User is signed out, load from localStorage
+          loadLocalData();
+        }
+
+        setIsDataLoaded(true);
+      });
+    };
+
+    initializeApp();
 
     // Cleanup subscription
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
   
   // Effect to handle initial layout loading
