@@ -1153,6 +1153,8 @@ function App() {
       }
 
       // Now set up auth listener after migrations are complete
+      // Note: auth is guaranteed non-null here due to the early return check above
+      if (!auth) return;
       unsubscribe = auth.onAuthStateChanged(async (user) => {
         if (user) {
           // User is signed in, load their data from Firestore
