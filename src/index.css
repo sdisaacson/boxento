@@ -266,6 +266,48 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   @apply opacity-90 transition-opacity duration-300 ease-in;
 }
 
+/*
+ * =================================
+ * RESIZE BOUNCE/SPRING EFFECT
+ * =================================
+ */
+
+/* Bounce effect when resize completes */
+.react-grid-item.resize-complete {
+  animation: resizeBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes resizeBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.02); }
+  70% { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+
+/*
+ * =================================
+ * MIN/MAX CONSTRAINT FEEDBACK
+ * =================================
+ */
+
+/* Visual feedback when hitting min size constraint */
+.react-grid-item.at-min-size {
+  animation: constraintPulse 0.3s ease-out;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Visual feedback when hitting max size constraint */
+.react-grid-item.at-max-size {
+  animation: constraintPulse 0.3s ease-out;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4) !important;
+}
+
+@keyframes constraintPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3); }
+  100% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4); }
+}
+
 /* 
  * =================================
  * DRAG DIRECTION ANIMATION STYLES
@@ -306,12 +348,16 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .react-grid-item.dropping {
   border-radius: var(--border-radius-standard) !important;
   z-index: 2;
-  /* Almost invisible background with extremely subtle gradient */
-  background: linear-gradient(to bottom, rgba(250, 250, 252, 0.3), rgba(248, 248, 250, 0.3)) !important;
-  /* Nearly invisible hairline border */
-  border: 0.5px solid rgba(0, 0, 0, 0.03) !important;
-  /* Extremely subtle shadow */
-  box-shadow: 
+  /* Smooth transitions for placeholder movement */
+  transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              width 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              height 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  /* Subtle gradient background with slight blue tint */
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(147, 197, 253, 0.05)) !important;
+  /* Soft border */
+  border: 1.5px dashed rgba(59, 130, 246, 0.3) !important;
+  /* Subtle shadow */
+  box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.02),
     0 2px 6px rgba(0, 0, 0, 0.01) !important;
   /* Remove the outline that was too visible */

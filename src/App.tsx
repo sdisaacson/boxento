@@ -895,13 +895,67 @@ function App() {
     }
   }, [draggedWidgetId, dragDirection]);
   
+  // Track resizing widget for constraint feedback
+  const [resizingWidgetId, setResizingWidgetId] = useState<string | null>(null);
+  const lastResizeSize = useRef<{ w: number; h: number } | null>(null);
+
   // Handle resize events
-  const handleResizeStart = (): void => {
+  const handleResizeStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
     document.body.classList.add('react-grid-layout--resizing');
+    setResizingWidgetId(newItem.i);
+    lastResizeSize.current = { w: newItem.w, h: newItem.h };
   };
-  
-  const handleResizeStop = (): void => {
+
+  // Handle resize in progress - for constraint feedback
+  const handleResize = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
+    if (!resizingWidgetId || !lastResizeSize.current) return;
+
+    const widgetElement = document.querySelector(`[data-grid*='"i":"${newItem.i}"']`) as HTMLElement;
+    if (!widgetElement) return;
+
+    // Check if hitting min constraints
+    const isAtMinWidth = newItem.w === (newItem.minW || 2);
+    const isAtMinHeight = newItem.h === (newItem.minH || 2);
+    const wasLarger = lastResizeSize.current.w > newItem.w || lastResizeSize.current.h > newItem.h;
+
+    // Check if hitting max constraints
+    const isAtMaxWidth = newItem.maxW && newItem.w === newItem.maxW;
+    const isAtMaxHeight = newItem.maxH && newItem.h === newItem.maxH;
+    const wasSmaller = lastResizeSize.current.w < newItem.w || lastResizeSize.current.h < newItem.h;
+
+    // Apply constraint feedback classes
+    if ((isAtMinWidth || isAtMinHeight) && wasLarger) {
+      widgetElement.classList.remove('at-max-size');
+      widgetElement.classList.add('at-min-size');
+      // Remove after animation
+      setTimeout(() => widgetElement.classList.remove('at-min-size'), 300);
+    } else if ((isAtMaxWidth || isAtMaxHeight) && wasSmaller) {
+      widgetElement.classList.remove('at-min-size');
+      widgetElement.classList.add('at-max-size');
+      // Remove after animation
+      setTimeout(() => widgetElement.classList.remove('at-max-size'), 300);
+    }
+
+    lastResizeSize.current = { w: newItem.w, h: newItem.h };
+  };
+
+  const handleResizeStop = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
     document.body.classList.remove('react-grid-layout--resizing');
+
+    // Apply bounce effect to the resized widget
+    const widgetElement = document.querySelector(`[data-grid*='"i":"${newItem.i}"']`) as HTMLElement;
+    if (widgetElement) {
+      widgetElement.classList.add('resize-complete');
+      // Remove class after animation completes
+      setTimeout(() => {
+        widgetElement.classList.remove('resize-complete');
+      }, 400);
+    }
+
+    // Reset tracking
+    setResizingWidgetId(null);
+    lastResizeSize.current = null;
+
     saveLayouts(layouts, false);
   };
   
@@ -1525,6 +1579,7 @@ function App() {
                     onDrag={handleDrag}
                     onDragStop={handleDragStop}
                     onResizeStart={handleResizeStart}
+                    onResize={handleResize}
                     onResizeStop={handleResizeStop}
                     margin={[15, 15]}
                     containerPadding={[10, 10]}
