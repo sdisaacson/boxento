@@ -1140,6 +1140,11 @@ function App() {
     // Migrate any widget-specific localStorage keys before loading data
     migrateWidgetSpecificConfigs();
 
+    // Migrate legacy Base64 "encryption" to real AES-GCM encryption
+    configManager.migrateToSecureEncryption().catch(err => {
+      console.error('Failed to migrate encryption:', err);
+    });
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // User is signed in, load their data from Firestore
