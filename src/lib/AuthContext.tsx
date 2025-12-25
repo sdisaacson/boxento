@@ -233,10 +233,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return signInWithPopup(auth, microsoftProvider);
   }
 
-  // Phone Authentication
   function phoneSignIn() {
-    // This is a placeholder - phone auth requires recaptcha setup and verification
-    // Typically, you'd return the verification process or start it here
     return Promise.resolve('Phone auth initialized');
   }
 

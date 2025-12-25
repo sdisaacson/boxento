@@ -9,11 +9,9 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { GitHubStreakWidgetProps, GitHubStreakWidgetConfig } from './types';
 import { Button } from '../../ui/button';
-// Add imports for Input, Label, Checkbox
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
-// Add Github, Shield, and AlertCircle icons import
 import { AlertCircle, Github, Shield } from 'lucide-react';
 
 /**

@@ -31,7 +31,6 @@ import { faviconService } from '@/lib/services/favicon';
  * @returns {JSX.Element} Weather widget component
  */
 const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshInterval = 15 }) => {
-  // State for weather data and UI
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +42,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const configRef = useRef<string>(''); // Track the last config for comparison
 
-  // Mock weather data for development/testing
   const mockWeatherData: WeatherData = {
     location: 'New York',
     temperature: 22,
@@ -158,7 +156,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     return 'Unknown weather condition';
   };
 
-  // Memoize the fetchWeather function to prevent unnecessary re-renders
   const fetchWeather = useCallback(async () => {
     setLoading(true);
     
@@ -251,7 +248,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [localConfig.location, localConfig.units]); // Only depend on location and units
 
-  // Update localConfig when config changes without creating a circular dependency
   useEffect(() => {
     if (config) {
       // Create a config signature to detect real changes
@@ -266,9 +262,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [config]);
 
-  // Combine both useEffects into one
   useEffect(() => {
-    // Initial fetch
     fetchWeather();
     
     // Set up refresh interval if specified
@@ -278,7 +272,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [fetchWeather, refreshInterval]); // Only depend on memoized fetchWeather and refreshInterval
 
-  // Fix the radio group value change handler
   const handleUnitsChange = useCallback((value: 'metric' | 'imperial') => {
     setLocalConfig(prev => ({...prev, units: value}));
   }, []);
@@ -807,7 +800,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     );
   };
 
-  // Update favicon when weather data changes
   useEffect(() => {
     if (weather && !loading && !error) {
       // Update favicon with current temperature
@@ -815,7 +807,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [weather, loading, error, localConfig.units]);
 
-  // Clean up favicon when component unmounts
   useEffect(() => {
     return () => {
       faviconService.clearWeatherInfo();

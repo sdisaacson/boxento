@@ -18,10 +18,8 @@ import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
-// Add import for Checkbox
 import { Checkbox } from '../../ui/checkbox';
 
-// Add these interfaces at the top with other types
 interface GoogleCalendarEvent {
   id: string;
   summary?: string;

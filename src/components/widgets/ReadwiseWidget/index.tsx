@@ -7,7 +7,6 @@ import {
   DialogFooter
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
-// Add AlertCircle import
 import { RefreshCw, Quote, AlertCircle, BookOpen, Book } from 'lucide-react';
 import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
 import { Button } from '../../ui/button';
