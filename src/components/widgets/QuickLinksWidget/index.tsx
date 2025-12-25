@@ -125,7 +125,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ config }) => {
     if (config) {
       const shouldUpdateLinks = config.links && JSON.stringify(config.links) !== JSON.stringify(links);
       if (shouldUpdateLinks) {
-        console.log('Updating links from config:', config.links);
         setLinks(config.links);
       }
       

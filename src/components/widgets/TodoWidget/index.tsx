@@ -80,7 +80,6 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     
     // Generate a unique ID using timestamp and random number for broader compatibility
     const newTodoId = 'todo-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
-    console.log('[TodoWidget] Generated new todo ID:', newTodoId);
 
     const newTodo: TodoItem = {
       id: newTodoId,

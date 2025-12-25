@@ -207,7 +207,7 @@ const useExchangeRates = (apiKey: string | undefined, baseCurrency: string = 'US
       setRates(data.rates);
       setLastUpdated(new Date());
       setError(null);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch rates. Check your connection and try again.');
     } finally {
       setLoading(false);

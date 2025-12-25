@@ -111,7 +111,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
 
     // Play notification sound
     const audio = new Audio('/sounds/bell.mp3');
-    audio.play().catch(e => console.log('Audio playback failed:', e));
+    audio.play().catch(() => { /* Audio playback may fail if user hasn't interacted with page */ });
 
     if (mode === TimerMode.WORK) {
       nextCycles = cyclesCompleted + 1;

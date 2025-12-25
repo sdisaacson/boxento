@@ -18,6 +18,7 @@ import { configManager } from '@/lib/configManager'
 import { UserMenuButton } from '@/components/auth/UserMenuButton'
 import { auth } from '@/lib/firebase'
 import { userDashboardService } from '@/lib/firestoreService'
+import { TIMING, STORAGE_KEYS } from '@/lib/constants'
 import { useSync } from '@/lib/SyncContext'
 import { Button } from './components/ui/button'
 import {
@@ -295,7 +296,7 @@ function App() {
     // Update time every minute
     const intervalId = setInterval(() => {
       faviconService.updateWithCurrentTime();
-    }, 60000);
+    }, TIMING.FAVICON_UPDATE_INTERVAL_MS);
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);
@@ -374,7 +375,7 @@ function App() {
   
   const [layouts, setLayouts] = useState<{ [key: string]: LayoutItem[] }>(() => {
     try {
-      const savedLayouts = loadFromLocalStorage('boxento-layouts', {});
+      const savedLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, {});
       if (Object.keys(savedLayouts).length > 0) {
         return validateLayouts(savedLayouts);
       }
@@ -388,7 +389,7 @@ function App() {
   
   const [widgets, setWidgets] = useState<Widget[]>(() => {
     if (typeof window !== 'undefined') {
-      const savedWidgets = loadFromLocalStorage('boxento-widgets', []);
+      const savedWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, []);
       
       // Only use default widgets if we're not logged in and no widgets in storage
       if (savedWidgets.length === 0 && !auth?.currentUser) {
@@ -457,7 +458,7 @@ function App() {
     setWidgets(updatedWidgets);
 
     // Save to localStorage immediately
-    localStorage.setItem('boxento-widgets', JSON.stringify(updatedWidgets));
+    localStorage.setItem(STORAGE_KEYS.WIDGETS, JSON.stringify(updatedWidgets));
 
     // Save each widget's configuration separately using configManager
     updatedWidgets.forEach(widget => {
@@ -486,7 +487,7 @@ function App() {
         }
 
         // Schedule save for later (returns immediately)
-        widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
+        widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
       } else {
         // Save immediately and wait for completion
         await saveToFirestore();
@@ -507,7 +508,7 @@ function App() {
     setLayouts(updatedLayouts);
 
     // Save to localStorage
-    localStorage.setItem('boxento-layouts', JSON.stringify(updatedLayouts));
+    localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(updatedLayouts));
 
     // Save to Firestore if logged in
     if (auth?.currentUser) {
@@ -528,7 +529,7 @@ function App() {
         }
 
         // Schedule save for later (returns immediately)
-        layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, 500);
+        layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
       } else {
         // Save immediately and wait for completion
         await saveToFirestore();
@@ -874,7 +875,7 @@ function App() {
         // Remove rebound class after animation completes
         setTimeout(() => {
           widgetElement.classList.remove('drag-rebound');
-        }, 500); // Match the animation duration in CSS
+        }, TIMING.WIDGET_REMOVE_ANIMATION_MS);
       }
     }
     
@@ -983,11 +984,11 @@ function App() {
   // Load local data
   const loadLocalData = () => {
     // Load layouts from localStorage
-    const localLayouts = loadFromLocalStorage('boxento-layouts', getDefaultLayouts());
+    const localLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
     if (localLayouts) setLayouts(localLayouts);
 
     // Load widgets from localStorage
-    const localWidgets = loadFromLocalStorage('boxento-widgets', getDefaultWidgets());
+    const localWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
     if (localWidgets) setWidgets(localWidgets);
   };
 
@@ -1027,8 +1028,8 @@ function App() {
 
       // Save back to unified storage if we made changes
       if (hasChanges) {
-        localStorage.setItem('boxento-widget-configs', JSON.stringify(unifiedConfigs));
-        console.log('Migrated widget-specific localStorage keys to unified storage');
+        localStorage.setItem(STORAGE_KEYS.WIDGET_CONFIGS, JSON.stringify(unifiedConfigs));
+        console.warn('Migrated widget-specific localStorage keys to unified storage');
       }
     } catch (e) {
       console.error('Error during widget config migration:', e);
@@ -1102,8 +1103,8 @@ function App() {
           // Validated layouts set
           
           // Also update localStorage to match Firestore state
-          localStorage.setItem('boxento-widgets', JSON.stringify(typedWidgets));
-          localStorage.setItem('boxento-layouts', JSON.stringify(validatedLayouts));
+          localStorage.setItem(STORAGE_KEYS.WIDGETS, JSON.stringify(typedWidgets));
+          localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(validatedLayouts));
         } else if (!userHasFirestoreData) {
           // Fall back to localStorage if no Firestore data
           loadLocalData();
@@ -1245,7 +1246,7 @@ function App() {
       if (hasOrphanedItems) {
         // Cleaning up orphaned layout items
         setLayouts(cleanedLayouts);
-        localStorage.setItem('boxento-layouts', JSON.stringify(cleanedLayouts));
+        localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(cleanedLayouts));
       }
     }
   }, [widgets, layouts]);
