@@ -21,6 +21,7 @@ import { userDashboardService } from '@/lib/firestoreService'
 import { TIMING, STORAGE_KEYS } from '@/lib/constants'
 import { useSync } from '@/lib/SyncContext'
 import { Button } from './components/ui/button'
+import { Skeleton } from './components/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
@@ -407,6 +408,7 @@ function App() {
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false);
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
   const [isLayoutReady, setIsLayoutReady] = useState(false);
+  const [isTransitionsEnabled, setIsTransitionsEnabled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const widgetCategories: WidgetCategory = (() => {
     // Group widgets by category
@@ -1285,12 +1287,15 @@ function App() {
       
       // Add delay to ensure layout calculations are complete
       const delay = allWidgetsHaveLayouts ? 300 : 500;
-      
+
       const timer = setTimeout(() => {
         setIsLayoutReady(true);
-        // Layout is now ready for rendering
+        // Enable transitions after another short delay to prevent initial animation
+        setTimeout(() => {
+          setIsTransitionsEnabled(true);
+        }, 100);
       }, delay);
-      
+
       return () => clearTimeout(timer);
     }
   }, [layouts, widgets, currentBreakpoint]);
@@ -1431,14 +1436,52 @@ function App() {
     }
   };
   
-  // Only render the UI when data is loaded
+  // Show skeleton dashboard while loading data
   if (!isDataLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center dark:bg-slate-950">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
-        </div>
+      <div className="app app-background dark:bg-slate-950 min-h-screen">
+        {/* Skeleton Header */}
+        <header className="app-header">
+          <div className="header-container">
+            <div className="header-left">
+              <Skeleton className="h-8 w-28 rounded-lg" />
+            </div>
+            <div className="header-right flex gap-3">
+              <Skeleton className="h-9 w-9 rounded-full" />
+              <Skeleton className="h-9 w-24 rounded-lg" />
+            </div>
+          </div>
+        </header>
+
+        {/* Skeleton Dashboard Grid */}
+        <main className="main-content pt-20 px-4 md:px-6 lg:px-8">
+          <div className="max-w-[1600px] mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
+              {/* Skeleton widgets mimicking typical dashboard layout */}
+              <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-2 lg:col-span-2 row-span-2">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-2 lg:col-span-2 row-span-2">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+              <div className="col-span-2 md:col-span-2 lg:col-span-2 row-span-2">
+                <Skeleton className="w-full h-full rounded-2xl" />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -1559,11 +1602,30 @@ function App() {
             </div>
             
             <div className="desktop-view-container">
-              {/* Conditional rendering with opacity transition */}
+              {/* Show skeleton grid while layout is calculating */}
+              {!isLayoutReady && widgets.length > 0 && (
+                <div className="px-[10px] py-[10px]">
+                  <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
+                    <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                      <Skeleton className="w-full h-full rounded-2xl" />
+                    </div>
+                    <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                      <Skeleton className="w-full h-full rounded-2xl" />
+                    </div>
+                    <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                      <Skeleton className="w-full h-full rounded-2xl" />
+                    </div>
+                    <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                      <Skeleton className="w-full h-full rounded-2xl" />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Hide grid completely until layout is ready to prevent position animation */}
               <DashboardContextMenu onAddWidget={toggleWidgetSelector}>
-                <div className={`transition-opacity duration-300 ${isLayoutReady ? 'opacity-100' : 'opacity-0'}`}>
+                <div className={isLayoutReady ? '' : 'hidden'}>
                   <ResponsiveReactGridLayout
-                    className={`layout ${!isLayoutReady ? 'layout-loading' : ''}`}
+                    className={`layout ${!isTransitionsEnabled ? 'layout-loading' : ''}`}
                     layouts={layouts}
                     breakpoints={breakpoints}
                     cols={cols}
@@ -1601,13 +1663,6 @@ function App() {
                   </ResponsiveReactGridLayout>
                 </div>
               </DashboardContextMenu>
-              {/* Loading indicator during initial layout calculation */}
-              {!isLayoutReady && widgets.length > 0 && (
-                <div className="flex items-center justify-center p-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                  <span className="ml-2">Setting up your dashboard...</span>
-                </div>
-              )}
             </div>
           </div>
         </main>
