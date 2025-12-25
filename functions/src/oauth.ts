@@ -1,5 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
 import { Request, Response } from "express";
+import { logger } from "firebase-functions";
 
 // Define secrets - set via: firebase functions:secrets:set SECRET_NAME
 export const googleClientId = defineSecret("GOOGLE_CLIENT_ID");
@@ -24,6 +25,36 @@ export async function exchangeToken(req: Request, res: Response): Promise<void> 
   }
 
   try {
+    // Try secret first, fallback to env var for debugging
+    // IMPORTANT: trim() to remove any trailing newlines from secrets
+    let clientId = googleClientId.value()?.trim() || "";
+    let clientSecret = googleClientSecret.value()?.trim() || "";
+
+    // Fallback to process.env if secrets are empty
+    if (!clientId) {
+      clientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
+    }
+    if (!clientSecret) {
+      clientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
+    }
+
+    logger.info("OAuth exchange request", {
+      clientIdLength: clientId?.length || 0,
+      clientIdPrefix: clientId?.substring(0, 20) || "EMPTY",
+      clientSecretLength: clientSecret?.length || 0,
+      redirectUri: redirectUri,
+      fromSecret: (googleClientId.value()?.length || 0) > 0,
+    });
+
+    if (!clientId || !clientSecret) {
+      logger.error("OAuth client credentials missing", {
+        hasClientId: Boolean(clientId),
+        hasClientSecret: Boolean(clientSecret),
+      });
+      res.status(500).json({ error: "OAuth client not configured" });
+      return;
+    }
+
     const response = await fetch(GOOGLE_TOKEN_URL, {
       method: "POST",
       headers: {
@@ -31,8 +62,8 @@ export async function exchangeToken(req: Request, res: Response): Promise<void> 
       },
       body: new URLSearchParams({
         code,
-        client_id: googleClientId.value(),
-        client_secret: googleClientSecret.value(),
+        client_id: clientId,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
@@ -40,7 +71,10 @@ export async function exchangeToken(req: Request, res: Response): Promise<void> 
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Token exchange failed:", error);
+      logger.error("Token exchange failed", {
+        status: response.status,
+        error,
+      });
       res.status(response.status).json({ error: "Token exchange failed" });
       return;
     }
@@ -56,7 +90,7 @@ export async function exchangeToken(req: Request, res: Response): Promise<void> 
       scope: tokenData.scope,
     });
   } catch (error) {
-    console.error("OAuth exchange error:", error);
+    logger.error("OAuth exchange error", { error });
     res.status(500).json({ error: "Internal server error" });
   }
 }
@@ -84,8 +118,8 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        client_id: googleClientId.value(),
-        client_secret: googleClientSecret.value(),
+        client_id: googleClientId.value()?.trim() || "",
+        client_secret: googleClientSecret.value()?.trim() || "",
         refresh_token: token,
         grant_type: "refresh_token",
       }),
@@ -93,7 +127,10 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Token refresh failed:", error);
+      logger.error("Token refresh failed", {
+        status: response.status,
+        error,
+      });
       res.status(response.status).json({ error: "Token refresh failed" });
       return;
     }
@@ -107,7 +144,7 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
       scope: tokenData.scope,
     });
   } catch (error) {
-    console.error("OAuth refresh error:", error);
+    logger.error("OAuth refresh error", { error });
     res.status(500).json({ error: "Internal server error" });
   }
 }
