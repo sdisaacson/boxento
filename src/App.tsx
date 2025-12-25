@@ -1152,8 +1152,13 @@ function App() {
 
       // If Firebase auth is not configured, load from localStorage directly
       if (!auth) {
-        loadLocalData();
-        setIsDataLoaded(true);
+        try {
+          loadLocalData();
+        } catch (error) {
+          console.error('Error loading local data:', error);
+        } finally {
+          setIsDataLoaded(true);
+        }
         return;
       }
 
