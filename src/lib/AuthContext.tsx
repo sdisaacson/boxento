@@ -130,25 +130,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   function logout() {
     if (!auth) return Promise.reject(new Error('Firebase is not initialized'));
 
-    // Function to clear all localStorage except theme and app settings
+    // Function to clear all localStorage except theme, app settings, and OAuth tokens
     const clearAllStorage = () => {
-      // Save theme setting and app settings
-      const theme = localStorage.getItem('theme');
-      const appSettings = localStorage.getItem('boxento-app-settings');
-      
+      // Save items we want to preserve
+      const preservedItems: Record<string, string | null> = {
+        'theme': localStorage.getItem('theme'),
+        'boxento-app-settings': localStorage.getItem('boxento-app-settings'),
+      };
+
+      // Also preserve Google Calendar OAuth tokens (they're tied to the user's Google account, not Boxento account)
+      // Find all googleAccessToken, googleRefreshToken, googleTokenExpiry keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('googleAccessToken-') ||
+                    key.startsWith('googleRefreshToken-') ||
+                    key.startsWith('googleTokenExpiry-'))) {
+          preservedItems[key] = localStorage.getItem(key);
+        }
+      }
+
       // Clear ALL localStorage
       localStorage.clear();
-      
-      // Restore theme if available
-      if (theme) {
-        localStorage.setItem('theme', theme);
-      }
-      
-      // Restore app settings if available
-      if (appSettings) {
-        localStorage.setItem('boxento-app-settings', appSettings);
-      }
-      
+
+      // Restore preserved items
+      Object.entries(preservedItems).forEach(([key, value]) => {
+        if (value !== null) {
+          localStorage.setItem(key, value);
+        }
+      });
+
       // Also clear sessionStorage just to be sure
       sessionStorage.clear();
     };
