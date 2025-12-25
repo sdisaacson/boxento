@@ -390,28 +390,15 @@ function App() {
   const [widgets, setWidgets] = useState<Widget[]>(() => {
     if (typeof window !== 'undefined') {
       const savedWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, []);
-      
+
       // Only use default widgets if we're not logged in and no widgets in storage
       if (savedWidgets.length === 0 && !auth?.currentUser) {
         return getDefaultWidgets();
       }
-      
-      // Load each widget's configuration from configManager
-      return savedWidgets.map((widget: Widget) => {
-        if (widget.id) {
-          const savedConfig = configManager.getWidgetConfig(widget.id);
-          if (savedConfig) {
-            return {
-              ...widget,
-              config: {
-                ...widget.config,
-                ...savedConfig
-              }
-            };
-          }
-        }
-        return widget;
-      });
+
+      // Return widget metadata only - configs will be loaded asynchronously
+      // in loadLocalData() or loadUserData() after component mounts
+      return savedWidgets;
     }
     return []
   });
@@ -981,15 +968,33 @@ function App() {
     );
   };
   
-  // Load local data
-  const loadLocalData = () => {
+  // Load local data (async to properly load encrypted configs)
+  const loadLocalData = async () => {
     // Load layouts from localStorage
     const localLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
     if (localLayouts) setLayouts(localLayouts);
 
     // Load widgets from localStorage
     const localWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
-    if (localWidgets) setWidgets(localWidgets);
+
+    // Load and decrypt widget configs from localStorage
+    const localConfigs = await configManager.getConfigs(true);
+
+    // Merge configs into widgets
+    const widgetsWithConfigs = localWidgets.map((widget: Widget) => {
+      if (widget.id && localConfigs[widget.id]) {
+        return {
+          ...widget,
+          config: {
+            ...widget.config,
+            ...localConfigs[widget.id]
+          }
+        };
+      }
+      return widget;
+    });
+
+    setWidgets(widgetsWithConfigs);
   };
 
   /**
@@ -1107,8 +1112,8 @@ function App() {
           localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(validatedLayouts));
         } else if (!userHasFirestoreData) {
           // Fall back to localStorage if no Firestore data
-          loadLocalData();
-          
+          await loadLocalData();
+
           // Migrate to Firestore if logged in
           if (auth?.currentUser && widgets.length > 0) {
             try {
@@ -1124,13 +1129,13 @@ function App() {
         console.error('Error loading widgets from Firestore:', error);
         // Only fall back to localStorage if we haven't loaded Firestore data
         if (!userHasFirestoreData) {
-          loadLocalData();
+          await loadLocalData();
         }
       }
     } catch (error) {
       console.error('Error loading user data from Firestore:', error);
       // Fallback to localStorage
-      loadLocalData();
+      await loadLocalData();
     }
   };
   
@@ -1154,7 +1159,7 @@ function App() {
       // If Firebase auth is not configured, load from localStorage directly
       if (!auth) {
         try {
-          loadLocalData();
+          await loadLocalData();
         } catch (error) {
           console.error('Error loading local data:', error);
         } finally {
@@ -1170,7 +1175,7 @@ function App() {
           await loadUserData();
         } else {
           // User is signed out, load from localStorage
-          loadLocalData();
+          await loadLocalData();
         }
 
         setIsDataLoaded(true);
