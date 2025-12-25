@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
+import { encryptionUtils } from '@/lib/encryption'
 import {
   Dialog,
   DialogContent,
@@ -144,6 +145,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     // 'https://www.googleapis.com/auth/calendar.readonly',
     // 'https://www.googleapis.com/auth/calendar.events.readonly'
   ], []);
+
+  // Cloud Function URLs for secure OAuth token handling
+  const OAUTH_EXCHANGE_URL = import.meta.env.VITE_PUBLIC_OAUTH_EXCHANGE_URL || '';
+  const OAUTH_REFRESH_URL = import.meta.env.VITE_PUBLIC_OAUTH_REFRESH_URL || '';
   
   /**
    * Generates a random state string for OAuth security
@@ -202,38 +207,46 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   
   /**
    * Refreshes the access token when it expires
+   * Uses Cloud Function to securely handle the refresh without exposing client secret
+   * Decrypts refresh token from storage and encrypts new access token before storing
    */
   const refreshAccessToken = React.useCallback(async () => {
     try {
       const { refreshTokenKey, accessTokenKey, tokenExpiryKey } = getTokenKeys();
-      const refreshToken = localStorage.getItem(refreshTokenKey);
-      
-      if (!refreshToken) {
+      const encryptedRefreshToken = localStorage.getItem(refreshTokenKey);
+
+      if (!encryptedRefreshToken) {
         throw new Error('No refresh token available');
       }
-      
-      const response = await fetch('https://oauth2.googleapis.com/token', {
+
+      if (!OAUTH_REFRESH_URL) {
+        throw new Error('OAuth refresh URL not configured');
+      }
+
+      // Decrypt the refresh token before sending to Cloud Function
+      const refreshToken = await encryptionUtils.decrypt(encryptedRefreshToken);
+
+      const response = await fetch(OAUTH_REFRESH_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
-          client_id: GOOGLE_CLIENT_ID,
-          client_secret: import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token',
+        body: JSON.stringify({
+          refreshToken: refreshToken,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Token refresh failed: ${response.statusText}`);
       }
-      
+
       const tokenData = await response.json();
-      
-      localStorage.setItem(accessTokenKey, tokenData.access_token);
+
+      // Encrypt new access token before storing
+      const encryptedAccessToken = await encryptionUtils.encrypt(tokenData.access_token);
+      localStorage.setItem(accessTokenKey, encryptedAccessToken);
       localStorage.setItem(tokenExpiryKey, (Date.now() + tokenData.expires_in * 1000).toString());
-      
+
       return tokenData.access_token;
     } catch (err) {
       console.error('Failed to refresh token', err);
@@ -241,26 +254,33 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       disconnectGoogleCalendar();
       throw err;
     }
-  }, [getTokenKeys, GOOGLE_CLIENT_ID, disconnectGoogleCalendar]);
+  }, [getTokenKeys, OAUTH_REFRESH_URL, disconnectGoogleCalendar]);
   
   /**
    * Gets a valid access token, refreshing if necessary
+   * Decrypts the token from localStorage before returning
    */
   const getValidAccessToken = React.useCallback(async () => {
     const { accessTokenKey, tokenExpiryKey } = getTokenKeys();
-    const accessToken = localStorage.getItem(accessTokenKey);
+    const encryptedAccessToken = localStorage.getItem(accessTokenKey);
     const tokenExpiry = localStorage.getItem(tokenExpiryKey);
-    
-    if (!accessToken || !tokenExpiry) {
+
+    if (!encryptedAccessToken || !tokenExpiry) {
       return null;
     }
-    
+
     // Check if token is expired or about to expire (within 5 minutes)
     if (Date.now() > parseInt(tokenExpiry) - 300000) {
       return refreshAccessToken();
     }
-    
-    return accessToken;
+
+    // Decrypt the access token before returning
+    try {
+      return await encryptionUtils.decrypt(encryptedAccessToken);
+    } catch {
+      console.error('Failed to decrypt access token');
+      return null;
+    }
   }, [getTokenKeys, refreshAccessToken]);
   
   /**
@@ -453,7 +473,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   
   /**
    * Handles the OAuth callback and exchanges the code for tokens
-   * Note: In a production environment, this should be done server-side for security
+   * Uses Cloud Function to securely exchange the authorization code without exposing client secret
    */
   const handleOAuthCallback = React.useCallback(async (code: string, state: string) => {
     try {
@@ -462,53 +482,54 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       if (state !== storedState) {
         throw new Error('Invalid state parameter');
       }
-      
+
       // Clear the stored state
       localStorage.removeItem('googleOAuthState');
-      
-      // Exchange the code for tokens
-      // Note: In a production app, this should be done server-side for security
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+
+      if (!OAUTH_EXCHANGE_URL) {
+        throw new Error('OAuth exchange URL not configured');
+      }
+
+      // Exchange the code for tokens via Cloud Function
+      const tokenResponse = await fetch(OAUTH_EXCHANGE_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
+        body: JSON.stringify({
           code,
-          client_id: GOOGLE_CLIENT_ID,
-          client_secret: import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET', // Not secure in client-side code
-          redirect_uri: GOOGLE_REDIRECT_URI,
-          grant_type: 'authorization_code',
+          redirectUri: GOOGLE_REDIRECT_URI,
         }),
       });
-      
+
       if (!tokenResponse.ok) {
         throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
       }
-      
+
       const tokenData = await tokenResponse.json();
-      
-      // Store the tokens securely
-      // Note: In a production app, tokens should be stored server-side or in HttpOnly cookies
-      // Store tokens in widget-specific storage to prevent overwriting between instances
+
+      // Store tokens in widget-specific storage with encryption
       const widgetTokenKey = `googleAccessToken-${localConfig.id || 'default'}`;
       const widgetRefreshTokenKey = `googleRefreshToken-${localConfig.id || 'default'}`;
       const widgetTokenExpiryKey = `googleTokenExpiry-${localConfig.id || 'default'}`;
-      
-      localStorage.setItem(widgetTokenKey, tokenData.access_token);
-      localStorage.setItem(widgetRefreshTokenKey, tokenData.refresh_token);
+
+      // Encrypt tokens before storing in localStorage
+      const encryptedAccessToken = await encryptionUtils.encrypt(tokenData.access_token);
+      const encryptedRefreshToken = await encryptionUtils.encrypt(tokenData.refresh_token);
+
+      localStorage.setItem(widgetTokenKey, encryptedAccessToken);
+      localStorage.setItem(widgetRefreshTokenKey, encryptedRefreshToken);
       localStorage.setItem(widgetTokenExpiryKey, (Date.now() + tokenData.expires_in * 1000).toString());
-      
+
       // Fetch user's calendars
       const calendars = await fetchCalendars(tokenData.access_token);
-      
+
       setIsGoogleConnected(true);
       // Ensure we have at least one calendar selected
       if (calendars.length > 0 && !calendars.some((cal: CalendarSource) => cal.selected)) {
         calendars[0].selected = true;
       }
-      
-      
+
       updateConfig({
         ...localConfig,
         googleCalendarConnected: true,
@@ -523,7 +544,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       console.error('Failed to handle OAuth callback', err);
       setIsLoading(false);
     }
-  }, [localConfig, fetchEvents, updateConfig]);
+  }, [localConfig, fetchEvents, updateConfig, OAUTH_EXCHANGE_URL, GOOGLE_REDIRECT_URI]);
   
   // Check for OAuth callback - params are stored in sessionStorage by App.tsx
   useEffect(() => {

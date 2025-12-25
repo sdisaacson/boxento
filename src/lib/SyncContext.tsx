@@ -1,9 +1,21 @@
 import { onSnapshot, doc, collection } from 'firebase/firestore';
-import { ReactNode, createContext, useContext, useState, useEffect, Component, type ErrorInfo } from 'react';
+import { ReactNode, createContext, useContext, useState, useEffect, useRef, useCallback, Component, type ErrorInfo } from 'react';
 import { useAuth } from './useAuth';
 import { db } from './firebase';
 
 type SyncStatus = 'idle' | 'syncing' | 'error' | 'success';
+
+// Debounce utility for localStorage updates
+function debounce<T extends (...args: Parameters<T>) => void>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
 
 interface SyncContextProps {
   isSyncing: boolean;
@@ -63,31 +75,71 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  
+
+  // Track pending sync updates to batch status changes
+  const pendingSyncsRef = useRef(new Set<string>());
+
+  // Debounced localStorage writers (300ms delay to batch rapid updates)
+  const debouncedWriteLayouts = useCallback(
+    debounce((data: unknown) => {
+      localStorage.setItem('boxento-layouts', JSON.stringify(data));
+    }, 300),
+    []
+  );
+
+  const debouncedWriteWidgets = useCallback(
+    debounce((data: unknown) => {
+      localStorage.setItem('boxento-widgets', JSON.stringify(data));
+    }, 300),
+    []
+  );
+
+  const debouncedWriteConfigs = useCallback(
+    debounce((data: unknown) => {
+      localStorage.setItem('boxento-widget-configs', JSON.stringify(data));
+    }, 300),
+    []
+  );
+
+  // Debounced sync status updater to batch multiple listener updates
+  const debouncedUpdateSyncStatus = useCallback(
+    debounce(() => {
+      if (pendingSyncsRef.current.size === 0) {
+        setLastSyncTime(new Date());
+        setSyncStatus('success');
+        setIsSyncing(false);
+        setSyncError(null);
+      }
+    }, 100),
+    []
+  );
+
+  const markSyncComplete = useCallback((syncType: string) => {
+    pendingSyncsRef.current.delete(syncType);
+    debouncedUpdateSyncStatus();
+  }, [debouncedUpdateSyncStatus]);
+
   // Set up listeners for Firestore data changes
   useEffect(() => {
     if (!authContext?.currentUser || !db) return;
-    
+
     setSyncStatus('syncing');
     setIsSyncing(true);
-    
+    pendingSyncsRef.current = new Set(['layouts', 'widgets', 'configs']);
+
     let layoutsUnsubscribe: () => void = () => {};
     let widgetsUnsubscribe: () => void = () => {};
     let widgetConfigsUnsubscribe: () => void = () => {};
-    
+
     try {
       // Listen for layouts changes
       layoutsUnsubscribe = onSnapshot(
         doc(db, 'users', authContext.currentUser.uid, 'dashboard', 'layouts'),
         (doc) => {
           if (doc.exists()) {
-            // Update localStorage as a fallback - store direct data, not wrapped in 'layouts'
-            localStorage.setItem('boxento-layouts', JSON.stringify(doc.data()));
-            
-            setLastSyncTime(new Date());
-            setSyncStatus('success');
-            setIsSyncing(false);
-            setSyncError(null);
+            // Debounced localStorage update
+            debouncedWriteLayouts(doc.data());
+            markSyncComplete('layouts');
           }
         },
         (error) => {
@@ -97,19 +149,15 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setIsSyncing(false);
         }
       );
-      
+
       // Listen for widgets collection changes
       widgetsUnsubscribe = onSnapshot(
         doc(db, 'users', authContext.currentUser.uid, 'dashboard', 'widget-list'),
         (doc) => {
           if (doc.exists()) {
-            // Update localStorage as a fallback
-            localStorage.setItem('boxento-widgets', JSON.stringify(doc.data().widgets));
-            
-            setLastSyncTime(new Date());
-            setSyncStatus('success');
-            setIsSyncing(false);
-            setSyncError(null);
+            // Debounced localStorage update
+            debouncedWriteWidgets(doc.data().widgets);
+            markSyncComplete('widgets');
           }
         },
         (error) => {
@@ -119,7 +167,7 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setIsSyncing(false);
         }
       );
-      
+
       try {
         // Listen for widget configurations
         widgetConfigsUnsubscribe = onSnapshot(
@@ -130,14 +178,10 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             snapshot.forEach((doc) => {
               configs[doc.id] = doc.data().config;
             });
-            
-            // Update localStorage as a fallback
-            localStorage.setItem('boxento-widget-configs', JSON.stringify(configs));
-            
-            setLastSyncTime(new Date());
-            setSyncStatus('success');
-            setIsSyncing(false);
-            setSyncError(null);
+
+            // Debounced localStorage update
+            debouncedWriteConfigs(configs);
+            markSyncComplete('configs');
           },
           (error) => {
             console.error('Error syncing widget configurations:', error);
@@ -160,7 +204,7 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSyncStatus('error');
       setIsSyncing(false);
     }
-    
+
     // Cleanup listeners
     return () => {
       try {
@@ -171,7 +215,7 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error cleaning up Firestore listeners:', error);
       }
     };
-  }, [authContext]);
+  }, [authContext, debouncedWriteLayouts, debouncedWriteWidgets, debouncedWriteConfigs, markSyncComplete]);
   
   return (
     <SyncContext.Provider value={{ isSyncing, lastSyncTime, syncError, syncStatus }}>
