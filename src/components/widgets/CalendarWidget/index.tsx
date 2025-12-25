@@ -159,17 +159,42 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   };
 
   /**
-   * Get widget-specific token keys
+   * Get widget-specific token keys and migrate old tokens if needed
    */
   const getTokenKeys = React.useCallback(() => {
     // Safely handle cases where localConfig might not be fully initialized
-    // This prevents "cannot access getTokenKeys before initialization" errors
-    const widgetId = localConfig?.id || 'default'; 
-    return {
+    const widgetId = localConfig?.id || 'default';
+    const keys = {
       accessTokenKey: `googleAccessToken-${widgetId}`,
       refreshTokenKey: `googleRefreshToken-${widgetId}`,
       tokenExpiryKey: `googleTokenExpiry-${widgetId}`
     };
+
+    // Migration: Check if tokens exist with old 'default' key and migrate them
+    if (widgetId !== 'default') {
+      const oldAccessToken = localStorage.getItem('googleAccessToken-default');
+      const newAccessToken = localStorage.getItem(keys.accessTokenKey);
+
+      // If we have old tokens but no new ones, migrate them
+      if (oldAccessToken && !newAccessToken) {
+        const oldRefreshToken = localStorage.getItem('googleRefreshToken-default');
+        const oldExpiry = localStorage.getItem('googleTokenExpiry-default');
+
+        // Copy to new keys
+        localStorage.setItem(keys.accessTokenKey, oldAccessToken);
+        if (oldRefreshToken) localStorage.setItem(keys.refreshTokenKey, oldRefreshToken);
+        if (oldExpiry) localStorage.setItem(keys.tokenExpiryKey, oldExpiry);
+
+        // Remove old keys
+        localStorage.removeItem('googleAccessToken-default');
+        localStorage.removeItem('googleRefreshToken-default');
+        localStorage.removeItem('googleTokenExpiry-default');
+
+        console.log('Migrated Google Calendar tokens to widget-specific keys');
+      }
+    }
+
+    return keys;
   }, [localConfig?.id]);
 
   /**
