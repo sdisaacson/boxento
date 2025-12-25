@@ -2,6 +2,21 @@ import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { execSync } from 'child_process'
+
+// Get git commit hash for build versioning
+const getGitHash = () => {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+// Get build timestamp
+const getBuildTime = () => {
+  return new Date().toISOString()
+}
 
 // Helper function to get allowed hosts from environment or use defaults
 const getAllowedHosts = () => {
@@ -27,6 +42,10 @@ const getAllowedHosts = () => {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    __BUILD_HASH__: JSON.stringify(getGitHash()),
+    __BUILD_TIME__: JSON.stringify(getBuildTime()),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

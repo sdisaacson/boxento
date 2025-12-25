@@ -115,6 +115,13 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
 // Define the Footer component
 const AppFooter = () => {
   const currentYear = new Date().getFullYear();
+  const buildHash = __BUILD_HASH__;
+  const buildTime = new Date(__BUILD_TIME__).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   return (
     <footer className="py-4 sm:py-6 px-4 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
@@ -174,8 +181,18 @@ const AppFooter = () => {
               Contribute
             </a>
           </div>
-          <div className="text-sm text-gray-400 dark:text-gray-500">
-            © {currentYear}
+          <div className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
+            <span>© {currentYear}</span>
+            <span>·</span>
+            <a
+              href={`https://github.com/sushaantu/boxento/commit/${buildHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title={`Built: ${buildTime}`}
+            >
+              v{buildHash}
+            </a>
           </div>
         </div>
 
@@ -240,8 +257,18 @@ const AppFooter = () => {
               </a>
             </div>
             <span className="text-gray-300 dark:text-gray-600">|</span>
-            <div className="text-sm text-gray-400 dark:text-gray-500">
-              © {currentYear}
+            <div className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
+              <span>© {currentYear}</span>
+              <span>·</span>
+              <a
+                href={`https://github.com/sushaantu/boxento/commit/${buildHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                title={`Built: ${buildTime}`}
+              >
+                v{buildHash}
+              </a>
             </div>
           </div>
         </div>
