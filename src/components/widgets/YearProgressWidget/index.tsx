@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Dialog,
   DialogContent,
@@ -150,24 +151,22 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
   }, [progress.total, width]);
 
   // Handle tooltip display on hover - using event delegation on SVG parent
+  // Use viewport coordinates (fixed positioning) to avoid clipping by overflow-hidden
   const handleSvgMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const target = e.target as SVGElement;
     if (target.tagName === 'circle') {
       const day = parseInt(target.getAttribute('data-day') || '0', 10);
-      if (day > 0 && svgContainerRef.current) {
+      if (day > 0) {
         const circleRect = target.getBoundingClientRect();
-        const containerRect = svgContainerRef.current.getBoundingClientRect();
-        const relativeY = circleRect.top - containerRect.top;
-        // Show tooltip below if too close to top (less than 50px space)
-        const showBelow = relativeY < 50;
+        // Use viewport coordinates for fixed positioning
         setTooltip({
           show: true,
           content: `Day ${day} of ${progress.total}`,
           date: dateCache[day - 1],
           day,
-          x: circleRect.left - containerRect.left + circleRect.width / 2,
-          y: showBelow ? relativeY + circleRect.height : relativeY,
-          showBelow
+          x: circleRect.left + circleRect.width / 2,
+          y: circleRect.top,
+          showBelow: false
         });
       }
     }
@@ -415,17 +414,20 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
               {dots}
             </svg>
             
-            {tooltip.show && (
+            {tooltip.show && createPortal(
               <div
-                className={`absolute px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded shadow-lg pointer-events-none z-10 transform -translate-x-1/2 ${tooltip.showBelow ? 'translate-y-1' : '-translate-y-full'}`}
+                className="fixed px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded shadow-lg pointer-events-none"
                 style={{
                   left: `${tooltip.x}px`,
-                  top: `${tooltip.y + (tooltip.showBelow ? 5 : -5)}px`
+                  top: `${tooltip.y - 8}px`,
+                  transform: 'translate(-50%, -100%)',
+                  zIndex: 9999
                 }}
               >
                 <div className="font-medium">{tooltip.date}</div>
                 <div className="text-xs opacity-80">{tooltip.content}</div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
           {stats}

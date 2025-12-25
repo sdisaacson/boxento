@@ -525,21 +525,20 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     }
   }, [localConfig, fetchEvents, updateConfig]);
   
-  // Check for OAuth callback in URL
+  // Check for OAuth callback - params are stored in sessionStorage by App.tsx
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
-    // Check for OAuth callback parameters in URL
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state');
-    
+
+    // Check for OAuth callback parameters stored by App.tsx
+    const code = sessionStorage.getItem('googleOAuthCode');
+    const state = sessionStorage.getItem('googleOAuthState');
+
     if (code && state) {
-      
-      // Remove the query parameters from the URL for cleaner UX
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Handle the OAuth callback
+      // Clear sessionStorage immediately to prevent re-processing
+      sessionStorage.removeItem('googleOAuthCode');
+      sessionStorage.removeItem('googleOAuthState');
+
+      // Process the OAuth callback
       setIsLoading(true);
       handleOAuthCallback(code, state);
     }

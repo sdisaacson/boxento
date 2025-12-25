@@ -1145,6 +1145,26 @@ function App() {
 
     // Use async IIFE to properly await migrations before loading data
     const initializeApp = async () => {
+      // Handle OAuth callback params BEFORE loading data
+      // This prevents the params from being lost while showing "Loading your dashboard..."
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get('code');
+        const state = url.searchParams.get('state');
+        if (code && state) {
+          // Only store if we have a matching state in localStorage (valid OAuth flow)
+          const storedState = localStorage.getItem('googleOAuthState');
+          if (storedState === state) {
+            sessionStorage.setItem('googleOAuthCode', code);
+            sessionStorage.setItem('googleOAuthState', state);
+          }
+          // Clear URL immediately regardless
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        // Don't clear sessionStorage here - let the CalendarWidget clear it after processing
+        // This prevents race conditions with React strict mode running effects twice
+      }
+
       // Migrate any widget-specific localStorage keys before loading data
       migrateWidgetSpecificConfigs();
 
@@ -1156,30 +1176,29 @@ function App() {
         console.error('Failed to migrate encryption:', err);
       }
 
-      // If Firebase auth is not configured, load from localStorage directly
-      if (!auth) {
-        try {
-          await loadLocalData();
-        } catch (error) {
-          console.error('Error loading local data:', error);
-        } finally {
-          setIsDataLoaded(true);
-        }
-        return;
+      // ALWAYS load from localStorage first - this prevents blocking on Firebase auth
+      // and ensures the dashboard shows quickly
+      try {
+        await loadLocalData();
+      } catch (error) {
+        console.error('Error loading local data:', error);
       }
 
-      // Set up auth listener after migrations are complete
-      unsubscribe = auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          // User is signed in, load their data from Firestore
-          await loadUserData();
-        } else {
-          // User is signed out, load from localStorage
-          await loadLocalData();
-        }
+      // Show the dashboard immediately with local data
+      setIsDataLoaded(true);
 
-        setIsDataLoaded(true);
-      });
+      // If Firebase auth is configured, set up listener to sync with Firestore
+      // This runs in the background AFTER the dashboard is already visible
+      if (auth) {
+        unsubscribe = auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            // User is signed in, load their data from Firestore
+            // This will merge/override local data with Firestore data
+            await loadUserData();
+          }
+          // If user is null (logged out), we already loaded local data above
+        });
+      }
     };
 
     initializeApp();
