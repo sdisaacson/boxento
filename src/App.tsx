@@ -801,8 +801,10 @@ function App() {
     const { width, height } = getWidgetDimensions();
     
     // Create widget config with callbacks
+    // IMPORTANT: Include widget.id so widgets can use it for storage keys
     const widgetConfig = {
       ...widget.config,
+      id: widget.id,
       onDelete: () => deleteWidget(widget.id),
       onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
     };
