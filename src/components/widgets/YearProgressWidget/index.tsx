@@ -36,13 +36,15 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
     day: number;
     x: number;
     y: number;
+    showBelow: boolean;
   }>({
     show: false,
     content: '',
     date: '',
     day: 0,
     x: 0,
-    y: 0
+    y: 0,
+    showBelow: false
   });
 
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -155,14 +157,17 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
       if (day > 0 && svgContainerRef.current) {
         const circleRect = target.getBoundingClientRect();
         const containerRect = svgContainerRef.current.getBoundingClientRect();
-        // Calculate position relative to the container with position:relative
+        const relativeY = circleRect.top - containerRect.top;
+        // Show tooltip below if too close to top (less than 50px space)
+        const showBelow = relativeY < 50;
         setTooltip({
           show: true,
           content: `Day ${day} of ${progress.total}`,
           date: dateCache[day - 1],
           day,
           x: circleRect.left - containerRect.left + circleRect.width / 2,
-          y: circleRect.top - containerRect.top
+          y: showBelow ? relativeY + circleRect.height : relativeY,
+          showBelow
         });
       }
     }
@@ -411,11 +416,11 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, con
             </svg>
             
             {tooltip.show && (
-              <div 
-                className="absolute px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded shadow-lg pointer-events-none z-10 transform -translate-x-1/2 -translate-y-full transition-opacity duration-150"
+              <div
+                className={`absolute px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-xs rounded shadow-lg pointer-events-none z-10 transform -translate-x-1/2 ${tooltip.showBelow ? 'translate-y-1' : '-translate-y-full'}`}
                 style={{
                   left: `${tooltip.x}px`,
-                  top: `${tooltip.y - 10}px`
+                  top: `${tooltip.y + (tooltip.showBelow ? 5 : -5)}px`
                 }}
               >
                 <div className="font-medium">{tooltip.date}</div>
