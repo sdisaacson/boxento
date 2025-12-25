@@ -1029,6 +1029,7 @@ function App() {
       // Save back to unified storage if we made changes
       if (hasChanges) {
         localStorage.setItem(STORAGE_KEYS.WIDGET_CONFIGS, JSON.stringify(unifiedConfigs));
+        console.warn('Migrated widget-specific localStorage keys to unified storage');
       }
     } catch (e) {
       console.error('Error during widget config migration:', e);

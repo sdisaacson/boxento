@@ -19,16 +19,6 @@ export const TIMING = {
 
 // Grid layout constants
 export const GRID = {
-  /** Number of columns for large screens */
-  COLS_LG: 12,
-  /** Number of columns for medium screens */
-  COLS_MD: 10,
-  /** Number of columns for small screens */
-  COLS_SM: 6,
-  /** Number of columns for extra small screens */
-  COLS_XS: 4,
-  /** Number of columns for extra extra small screens */
-  COLS_XXS: 2,
   /** Default minimum widget width */
   MIN_WIDGET_WIDTH: 2,
   /** Default minimum widget height */

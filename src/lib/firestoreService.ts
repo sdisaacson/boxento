@@ -242,6 +242,7 @@ export const userDashboardService = {
         if (data && 'layouts' in data && typeof data.layouts === 'object' && !Array.isArray(data.layouts)) {
           // Save layouts directly without the wrapper
           await setDoc(docRef, data.layouts, { merge: true });
+          console.warn('Migrated legacy layout structure to new format');
         }
       }
     } catch (error) {
