@@ -48,6 +48,15 @@ export const BREAKPOINTS = {
   xxs: 0,
 } as const;
 
+// Column counts for each breakpoint
+export const COLS = {
+  lg: 12,
+  md: 10,
+  sm: 6,
+  xs: 4,
+  xxs: 2,
+} as const;
+
 // Storage keys
 export const STORAGE_KEYS = {
   WIDGETS: 'boxento-widgets',
