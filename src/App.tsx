@@ -1135,8 +1135,6 @@ function App() {
   
   // Initialize auth listener
   useEffect(() => {
-    if (!auth) return;
-
     let unsubscribe: (() => void) | undefined;
 
     // Use async IIFE to properly await migrations before loading data
@@ -1152,9 +1150,14 @@ function App() {
         console.error('Failed to migrate encryption:', err);
       }
 
-      // Now set up auth listener after migrations are complete
-      // Note: auth is guaranteed non-null here due to the early return check above
-      if (!auth) return;
+      // If Firebase auth is not configured, load from localStorage directly
+      if (!auth) {
+        loadLocalData();
+        setIsDataLoaded(true);
+        return;
+      }
+
+      // Set up auth listener after migrations are complete
       unsubscribe = auth.onAuthStateChanged(async (user) => {
         if (user) {
           // User is signed in, load their data from Firestore
