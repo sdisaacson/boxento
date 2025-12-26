@@ -14,7 +14,8 @@ import { Bell, Sparkles } from 'lucide-react';
 
 const parseChangelog = async (): Promise<ChangelogData> => {
     try {
-        const response = await fetch('/CHANGELOG.md');
+        // Add cache-busting to ensure we get the latest changelog
+        const response = await fetch(`/CHANGELOG.md?v=${__BUILD_HASH__}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
