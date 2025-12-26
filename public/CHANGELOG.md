@@ -1,5 +1,26 @@
 # What's New
 
+## December 25, 2025
+
+### 🔒 Security Enhancements
+• Server-Side OAuth: Google Calendar authentication now uses Cloud Functions instead of exposing client secrets in the browser
+• Firestore Security Rules: Added proper rules to restrict users to their own data
+• Encrypted OAuth Tokens: Google Calendar tokens are now encrypted before storing in localStorage
+
+### 🚀 Performance Improvements
+• Offline Persistence: Enabled Firestore IndexedDB persistence for better offline experience
+• Debounced Sync: Reduced unnecessary localStorage writes with 300ms debouncing
+• Optimized Real-Time Listeners: Batched sync status updates to reduce UI flicker
+
+### 🐛 Bug Fixes
+• Fixed Google Calendar persisting across logout/login - tokens are now preserved
+• Fixed widget ID not being passed to CalendarWidget config
+• Fixed OAuth secrets with trailing newlines causing "invalid_client" errors
+• Added automatic token migration from old storage keys to new widget-specific keys
+
+### ✨ New Features
+• Build Version in Footer: Shows git commit hash to identify deployed version - click to view the commit on GitHub
+
 ## June 17, 2025
 
 ### 🎉 Major UX Improvement: Clear Local-Only Mode
