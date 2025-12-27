@@ -342,22 +342,23 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         <div className="text-xs text-gray-500 mb-3">
           {error}
         </div>
-        <div className="flex flex-col space-y-2">
-          <button 
+        <div className="flex gap-2">
+          <button
             onClick={() => fetchUfData()}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
             aria-label="Reintentar cargar datos"
+            title="Reintentar"
           >
-            Reintentar
+            <RefreshCw size={18} />
           </button>
-          <button 
+          <button
             onClick={() => {
               setLocalConfig({...localConfig, useFallbackData: true, ufData: fallbackUfData});
             }}
-            className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 transition-colors"
+            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Usar datos aproximados"
           >
-            Usar valor aproximado
+            Usar aprox.
           </button>
         </div>
       </div>
@@ -405,10 +406,10 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         )}
         <button
           onClick={() => fetchUfData()}
-          className="mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center justify-center gap-1"
+          className="mt-2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+          title="Actualizar"
         >
-          <RefreshCw size={12} />
-          Actualizar
+          <RefreshCw size={14} />
         </button>
       </div>
     );
@@ -451,20 +452,21 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
         </div>
         
         <div className="flex flex-col items-end">
-          <button 
+          <button
             onClick={() => fetchUfData()}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Actualizar"
           >
-            Actualizar
+            <RefreshCw size={16} />
           </button>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {lastUpdated && `Última actualización: ${lastUpdated.toLocaleTimeString()}`}
+            {lastUpdated && lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
     );
   }, [loading, error, ufData, formatUfValue, formatDate, fetchUfData, lastUpdated]);
-  
+
   // Render tall small view (2x3 or 2x4)
   const renderTallSmallView = useCallback(() => {
     if (loading) {
@@ -501,21 +503,22 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
           </div>
         </div>
         
-        <div>
-          <button 
+        <div className="flex flex-col items-center">
+          <button
             onClick={() => fetchUfData()}
-            className="w-full text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Actualizar"
           >
-            Actualizar
+            <RefreshCw size={16} />
           </button>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
-            {lastUpdated && `Última actualización: ${lastUpdated.toLocaleTimeString()}`}
+            {lastUpdated && lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
     );
   }, [loading, error, ufData, formatUfValue, formatDate, fetchUfData, lastUpdated]);
-  
+
   // Render medium view (3x3)
   const renderMediumView = useCallback(() => {
     if (loading || error || !ufData) {
@@ -526,7 +529,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
     
     return (
       <div className="h-full flex flex-col">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex flex-col">
             <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
               Unidad de Fomento (UF)
@@ -538,12 +541,13 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
               {formatDate(ufData.fecha)}
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => fetchUfData()}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Actualizar"
           >
-            Actualizar
+            <RefreshCw size={16} />
           </button>
         </div>
         
@@ -594,18 +598,19 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
           </div>
           
           <div className="flex flex-col items-end">
-            <button 
+            <button
               onClick={() => fetchUfData()}
-              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title="Actualizar"
             >
-              Actualizar
+              <RefreshCw size={16} />
             </button>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {lastUpdated && `Última actualización: ${lastUpdated.toLocaleTimeString()}`}
+              {lastUpdated && lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         </div>
-        
+
         {showHistoricalData && (
           <div className="flex-grow overflow-y-auto">
             <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
@@ -621,14 +626,14 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             </div>
           </div>
         )}
-        
+
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           Fuente: mindicador.cl
         </div>
       </div>
     );
   }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
-  
+
   // Render tall medium view (3x4)
   const renderTallMediumView = useCallback(() => {
     if (loading || error || !ufData) {
@@ -652,14 +657,15 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             </div>
           </div>
           
-          <button 
+          <button
             onClick={() => fetchUfData()}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Actualizar"
           >
-            Actualizar
+            <RefreshCw size={16} />
           </button>
         </div>
-        
+
         {showHistoricalData && (
           <div className="flex-grow overflow-y-auto">
             <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
@@ -675,15 +681,15 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             </div>
           </div>
         )}
-        
+
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-          {lastUpdated && `Última actualización: ${lastUpdated.toLocaleTimeString()}`}
+          {lastUpdated && lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
           <div>Fuente: mindicador.cl</div>
         </div>
       </div>
     );
   }, [loading, error, ufData, localConfig.showHistory, formatUfValue, formatDate, fetchUfData, lastUpdated]);
-  
+
   // Render large view (4x4 or larger)
   const renderLargeView = useCallback(() => {
     if (loading || error || !ufData) {
@@ -708,18 +714,19 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
           </div>
           
           <div className="flex flex-col items-end">
-            <button 
+            <button
               onClick={() => fetchUfData()}
-              className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title="Actualizar"
             >
-              Actualizar
+              <RefreshCw size={18} />
             </button>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {lastUpdated && `Última actualización: ${lastUpdated.toLocaleTimeString()}`}
+              {lastUpdated && lastUpdated.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         </div>
-        
+
         {showHistoricalData && (
           <div className="flex-grow overflow-y-auto">
             <div className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
@@ -735,10 +742,9 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             </div>
           </div>
         )}
-        
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-3 flex justify-between items-center">
-          <div>Fuente: mindicador.cl</div>
-          <div>{lastUpdated && `Actualizado: ${lastUpdated.toLocaleTimeString()}`}</div>
+
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+          Fuente: mindicador.cl
         </div>
       </div>
     );
