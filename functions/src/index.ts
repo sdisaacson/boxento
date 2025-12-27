@@ -86,19 +86,20 @@ export const flightProxy = onRequest(
         return;
       }
 
-      const { flight_iata, flight_icao } = req.query;
+      const { flight_iata, flight_icao, flight_date } = req.query;
 
       if (!flight_iata && !flight_icao) {
         res.status(400).json({ error: "Flight number is required" });
         return;
       }
 
-      // Build the AirLabs API URL
+      // Build the AirLabs API URL - use schedules endpoint for better date support
       const params = new URLSearchParams({ api_key: apiKey });
       if (flight_iata) params.append("flight_iata", flight_iata as string);
       if (flight_icao) params.append("flight_icao", flight_icao as string);
 
-      const apiUrl = `https://airlabs.co/api/v9/flight?${params.toString()}`;
+      // Use schedules endpoint which returns flight schedule data
+      const apiUrl = `https://airlabs.co/api/v9/schedules?${params.toString()}`;
       const response = await fetch(apiUrl, {
         headers: {
           "Accept": "application/json",
@@ -117,11 +118,23 @@ export const flightProxy = onRequest(
         throw new Error(data.error.message || "AirLabs API error");
       }
 
-      // Transform AirLabs response to a cleaner format for the widget
-      const flight = data.response;
-      if (!flight || !flight.flight_iata) {
+      // Get flights from response array
+      const flights = data.response;
+      if (!flights || !Array.isArray(flights) || flights.length === 0) {
         res.json({ data: null, message: "Flight not found" });
         return;
+      }
+
+      // If date is provided, try to find a matching flight
+      let flight = flights[0]; // Default to first result
+      if (flight_date) {
+        const targetDate = flight_date as string;
+        const matchingFlight = flights.find((f: { dep_time?: string }) =>
+          f.dep_time && f.dep_time.startsWith(targetDate)
+        );
+        if (matchingFlight) {
+          flight = matchingFlight;
+        }
       }
 
       // Return clean flight data
@@ -130,7 +143,7 @@ export const flightProxy = onRequest(
           flight_iata: flight.flight_iata,
           flight_icao: flight.flight_icao,
           flight_number: flight.flight_number,
-          airline_name: flight.airline_name,
+          airline_name: flight.airline_name || `${flight.airline_iata} Airlines`,
           airline_iata: flight.airline_iata,
           status: flight.status,
           departure: {
@@ -163,7 +176,7 @@ export const flightProxy = onRequest(
             delay: flight.arr_delayed
           },
           duration: flight.duration,
-          progress: flight.percent,
+          progress: flight.percent || 0,
           aircraft: {
             registration: flight.reg_number,
             icao: flight.aircraft_icao

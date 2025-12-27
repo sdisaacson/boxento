@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plane, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plane, RefreshCw, AlertCircle, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,8 @@ import {
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
+import { Calendar } from '../../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
 import WidgetHeader from '../common/WidgetHeader';
 import type { FlightTrackerWidgetProps } from './types';
 
@@ -55,14 +58,18 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
   const [error, setError] = useState<string | null>(null);
 
   // Fetch flight data
-  const fetchFlight = useCallback(async (flight: string) => {
+  const fetchFlight = useCallback(async (flight: string, date?: string) => {
     if (!flight) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/flights?flight_iata=${flight.toUpperCase()}`);
+      const params = new URLSearchParams({ flight_iata: flight.toUpperCase() });
+      if (date) {
+        params.append('flight_date', date);
+      }
+      const response = await fetch(`/api/flights?${params.toString()}`);
       const result = await response.json();
 
       if (!response.ok) {
@@ -86,9 +93,9 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
   // Fetch on mount if flight number is configured
   useEffect(() => {
     if (flightNumber) {
-      fetchFlight(flightNumber);
+      fetchFlight(flightNumber, flightDate);
     }
-  }, [flightNumber, fetchFlight]);
+  }, [flightNumber, flightDate, fetchFlight]);
 
   // Format time from "2025-12-27 19:50" to "19:50"
   const formatTime = (dateStr: string | null | undefined) => {
@@ -120,7 +127,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
     }
     setShowSettings(false);
     if (newFlightNumber) {
-      fetchFlight(newFlightNumber);
+      fetchFlight(newFlightNumber, inputDate);
     }
   };
 
@@ -156,7 +163,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
       <AlertCircle size={32} className="text-red-500 mb-3" strokeWidth={1.5} />
       <p className="text-sm text-red-500 mb-3">{error}</p>
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => fetchFlight(flightNumber)}>
+        <Button size="sm" onClick={() => fetchFlight(flightNumber, flightDate)}>
           Retry
         </Button>
         <Button size="sm" variant="outline" onClick={() => setShowSettings(true)}>
@@ -241,7 +248,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
 
         {/* Refresh button */}
         <button
-          onClick={() => fetchFlight(flightNumber)}
+          onClick={() => fetchFlight(flightNumber, flightDate)}
           className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1"
         >
           <RefreshCw size={12} />
@@ -274,13 +281,30 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="date">Flight Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={inputDate}
-              onChange={(e) => setInputDate(e.target.value)}
-            />
+            <Label>Flight Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {inputDate ? format(new Date(inputDate + 'T00:00:00'), 'PPP') : 'Pick a date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={inputDate ? new Date(inputDate + 'T00:00:00') : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      setInputDate(format(date, 'yyyy-MM-dd'));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
