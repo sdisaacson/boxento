@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -147,230 +148,247 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     }));
   }, [config]);
   
-  // Fetch GitHub contribution data when username changes
-  useEffect(() => {
-    const abortController = new AbortController();
-    
-    const fetchGitHubData = async () => {
-      // Skip if no username is provided
-      if (!localConfig.username) {
-        return;
-      }
-      
-      setGithubData(prev => ({ ...prev, loading: true, error: null }));
-      
-      try {
-        // GitHub contributions API using GitHub's GraphQL API
-        const username = localConfig.username;
-        
-        // GitHub GraphQL API requires authentication - check if token is provided
-        if (!localConfig.personalAccessToken) {
-          if (!abortController.signal.aborted) {
-            setGithubData(prev => ({
-              ...prev,
-              loading: false,
-              error: 'GitHub API requires a Personal Access Token. Please add one in widget settings.'
-            }));
-          }
-          return;
-        }
-        
-        // Fetch contribution data for the last 365 days
-        // Using GitHub GraphQL API
-        const query = `
-          query {
-            user(login: "${username}") {
-              name
-              contributionsCollection {
-                contributionCalendar {
-                  totalContributions
-                  weeks {
-                    contributionDays {
-                      contributionCount
-                      date
-                    }
+  // Ref to track abort controller for cleanup
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Fetch GitHub contribution data
+  const fetchGitHubData = useCallback(async () => {
+    // Skip if no username is provided
+    if (!localConfig.username) {
+      return;
+    }
+
+    // Skip if no token is provided
+    if (!localConfig.personalAccessToken) {
+      setGithubData(prev => ({
+        ...prev,
+        loading: false,
+        error: 'GitHub API requires a Personal Access Token. Please add one in widget settings.'
+      }));
+      return;
+    }
+
+    // Abort any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    setGithubData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      // GitHub contributions API using GitHub's GraphQL API
+      const username = localConfig.username;
+
+      // Fetch contribution data for the last 365 days
+      // Using GitHub GraphQL API
+      const query = `
+        query {
+          user(login: "${username}") {
+            name
+            contributionsCollection {
+              contributionCalendar {
+                totalContributions
+                weeks {
+                  contributionDays {
+                    contributionCount
+                    date
                   }
                 }
               }
             }
           }
-        `;
-        
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          'Authorization': `bearer ${localConfig.personalAccessToken}`
-        };
-        
-        const response = await fetch('https://api.github.com/graphql', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ query }),
-          signal: abortController.signal
-        });
-        
-        if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error('GitHub API access forbidden. This could be due to rate limiting or an invalid token.');
-          } else if (response.status === 401) {
-            throw new Error('Invalid GitHub Personal Access Token. Please update it in widget settings.');
-          } else {
-            throw new Error(`GitHub API error: ${response.status}`);
-          }
         }
-        
-        const result = await response.json() as GitHubAPIResponse;
-        
-        // Check for errors in the response
-        if (result.errors && result.errors.length > 0) {
-          throw new Error(result.errors[0].message || 'Error fetching GitHub data');
+      `;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `bearer ${localConfig.personalAccessToken}`
+      };
+
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query }),
+        signal
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('GitHub API access forbidden. This could be due to rate limiting or an invalid token.');
+        } else if (response.status === 401) {
+          throw new Error('Invalid GitHub Personal Access Token. Please update it in widget settings.');
+        } else {
+          throw new Error(`GitHub API error: ${response.status}`);
         }
-        
-        if (!result.data || !result.data.user) {
-          throw new Error(`GitHub user "${username}" not found`);
-        }
-        
-        const userData = result.data.user;
-        const contributionData = userData.contributionsCollection.contributionCalendar;
-        
-        // Extract contribution days from weeks
-        const contributionDays: { date: string; count: number }[] = [];
-        contributionData.weeks.forEach((week: GitHubContributionWeek) => {
-          week.contributionDays.forEach((day: GitHubContributionDay) => {
-            contributionDays.push({
-              date: day.date,
-              count: day.contributionCount
-            });
+      }
+
+      const result = await response.json() as GitHubAPIResponse;
+
+      // Check for errors in the response
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(result.errors[0].message || 'Error fetching GitHub data');
+      }
+
+      if (!result.data || !result.data.user) {
+        throw new Error(`GitHub user "${username}" not found`);
+      }
+
+      const userData = result.data.user;
+      const contributionData = userData.contributionsCollection.contributionCalendar;
+
+      // Extract contribution days from weeks
+      const contributionDays: { date: string; count: number }[] = [];
+      contributionData.weeks.forEach((week: GitHubContributionWeek) => {
+        week.contributionDays.forEach((day: GitHubContributionDay) => {
+          contributionDays.push({
+            date: day.date,
+            count: day.contributionCount
           });
         });
-        
-        // Sort by date
-        contributionDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        // Calculate current streak
-        let currentStreak = 0;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        // Get yesterday's date for checking if the streak is still active
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        
-        // Check if yesterday had contributions to maintain streak
-        const hasYesterdayContribution = contributionDays.some(
-          day => day.date === yesterdayStr && day.count > 0
+      });
+
+      // Sort by date
+      contributionDays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // Calculate current streak
+      let currentStreak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Get yesterday's date for checking if the streak is still active
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      // Check if yesterday had contributions to maintain streak
+      const hasYesterdayContribution = contributionDays.some(
+        day => day.date === yesterdayStr && day.count > 0
+      );
+
+      // If no contribution yesterday, streak is broken
+      if (!hasYesterdayContribution) {
+        // Check if there was a contribution today to start a new streak
+        const todayStr = today.toISOString().split('T')[0];
+        const hasTodayContribution = contributionDays.some(
+          day => day.date === todayStr && day.count > 0
         );
-        
-        // If no contribution yesterday, streak is broken
-        if (!hasYesterdayContribution) {
-          // Check if there was a contribution today to start a new streak
-          const todayStr = today.toISOString().split('T')[0];
-          const hasTodayContribution = contributionDays.some(
-            day => day.date === todayStr && day.count > 0
-          );
-          
-          currentStreak = hasTodayContribution ? 1 : 0;
-        } else {
-          // Count consecutive days with contributions
-          // Start from the most recent day (excluding today)
-          for (let i = contributionDays.length - 1; i >= 0; i--) {
-            const dayData = contributionDays[i];
-            const dayDate = new Date(dayData.date);
-            
-            // Skip future days and today
-            if (dayDate > yesterday) continue;
-            
-            // If this day doesn't match the expected next day in streak, break
-            if (i < contributionDays.length - 1) {
-              const prevDate = new Date(contributionDays[i + 1].date);
-              const expectedDate = new Date(prevDate);
-              expectedDate.setDate(expectedDate.getDate() - 1);
-              
-              if (dayDate.toISOString().split('T')[0] !== expectedDate.toISOString().split('T')[0]) {
-                break;
-              }
-            }
-            
-            // Add to streak if there were contributions
-            if (dayData.count > 0) {
-              currentStreak++;
-            } else {
+
+        currentStreak = hasTodayContribution ? 1 : 0;
+      } else {
+        // Count consecutive days with contributions
+        // Start from the most recent day (excluding today)
+        for (let i = contributionDays.length - 1; i >= 0; i--) {
+          const dayData = contributionDays[i];
+          const dayDate = new Date(dayData.date);
+
+          // Skip future days and today
+          if (dayDate > yesterday) continue;
+
+          // If this day doesn't match the expected next day in streak, break
+          if (i < contributionDays.length - 1) {
+            const prevDate = new Date(contributionDays[i + 1].date);
+            const expectedDate = new Date(prevDate);
+            expectedDate.setDate(expectedDate.getDate() - 1);
+
+            if (dayDate.toISOString().split('T')[0] !== expectedDate.toISOString().split('T')[0]) {
               break;
             }
           }
-          
-          // Add today if there was a contribution
-          const todayStr = today.toISOString().split('T')[0];
-          const hasTodayContribution = contributionDays.some(
-            day => day.date === todayStr && day.count > 0
-          );
-          
-          if (hasTodayContribution) {
+
+          // Add to streak if there were contributions
+          if (dayData.count > 0) {
             currentStreak++;
-          }
-        }
-        
-        // Calculate longest streak
-        let longestStreak = 0;
-        let currentLongestStreak = 0;
-        
-        for (let i = 0; i < contributionDays.length; i++) {
-          if (contributionDays[i].count > 0) {
-            currentLongestStreak++;
-            
-            if (i > 0) {
-              // Check if this day is consecutive to the previous one
-              const currentDate = new Date(contributionDays[i].date);
-              const prevDate = new Date(contributionDays[i - 1].date);
-              
-              const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime());
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              
-              // If days are not consecutive, reset streak
-              if (diffDays !== 1) {
-                currentLongestStreak = 1;
-              }
-            }
-            
-            longestStreak = Math.max(longestStreak, currentLongestStreak);
           } else {
-            currentLongestStreak = 0;
+            break;
           }
         }
-        
-        // Set the contribution data only if not aborted
-        if (!abortController.signal.aborted) {
-          setGithubData({
-            username,
-            currentStreak,
-            longestStreak,
-            totalContributions: contributionData.totalContributions,
-            contributionsByDay: contributionDays,
-            loading: false,
-            error: null
-          });
-        }
-        
-      } catch (error) {
-        // Only update state if not aborted
-        if (!abortController.signal.aborted) {
-          console.error('Failed to fetch GitHub data:', error);
-          setGithubData(prev => ({
-            ...prev,
-            loading: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch GitHub data. Please check the username and try again.'
-          }));
+
+        // Add today if there was a contribution
+        const todayStr = today.toISOString().split('T')[0];
+        const hasTodayContribution = contributionDays.some(
+          day => day.date === todayStr && day.count > 0
+        );
+
+        if (hasTodayContribution) {
+          currentStreak++;
         }
       }
-    };
-    
+
+      // Calculate longest streak
+      let longestStreak = 0;
+      let currentLongestStreak = 0;
+
+      for (let i = 0; i < contributionDays.length; i++) {
+        if (contributionDays[i].count > 0) {
+          currentLongestStreak++;
+
+          if (i > 0) {
+            // Check if this day is consecutive to the previous one
+            const currentDate = new Date(contributionDays[i].date);
+            const prevDate = new Date(contributionDays[i - 1].date);
+
+            const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // If days are not consecutive, reset streak
+            if (diffDays !== 1) {
+              currentLongestStreak = 1;
+            }
+          }
+
+          longestStreak = Math.max(longestStreak, currentLongestStreak);
+        } else {
+          currentLongestStreak = 0;
+        }
+      }
+
+      // Set the contribution data only if not aborted
+      if (!signal.aborted) {
+        setGithubData({
+          username,
+          currentStreak,
+          longestStreak,
+          totalContributions: contributionData.totalContributions,
+          contributionsByDay: contributionDays,
+          loading: false,
+          error: null
+        });
+      }
+
+    } catch (error) {
+      // Only update state if not aborted
+      if (!signal.aborted) {
+        console.error('Failed to fetch GitHub data:', error);
+        setGithubData(prev => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to fetch GitHub data. Please check the username and try again.'
+        }));
+      }
+    }
+  }, [localConfig.username, localConfig.personalAccessToken]);
+
+  // Fetch data on mount and when config changes
+  useEffect(() => {
     fetchGitHubData();
-    
+
     // Cleanup function to abort fetch on unmount
     return () => {
-      abortController.abort();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, [localConfig.username, localConfig.personalAccessToken]);
+  }, [fetchGitHubData]);
+
+  // Auto-refresh when tab becomes visible or every 5 minutes
+  useVisibilityRefresh({
+    onRefresh: fetchGitHubData,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: 300000, // Also refresh every 5 minutes
+    enabled: !!localConfig.username && !!localConfig.personalAccessToken
+  });
   
   /**
    * Determines the appropriate size category based on width and height

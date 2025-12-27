@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -57,22 +58,6 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
   // Ref for the widget container
   const widgetRef = useRef<HTMLDivElement | null>(null);
   
-  // Get a random highlight when component mounts or when refreshed
-  useEffect(() => {
-    if (localConfig.apiToken) {
-      fetchRandomHighlight();
-    }
-    
-    // Set up refresh interval if configured
-    if (localConfig.refreshInterval && localConfig.refreshInterval > 0) {
-      const intervalId = setInterval(() => {
-        fetchRandomHighlight();
-      }, localConfig.refreshInterval * 60 * 1000); // Convert minutes to milliseconds
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [localConfig.apiToken, localConfig.refreshInterval]);
-  
   // Update local config when props config changes
   useEffect(() => {
     setLocalConfig(prevConfig => ({
@@ -80,41 +65,41 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
       ...config
     }));
   }, [config]);
-  
+
   /**
    * Fetches a random highlight from Readwise API
    */
-  const fetchRandomHighlight = async () => {
+  const fetchRandomHighlight = useCallback(async () => {
     if (!localConfig.apiToken) {
       setError('API token is required');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Get a random page number (1-10) to increase variety
       const randomPage = Math.floor(Math.random() * 10) + 1;
-      
+
       const response = await fetch(`https://readwise.io/api/v2/highlights/?page=${randomPage}&page_size=100`, {
         headers: {
           'Authorization': `Token ${localConfig.apiToken}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.results && data.results.length > 0) {
         // Select a random highlight from the results
         const randomIndex = Math.floor(Math.random() * data.results.length);
         const randomHighlight = data.results[randomIndex];
-        
+
         // Get book info if available and showBookInfo is enabled
         if (localConfig.showBookInfo && randomHighlight.book_id) {
           try {
@@ -124,7 +109,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                 'Content-Type': 'application/json'
               }
             });
-            
+
             if (bookResponse.ok) {
               const bookData = await bookResponse.json();
               randomHighlight.book_title = bookData.title;
@@ -134,7 +119,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
             console.error('Error fetching book info:', bookError);
           }
         }
-        
+
         setHighlight(randomHighlight);
       } else {
         setError('No highlights found');
@@ -145,7 +130,24 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [localConfig.apiToken, localConfig.showBookInfo]);
+
+  // Get a random highlight when component mounts
+  useEffect(() => {
+    if (localConfig.apiToken) {
+      fetchRandomHighlight();
+    }
+  }, [localConfig.apiToken, fetchRandomHighlight]);
+
+  // Auto-refresh when tab becomes visible or at the configured interval
+  useVisibilityRefresh({
+    onRefresh: fetchRandomHighlight,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: localConfig.refreshInterval && localConfig.refreshInterval > 0
+      ? localConfig.refreshInterval * 60 * 1000
+      : 0,
+    enabled: !!localConfig.apiToken
+  });
   
   /**
    * Determines the appropriate size category based on width and height

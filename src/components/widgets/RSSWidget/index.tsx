@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -172,6 +173,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   useEffect(() => {
     fetchAllFeeds();
   }, [localConfig.feeds, fetchAllFeeds]);
+
+  // Auto-refresh when tab becomes visible or every 15 minutes
+  useVisibilityRefresh({
+    onRefresh: fetchAllFeeds,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: 900000, // Refresh every 15 minutes
+    enabled: localConfig.feeds?.some(feed => feed.enabled) ?? false
+  });
 
   /**
    * Format publication date

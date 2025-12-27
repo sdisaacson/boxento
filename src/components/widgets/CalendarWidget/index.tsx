@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
 import { encryptionUtils } from '@/lib/encryption'
 import {
@@ -678,20 +679,19 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     return () => clearInterval(timer)
   }, [])
   
-  // Refresh events periodically
+  // Initial fetch when connection state changes
   useEffect(() => {
     if (!isGoogleConnected) return;
-    
-    // Initial fetch when connection state changes
     fetchEvents(true);
-    
-    const refreshTimer = setInterval(() => {
-      // Use silent mode for background refreshes to reduce console noise
-      fetchEvents(true);
-    }, 300000); // Refresh every 5 minutes
-    
-    return () => clearInterval(refreshTimer);
-  }, [isGoogleConnected, fetchEvents]); // Remove localConfig as it's already a dependency of fetchEvents
+  }, [isGoogleConnected, fetchEvents]);
+
+  // Auto-refresh when tab becomes visible or every 5 minutes
+  useVisibilityRefresh({
+    onRefresh: () => fetchEvents(true),
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: 300000, // Refresh every 5 minutes
+    enabled: isGoogleConnected
+  });
 
   /**
    * Get the number of days in a month

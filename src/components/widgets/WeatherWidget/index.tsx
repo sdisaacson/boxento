@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type FC, useCallback } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info } from 'lucide-react';
 import {
   Dialog,
@@ -263,13 +264,15 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
 
   useEffect(() => {
     fetchWeather();
-    
-    // Set up refresh interval if specified
-    if (refreshInterval > 0) {
-      const interval = setInterval(fetchWeather, refreshInterval * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [fetchWeather, refreshInterval]); // Only depend on memoized fetchWeather and refreshInterval
+  }, [fetchWeather]);
+
+  // Auto-refresh when tab becomes visible or at the configured interval
+  useVisibilityRefresh({
+    onRefresh: fetchWeather,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: refreshInterval > 0 ? refreshInterval * 60 * 1000 : 0,
+    enabled: true
+  });
 
   const handleUnitsChange = useCallback((value: 'metric' | 'imperial') => {
     setLocalConfig(prev => ({...prev, units: value}));
