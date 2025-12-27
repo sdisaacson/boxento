@@ -292,15 +292,28 @@ const renderNoApiTokenState = () => {
   };
   
   /**
+   * Opens the highlight in Readwise
+   */
+  const openHighlightInReadwise = () => {
+    if (highlight?.id) {
+      window.open(`https://readwise.io/open/${highlight.id}`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  /**
    * Small View (2x2) - Just the highlight text
-   * 
+   *
    * @returns {JSX.Element} Small view content
    */
   const renderSmallView = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center overflow-hidden w-full px-1">
-          <div className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-6">
+          <div
+            className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-6 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
         </div>
@@ -310,16 +323,20 @@ const renderNoApiTokenState = () => {
   
   /**
    * Wide Small View (3x2) - Highlight with minimal book info
-   * 
+   *
    * @returns {JSX.Element} Wide small view content
    */
   const renderWideSmallView = () => {
     return (
       <div className="flex flex-col justify-between h-full">
-        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-4">
+        <div
+          className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          onClick={openHighlightInReadwise}
+          title="Open in Readwise"
+        >
           "{highlight?.text}"
         </div>
-        
+
         {localConfig.showBookInfo && highlight?.book_title && (
           <div className="text-xs text-gray-500 mt-2 flex items-center">
             <BookOpen size={12} className="mr-1" />
@@ -332,16 +349,20 @@ const renderNoApiTokenState = () => {
   
   /**
    * Tall Small View (2x3) - Highlight with book title and author
-   * 
+   *
    * @returns {JSX.Element} Tall small view content
    */
   const renderTallSmallView = () => {
     return (
       <div className="flex flex-col justify-between h-full">
-        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-7">
+        <div
+          className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-7 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          onClick={openHighlightInReadwise}
+          title="Open in Readwise"
+        >
           "{highlight?.text}"
         </div>
-        
+
         {localConfig.showBookInfo && (
           <div className="mt-2">
             {highlight?.book_title && (
@@ -363,17 +384,21 @@ const renderNoApiTokenState = () => {
   
   /**
    * Medium View (3x3) - Full highlight with book info and tags
-   * 
+   *
    * @returns {JSX.Element} Medium view content
    */
   const renderMediumView = () => {
     return (
       <div className="flex flex-col justify-between h-full">
         <div>
-          <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-6">
+          <div
+            className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-6 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
             <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
               Note: {highlight.note}
@@ -414,7 +439,7 @@ const renderNoApiTokenState = () => {
   
   /**
    * Wide Medium View (4x3) - Everything from medium plus refresh button
-   * 
+   *
    * @returns {JSX.Element} Wide medium view content
    */
   const renderWideMediumView = () => {
@@ -422,10 +447,14 @@ const renderNoApiTokenState = () => {
       <div className="grid grid-cols-4 h-full">
         <div className="col-span-3 flex flex-col justify-between pr-3">
           <div>
-            <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-5">
+            <div
+              className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-5 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              onClick={openHighlightInReadwise}
+              title="Open in Readwise"
+            >
               "{highlight?.text}"
             </div>
-            
+
             {highlight?.note && (
               <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
                 Note: {highlight.note}
@@ -482,17 +511,21 @@ const renderNoApiTokenState = () => {
   
   /**
    * Tall Medium View (3x4) - Similar to medium view but with larger quote display
-   * 
+   *
    * @returns {JSX.Element} Tall medium view content
    */
   const renderTallMediumView = () => {
     return (
       <div className="flex flex-col justify-between h-full">
         <div>
-          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-8">
+          <div
+            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-8 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
             <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               Note: {highlight.note}
@@ -543,17 +576,21 @@ const renderNoApiTokenState = () => {
   
   /**
    * Large View (4x4) - Full featured view with all highlight details
-   * 
+   *
    * @returns {JSX.Element} Large view content
    */
   const renderLargeView = () => {
     return (
       <div className="flex flex-col h-full">
         <div className="mb-4 flex-grow overflow-auto">
-          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4">
+          <div
+            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
             <div className="text-sm text-gray-700 dark:text-gray-300 mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="font-medium mb-1">Note:</div>

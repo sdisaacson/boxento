@@ -52,10 +52,10 @@ enum WidgetSizeCategory {
  * @returns {JSX.Element} Widget component
  */
 const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height, config }) => {
-  // Default configuration
+  // Default configuration - no API key needed, uses centralized server-side proxy
   const defaultConfig: FlightTrackerWidgetConfig = {
     title: 'Flight Tracker',
-    accessKey: '4bf75d0df1c2bfd61231d6281e15a28d', // Default to provided API key
+    accessKey: '', // No longer needed - handled by server-side proxy
     flightNumber: '',
     flightDate: new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
   };
@@ -170,11 +170,6 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
   useEffect(() => {
     const fetchFlightData = async () => {
       // Don't attempt to fetch without required parameters
-      if (!localConfig.accessKey) {
-        setError("API access key is required");
-        return;
-      }
-
       if (!localConfig.flightNumber || !localConfig._airlineCode || !localConfig._flightNumberOnly) {
         setError("Valid flight number is required");
         return;
@@ -185,9 +180,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
         setError(null);
 
         // Build query parameters for the flight search
-        const params = new URLSearchParams({
-          access_key: localConfig.accessKey
-        });
+        const params = new URLSearchParams();
 
         // Add flight number parameter based on type (IATA or ICAO)
         if (localConfig._isIcao) {
@@ -212,17 +205,11 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
           }
         }
 
-
-        // Use a fallback URL for testing if you're having connection issues
-        // Remove the "||" part in production for actual API use
-        const apiUrl = `https://api.aviationstack.com/v1/flights?${params.toString()}`;
-        const useFallback = true; // Set to false to use actual API
-
         // Array of demo flight codes that will use fallback data
         const demoFlights = ['ASH6040', 'UAL123', 'AAL456', 'DAL789'];
-        
+
         // Check if the current flight number is a demo flight
-        if (useFallback && localConfig.flightNumber && demoFlights.includes(localConfig.flightNumber)) {
+        if (localConfig.flightNumber && demoFlights.includes(localConfig.flightNumber)) {
           // Create mock data for demo flights
           
           // Wait a bit to simulate API call
@@ -366,7 +353,10 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
           }
           return;
         }
-        
+
+        // Use the server-side proxy (no API key needed - handled server-side)
+        const apiUrl = `/api/flights?${params.toString()}`;
+
         const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json'
@@ -443,16 +433,15 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ width, height
 
     // Check if all the necessary configuration values are set to fetch data,
     // or if a manual refresh was triggered
-    if (isManualRefresh || (localConfig.accessKey && localConfig.flightNumber && 
+    if (isManualRefresh || (localConfig.flightNumber &&
         localConfig._airlineCode && localConfig._flightNumberOnly)) {
       fetchFlightData();
     }
   }, [
-    localConfig.accessKey, 
-    localConfig.flightNumber, 
-    localConfig._airlineCode, 
-    localConfig._flightNumberOnly, 
-    localConfig.flightDate, 
+    localConfig.flightNumber,
+    localConfig._airlineCode,
+    localConfig._flightNumberOnly,
+    localConfig.flightDate,
     localConfig.airline,
     isManualRefresh // Add isManualRefresh to trigger re-fetch
   ]);
@@ -948,8 +937,8 @@ const renderSetupView = () => {
 
   // Render main content based on state
   const renderContent = () => {
-    // If API key and flight number are not set, show setup view
-    if (!localConfig.accessKey && !localConfig.flightNumber) {
+    // If flight number is not set, show setup view
+    if (!localConfig.flightNumber) {
       return renderSetupView();
     }
     
@@ -1114,29 +1103,15 @@ const renderSetupView = () => {
                 </p>
               </div>
 
-              {/* API Key with Flighty-inspired design */}
-              <div className="space-y-2">
-                <Label htmlFor="accessKey" className="flex items-center text-sm font-medium">
+              {/* Flight tracking info - no API key needed */}
+              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 space-y-1">
+                <div className="flex items-center text-sm font-medium text-green-700 dark:text-green-400">
                   <Shield className="h-3.5 w-3.5 mr-1.5" />
-                  API Key <span className="text-xs text-gray-500 ml-1">(Optional for demo flights)</span>
-                </Label>
-                <Input
-                  id="accessKey"
-                  type="password"
-                  value={localConfig.accessKey || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, accessKey: e.target.value})}
-                  placeholder="Your AviationStack API key"
-                  className="border-gray-300 dark:border-gray-600"
-                />
-                <div className="text-xs text-gray-500 space-y-1">
-                  <p>
-                    Get a free API key at <a href="https://aviationstack.com/signup/free" target="_blank" rel="noopener noreferrer">AviationStack</a>
-                  </p>
-                  <p className="flex items-center">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Free tier is limited to 100 requests per month
-                  </p>
+                  No API Key Required
                 </div>
+                <p className="text-xs text-green-600 dark:text-green-500">
+                  Flight tracking is handled automatically. Just enter your flight number above.
+                </p>
               </div>
             </TabsContent>
             

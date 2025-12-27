@@ -11,7 +11,6 @@ import WidgetHeader from '../common/WidgetHeader';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { useSharedCredential } from '@/lib/sharedCredentials';
 import { Switch } from "../../ui/switch";
 import { Checkbox } from "../../ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
@@ -158,36 +157,28 @@ const POPULAR_CURRENCIES = [
   'KRW', 'SGD', 'NOK', 'MXN', 'INR', 'RUB', 'ZAR', 'TRY', 'BRL', 'TWD'
 ];
 
-// Custom hook for fetching exchange rates
-const useExchangeRates = (apiKey: string | undefined, baseCurrency: string = 'USD', autoRefresh: boolean = false, refreshInterval: number = 60) => {
+// Custom hook for fetching exchange rates - now uses free Frankfurter API (no key needed)
+const useExchangeRates = (baseCurrency: string = 'USD', autoRefresh: boolean = false, refreshInterval: number = 60) => {
   const [rates, setRates] = React.useState<{[key: string]: number}>({});
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
-  
+
   // More robust fetchRates function with better error handling and debugging
   const fetchRates = React.useCallback(async () => {
     // Clear previous errors when starting a new fetch
     setError(null);
     setLoading(true);
-    
-    if (!apiKey) {
-      setError('API key is required');
-      setLoading(false);
-      return;
-    }
-    
+
     try {
-      // Use the app ID and base currency to construct the URL
-      const url = `https://openexchangerates.org/api/latest.json?app_id=${apiKey || ''}`;
-      
+      // Use our server-side proxy for currency rates (no API key needed)
+      const url = `/api/currency?base=${baseCurrency}`;
+
       const response = await fetch(url);
-      
+
       // Check if the response is OK
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          setError('Invalid API key. Please check your API key and try again.');
-        } else if (response.status === 429) {
+        if (response.status === 429) {
           setError('Rate limit exceeded. Please try again later.');
         } else {
           setError(`API error: ${response.status} ${response.statusText}`);
@@ -195,9 +186,9 @@ const useExchangeRates = (apiKey: string | undefined, baseCurrency: string = 'US
         setLoading(false);
         return;
       }
-      
+
       const data = await response.json();
-      
+
       // Check if we have rates in the response
       if (!data.rates) {
         setError('Invalid response from API. Please try again.');
@@ -212,27 +203,23 @@ const useExchangeRates = (apiKey: string | undefined, baseCurrency: string = 'US
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
-  
-  // Initial fetch and when api key or base currency changes
+  }, [baseCurrency]);
+
+  // Initial fetch when base currency changes
   React.useEffect(() => {
-    if (apiKey) {
-      fetchRates();
-    } else {
-      setError('API key is required');
-    }
-  }, [apiKey, baseCurrency, fetchRates]);
+    fetchRates();
+  }, [baseCurrency, fetchRates]);
   
   // Auto-refresh
   React.useEffect(() => {
-    if (!autoRefresh || !apiKey) return;
-    
+    if (!autoRefresh) return;
+
     const intervalId = setInterval(() => {
       fetchRates();
     }, refreshInterval * 60 * 1000);
-    
+
     return () => clearInterval(intervalId);
-  }, [autoRefresh, refreshInterval, fetchRates, apiKey]);
+  }, [autoRefresh, refreshInterval, fetchRates]);
   
   return { 
     rates, 
@@ -274,18 +261,13 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
     title: 'Currency Converter',
     baseCurrency: 'USD',
     targetCurrencies: ['EUR', 'GBP', 'JPY'],
-    useSharedCredential: false,
     autoRefresh: false,
     refreshInterval: 60,
     ...config
   });
 
-  // Access shared credentials
-  const { credential: sharedApiKey, updateCredential: updateSharedApiKey } = useSharedCredential('openexchangerates-api');
-
-  // Use exchange rates hook
+  // Use exchange rates hook - no API key needed anymore
   const { rates, loading, error, refetch } = useExchangeRates(
-    localConfig.useSharedCredential ? sharedApiKey || undefined : localConfig.apiKey,
     localConfig.baseCurrency,
     localConfig.autoRefresh,
     localConfig.refreshInterval
@@ -299,20 +281,15 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
 
   // Save settings
   const saveSettings = () => {
-    if (localConfig.useSharedCredential && sharedApiKey) {
-      updateSharedApiKey(sharedApiKey);
-    }
-    
     if (config?.onUpdate) {
       config.onUpdate(localConfig);
     }
-    
+
     setShowSettings(false);
+    // Refetch with new settings
     setTimeout(() => {
-      if (localConfig.useSharedCredential ? sharedApiKey : localConfig.apiKey) {
-        refetch();
-      }
-    }, 1500);
+      refetch();
+    }, 500);
   };
 
   // Handle widget deletion
@@ -418,42 +395,16 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
           
           <TabsContent value="advanced" className="space-y-4 py-4">
             <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="use-shared-credential"
-                  checked={localConfig.useSharedCredential || false}
-                  onCheckedChange={(checked: boolean) => setLocalConfig(prev => ({ ...prev, useSharedCredential: checked }))}
-                />
-                <Label htmlFor="use-shared-credential">Use Shared API Key</Label>
+              {/* No API key needed info */}
+              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 space-y-1">
+                <div className="flex items-center text-sm font-medium text-green-700 dark:text-green-400">
+                  <BadgeCent className="h-3.5 w-3.5 mr-1.5" />
+                  No API Key Required
+                </div>
+                <p className="text-xs text-green-600 dark:text-green-500">
+                  Currency rates are provided automatically. Just select your currencies above.
+                </p>
               </div>
-
-              {localConfig.useSharedCredential ? (
-                <div className="grid w-full items-center gap-1.5">
-                  <Label>Shared API Key</Label>
-                  <Input
-                    type="password"
-                    value={sharedApiKey || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateSharedApiKey(e.target.value)}
-                    placeholder="Enter shared API key"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openexchangerates.org</a>
-                  </p>
-                </div>
-              ) : (
-                <div className="grid w-full items-center gap-1.5">
-                  <Label>Private API Key</Label>
-                  <Input
-                    type="password"
-                    value={localConfig.apiKey || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    placeholder="Enter your Open Exchange Rates API key"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Get your free API key at <a href="https://openexchangerates.org/signup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openexchangerates.org</a>
-                  </p>
-                </div>
-              )}
 
               <div className="flex items-center space-x-3">
                 <Switch
@@ -463,7 +414,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
                 />
                 <Label htmlFor="auto-refresh">Auto Refresh</Label>
               </div>
-              
+
               {localConfig.autoRefresh && (
                 <div className="grid grid-cols-2 items-center gap-2">
                   <Label>Refresh Interval (minutes)</Label>
@@ -774,26 +725,8 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
       />
       
       <div className="flex-grow overflow-hidden">
-        {error && (error.includes('API key is required') || error.includes('Invalid API key')) ? (
-          // Specific view for API key error
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            {/* Use DollarSign icon from Lucide with consistent styling (gray color) */}
-            <BadgeCent size={24} className="text-gray-400 mb-3" strokeWidth={1.5} />
-            {/* Consistent text styling */}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              {error.includes('Invalid') ? 'Invalid API key.' : 'API key required for exchange rates.'}
-            </p>
-            {/* Consistent button styling */}
-            <Button
-              size="sm"
-              onClick={() => setShowSettings(true)}
-              variant="outline"
-            >
-              Configure API Key
-            </Button>
-          </div>
-        ) : error ? (
-          // General error view
+        {error ? (
+          // Error view
           <div className="h-full flex flex-col items-center justify-center text-center p-4">
             {/* Use AlertCircle icon for errors */}
             <AlertCircle size={40} className="text-red-500 mb-3" strokeWidth={1.5} />
@@ -804,7 +737,7 @@ const CurrencyConverterWidget: React.FC<CurrencyConverterWidgetProps> = ({ width
             {/* Consistent button styling */}
             <Button
               size="sm"
-              onClick={refetch} // Use refetch from the hook
+              onClick={refetch}
             >
               Retry
             </Button>

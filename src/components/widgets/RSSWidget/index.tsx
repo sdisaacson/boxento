@@ -76,8 +76,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
   // Move fetchSingleFeed before fetchAllFeeds
   const fetchSingleFeed = React.useCallback(async (feed: RSSFeed): Promise<RSSFeedItem[]> => {
-    const corsProxy = 'https://api.allorigins.win/raw?url=';
-    const response = await fetch(`${corsProxy}${encodeURIComponent(feed.url)}`);
+    // Use our own CORS proxy (server-side) instead of third-party allorigins.win
+    const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch RSS feed: ${response.statusText}`);
@@ -519,8 +519,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     }
 
     try {
-      const corsProxy = 'https://api.allorigins.win/raw?url=';
-      const response = await fetch(`${corsProxy}${encodeURIComponent(url)}`, {
+      // Use our own CORS proxy for validation
+      const response = await fetch(`/api/rss?url=${encodeURIComponent(url)}`, {
         signal: AbortSignal.timeout(10000) // 10 second timeout
       });
 
