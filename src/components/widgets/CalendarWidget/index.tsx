@@ -738,13 +738,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
 
   // Scroll the week sidebar to show today's date
   useEffect(() => {
-    if (weekSidebarRef.current) {
-      const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]');
-      if (todayElement) {
-        todayElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(() => {
+      if (weekSidebarRef.current) {
+        const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]');
+        if (todayElement) {
+          todayElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
       }
-    }
-  }, [selectedDate]);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedDate, events]);
 
   /**
    * Get the number of days in a month
