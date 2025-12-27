@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ChangelogData } from '@/types/changelog';
-import { Bell, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const parseChangelog = async (): Promise<ChangelogData> => {
     try {
@@ -81,7 +81,7 @@ export function Changelog() {
                     size="icon"
                     className="relative h-9 w-9 rounded-full"
                 >
-                    <Bell className="h-4 w-4" />
+                    <Sparkles className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[625px]">
