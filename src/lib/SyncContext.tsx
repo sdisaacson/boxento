@@ -1,5 +1,6 @@
 import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { ReactNode, createContext, useContext, useState, useEffect, useRef, useCallback, Component, type ErrorInfo } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from './useAuth';
 import { db } from './firebase';
 
@@ -78,6 +79,11 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Track pending sync updates to batch status changes
   const pendingSyncsRef = useRef(new Set<string>());
+  // Track retry attempts
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track if we've shown an error toast for this error session
+  const errorToastShownRef = useRef(false);
 
   // Debounced localStorage writers (300ms delay to batch rapid updates)
   const debouncedWriteLayouts = useCallback(
@@ -105,14 +111,56 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const debouncedUpdateSyncStatus = useCallback(
     debounce(() => {
       if (pendingSyncsRef.current.size === 0) {
+        // If we were in error state, show recovery toast
+        if (errorToastShownRef.current) {
+          toast.success('Sync restored', {
+            description: 'Your data is now syncing again.',
+            duration: 3000,
+          });
+          errorToastShownRef.current = false;
+        }
         setLastSyncTime(new Date());
         setSyncStatus('success');
         setIsSyncing(false);
         setSyncError(null);
+        retryCountRef.current = 0;
       }
     }, 100),
     []
   );
+
+  // Handle sync error with toast and retry
+  const handleSyncError = useCallback((errorMessage: string, source: string) => {
+    console.error(`Error syncing ${source}:`, errorMessage);
+    setSyncError(`Error syncing ${source}: ${errorMessage}`);
+    setSyncStatus('error');
+    setIsSyncing(false);
+
+    // Only show toast once per error session
+    if (!errorToastShownRef.current) {
+      errorToastShownRef.current = true;
+      toast.error('Sync failed', {
+        description: 'Your changes are saved locally. Will retry automatically.',
+        duration: 5000,
+      });
+    }
+
+    // Retry logic: retry up to 3 times with exponential backoff
+    if (retryCountRef.current < 3) {
+      const delay = Math.pow(2, retryCountRef.current) * 1000; // 1s, 2s, 4s
+      retryCountRef.current++;
+
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+
+      retryTimeoutRef.current = setTimeout(() => {
+        // Trigger a re-render to re-establish listeners
+        setSyncStatus('syncing');
+        setIsSyncing(true);
+      }, delay);
+    }
+  }, []);
 
   const markSyncComplete = useCallback((syncType: string) => {
     pendingSyncsRef.current.delete(syncType);
@@ -143,10 +191,7 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         },
         (error) => {
-          console.error('Error syncing layouts:', error);
-          setSyncError(`Error syncing layouts: ${error.message}`);
-          setSyncStatus('error');
-          setIsSyncing(false);
+          handleSyncError(error.message, 'layouts');
         }
       );
 
@@ -161,10 +206,7 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         },
         (error) => {
-          console.error('Error syncing widgets:', error);
-          setSyncError(`Error syncing widgets: ${error.message}`);
-          setSyncStatus('error');
-          setIsSyncing(false);
+          handleSyncError(error.message, 'widgets');
         }
       );
 
@@ -184,38 +226,32 @@ export const SyncProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             markSyncComplete('configs');
           },
           (error) => {
-            console.error('Error syncing widget configurations:', error);
-            setSyncError(`Error syncing widget configurations: ${error.message}`);
-            setSyncStatus('error');
-            setIsSyncing(false);
+            handleSyncError(error.message, 'widget configurations');
           }
         );
       } catch (configError: unknown) {
         const errorMessage = configError instanceof Error ? configError.message : 'Unknown error';
-        console.error('Error setting up widget configs listener:', configError);
-        setSyncError(`Error setting up sync: ${errorMessage}`);
-        setSyncStatus('error');
-        setIsSyncing(false);
+        handleSyncError(errorMessage, 'setup');
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error setting up Firestore listeners:', error);
-      setSyncError(`Error setting up sync: ${errorMessage}`);
-      setSyncStatus('error');
-      setIsSyncing(false);
+      handleSyncError(errorMessage, 'setup');
     }
 
-    // Cleanup listeners
+    // Cleanup listeners and retry timeout
     return () => {
       try {
         layoutsUnsubscribe();
         widgetsUnsubscribe();
         widgetConfigsUnsubscribe();
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
       } catch (error: unknown) {
         console.error('Error cleaning up Firestore listeners:', error);
       }
     };
-  }, [authContext, debouncedWriteLayouts, debouncedWriteWidgets, debouncedWriteConfigs, markSyncComplete]);
+  }, [authContext, debouncedWriteLayouts, debouncedWriteWidgets, debouncedWriteConfigs, markSyncComplete, handleSyncError]);
   
   return (
     <SyncContext.Provider value={{ isSyncing, lastSyncTime, syncError, syncStatus }}>

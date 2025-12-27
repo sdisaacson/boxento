@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
 import { encryptionUtils } from '@/lib/encryption'
@@ -124,6 +125,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   };
   
   const widgetRef = useRef<HTMLDivElement | null>(null)
+  const oauthProcessingRef = useRef(false)
   
   // Simplified settings state
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
@@ -276,6 +278,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       return tokenData.access_token;
     } catch (err) {
       console.error('Failed to refresh token', err);
+      toast.error('Google Calendar disconnected', {
+        description: 'Your session expired. Please reconnect your calendar.',
+        duration: 5000,
+      });
       // If refresh fails, disconnect from Google Calendar
       disconnectGoogleCalendar();
       throw err;
@@ -568,6 +574,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       setIsLoading(false);
     } catch (err) {
       console.error('Failed to handle OAuth callback', err);
+      toast.error('Failed to connect Google Calendar', {
+        description: 'Please try connecting again.',
+        duration: 5000,
+      });
       setIsLoading(false);
     }
   }, [localConfig, fetchEvents, updateConfig, OAUTH_EXCHANGE_URL, GOOGLE_REDIRECT_URI]);
@@ -576,18 +586,40 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Prevent duplicate processing (React StrictMode runs effects twice)
+    if (oauthProcessingRef.current) return;
+
     // Check for OAuth callback parameters stored by App.tsx
     const code = sessionStorage.getItem('googleOAuthCode');
     const state = sessionStorage.getItem('googleOAuthState');
 
     if (code && state) {
+      // Mark as processing to prevent race conditions
+      oauthProcessingRef.current = true;
+
       // Clear sessionStorage immediately to prevent re-processing
       sessionStorage.removeItem('googleOAuthCode');
       sessionStorage.removeItem('googleOAuthState');
 
-      // Process the OAuth callback
+      // Process the OAuth callback with timeout protection
       setIsLoading(true);
-      handleOAuthCallback(code, state);
+
+      // Set a timeout to prevent infinite loading state
+      const timeoutId = setTimeout(() => {
+        if (oauthProcessingRef.current) {
+          oauthProcessingRef.current = false;
+          setIsLoading(false);
+          toast.error('Connection timed out', {
+            description: 'Please try connecting again.',
+            duration: 5000,
+          });
+        }
+      }, 30000); // 30 second timeout
+
+      handleOAuthCallback(code, state).finally(() => {
+        clearTimeout(timeoutId);
+        oauthProcessingRef.current = false;
+      });
     }
   }, [handleOAuthCallback]);
   
@@ -644,6 +676,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
             }
           } catch (err) {
             console.error('Failed to validate tokens', err);
+            toast.error('Google Calendar disconnected', {
+              description: 'Failed to verify your calendar connection.',
+              duration: 5000,
+            });
             disconnectGoogleCalendar();
           }
         } else if (isConnectedInConfig) {

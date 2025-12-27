@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
@@ -60,7 +61,10 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     ...config
   });
   const [feedItems, setFeedItems] = useState<RSSFeedItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Start loading if there are enabled feeds configured
+  const [isLoading, setIsLoading] = useState<boolean>(
+    () => (config?.feeds || defaultConfig.feeds)?.some(feed => feed.enabled) ?? false
+  );
   const [error, setError] = useState<string | null>(null);
   const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('content');
@@ -110,7 +114,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     
     try {
       const allItems: RSSFeedItem[] = [];
-      
+      const failedFeeds: string[] = [];
+
       // Fetch all feeds in parallel
       await Promise.all(enabledFeeds.map(async feed => {
         try {
@@ -121,21 +126,39 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           })));
         } catch (error) {
           console.error(`Error fetching feed ${feed.url}:`, error);
+          failedFeeds.push(feed.title || feed.url);
         }
       }));
-      
+
+      // Notify user if some feeds failed
+      if (failedFeeds.length > 0 && allItems.length > 0) {
+        toast.warning(`${failedFeeds.length} feed${failedFeeds.length > 1 ? 's' : ''} failed to load`, {
+          description: failedFeeds.slice(0, 2).join(', ') + (failedFeeds.length > 2 ? '...' : ''),
+          duration: 4000,
+        });
+      } else if (failedFeeds.length > 0 && allItems.length === 0) {
+        toast.error('Failed to load RSS feeds', {
+          description: 'Check your feed URLs or try again later.',
+          duration: 5000,
+        });
+      }
+
       // Sort all items by date
       const sortedItems = allItems.sort((a, b) => {
         const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
         const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
         return dateB - dateA;
       });
-      
+
       setFeedItems(sortedItems);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching feeds:', error);
       setError('Failed to fetch RSS feeds');
+      toast.error('Failed to load RSS feeds', {
+        description: 'Please check your internet connection.',
+        duration: 5000,
+      });
       setIsLoading(false);
     }
   }, [localConfig, fetchSingleFeed]);

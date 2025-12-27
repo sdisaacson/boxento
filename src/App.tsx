@@ -36,6 +36,7 @@ import { faviconService } from '@/lib/services/favicon'
 import { useAppSettings } from '@/context/AppSettingsContext'
 import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
 import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
+import { useNetworkStatus } from '@/lib/useNetworkStatus'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -294,21 +295,8 @@ function App() {
     }
   }, []);
 
-  // Track online status for PWA functionality
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // Track online status for PWA functionality with toast notifications
+  const { isOnline } = useNetworkStatus();
 
   // Add a class to the body for theme styling
   useEffect(() => {
