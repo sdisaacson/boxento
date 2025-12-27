@@ -3,7 +3,7 @@ import { defineSecret } from "firebase-functions/params";
 import { exchangeToken, refreshToken, googleClientId, googleClientSecret } from "./oauth";
 
 // Define secrets for API keys
-const aviationStackApiKey = defineSecret("AVIATIONSTACK_API_KEY");
+const airLabsApiKey = defineSecret("AIRLABS_API_KEY");
 
 // Proxy for mindicador.cl API (Chilean economic indicators)
 export const mindicadorProxy = onRequest(
@@ -65,12 +65,12 @@ export const oauthRefresh = onRequest(
   refreshToken
 );
 
-// Proxy for AviationStack API (Flight tracking)
-// Moves the API key server-side so users don't need their own key
+// Proxy for AirLabs API (Flight tracking)
+// Better free tier than AviationStack - 1000 requests/month with more features
 export const flightProxy = onRequest(
   {
     cors: true,
-    secrets: [aviationStackApiKey],
+    secrets: [airLabsApiKey],
     invoker: "public"
   },
   async (req, res) => {
@@ -80,31 +80,25 @@ export const flightProxy = onRequest(
         return;
       }
 
-      const apiKey = aviationStackApiKey.value();
+      const apiKey = airLabsApiKey.value();
       if (!apiKey) {
         res.status(500).json({ error: "API key not configured" });
         return;
       }
 
-      // Get query parameters from the request
-      // Note: flight_date is NOT supported on AviationStack free tier
-      const { flight_iata, flight_icao, airline_iata, airline_icao } = req.query;
+      const { flight_iata, flight_icao } = req.query;
 
       if (!flight_iata && !flight_icao) {
-        res.status(400).json({ error: "Flight number (flight_iata or flight_icao) is required" });
+        res.status(400).json({ error: "Flight number is required" });
         return;
       }
 
-      // Build the AviationStack API URL
-      // Note: flight_date parameter removed - not supported on free tier
-      const params = new URLSearchParams({ access_key: apiKey });
+      // Build the AirLabs API URL
+      const params = new URLSearchParams({ api_key: apiKey });
       if (flight_iata) params.append("flight_iata", flight_iata as string);
       if (flight_icao) params.append("flight_icao", flight_icao as string);
-      if (airline_iata) params.append("airline_iata", airline_iata as string);
-      if (airline_icao) params.append("airline_icao", airline_icao as string);
 
-      // Note: AviationStack free tier only supports HTTP, not HTTPS
-      const apiUrl = `http://api.aviationstack.com/v1/flights?${params.toString()}`;
+      const apiUrl = `https://airlabs.co/api/v9/flight?${params.toString()}`;
       const response = await fetch(apiUrl, {
         headers: {
           "Accept": "application/json",
@@ -113,14 +107,80 @@ export const flightProxy = onRequest(
       });
 
       if (!response.ok) {
-        throw new Error(`AviationStack API error: ${response.status}`);
+        throw new Error(`AirLabs API error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Cache for 2 minutes (flight data updates frequently)
+      // Check for API errors in response
+      if (data.error) {
+        throw new Error(data.error.message || "AirLabs API error");
+      }
+
+      // Transform AirLabs response to a cleaner format for the widget
+      const flight = data.response;
+      if (!flight || !flight.flight_iata) {
+        res.json({ data: null, message: "Flight not found" });
+        return;
+      }
+
+      // Return clean flight data
+      const transformedData = {
+        data: {
+          flight_iata: flight.flight_iata,
+          flight_icao: flight.flight_icao,
+          flight_number: flight.flight_number,
+          airline_name: flight.airline_name,
+          airline_iata: flight.airline_iata,
+          status: flight.status,
+          departure: {
+            airport: flight.dep_name,
+            city: flight.dep_city,
+            country: flight.dep_country,
+            iata: flight.dep_iata,
+            icao: flight.dep_icao,
+            terminal: flight.dep_terminal,
+            gate: flight.dep_gate,
+            scheduled: flight.dep_time,
+            scheduled_utc: flight.dep_time_utc,
+            estimated: flight.dep_estimated,
+            actual: flight.dep_actual,
+            delay: flight.dep_delayed
+          },
+          arrival: {
+            airport: flight.arr_name,
+            city: flight.arr_city,
+            country: flight.arr_country,
+            iata: flight.arr_iata,
+            icao: flight.arr_icao,
+            terminal: flight.arr_terminal,
+            gate: flight.arr_gate,
+            baggage: flight.arr_baggage,
+            scheduled: flight.arr_time,
+            scheduled_utc: flight.arr_time_utc,
+            estimated: flight.arr_estimated,
+            actual: flight.arr_actual,
+            delay: flight.arr_delayed
+          },
+          duration: flight.duration,
+          progress: flight.percent,
+          aircraft: {
+            registration: flight.reg_number,
+            icao: flight.aircraft_icao
+          },
+          live: flight.lat && flight.lng ? {
+            latitude: flight.lat,
+            longitude: flight.lng,
+            altitude: flight.alt,
+            speed: flight.speed,
+            heading: flight.dir
+          } : null
+        }
+      };
+
+      // Cache for 2 minutes
       res.set("Cache-Control", "public, max-age=120");
-      res.json(data);
+      res.json(transformedData);
     } catch (error) {
       console.error("Error fetching flight data:", error);
       res.status(500).json({
