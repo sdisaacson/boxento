@@ -182,12 +182,28 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
     return formatDate(flightDate);
   };
 
+  // Check if API returned data for a different date than selected
+  const isDateMismatch = () => {
+    if (!flightData?.departure?.scheduled) return false;
+    const apiDate = flightData.departure.scheduled.split(' ')[0];
+    return apiDate !== flightDate;
+  };
+
   // Render flight info - Flighty-style minimal design
   const renderFlight = () => {
     if (!flightData) return null;
 
+    const dateMismatch = isDateMismatch();
+
     return (
       <div className="h-full flex flex-col p-3">
+        {/* Date mismatch warning */}
+        {dateMismatch && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs p-2 rounded mb-2 text-center">
+            Flight for {formatDate(flightDate)} not available yet. Showing nearest scheduled flight.
+          </div>
+        )}
+
         {/* Header with flight number, date, and status */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
