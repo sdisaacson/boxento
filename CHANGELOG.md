@@ -1,5 +1,30 @@
 # What's New
 
+## December 27, 2025
+
+### 🎉 New Widgets
+• **Countdown Widget**: Count down to important events with days, hours, minutes, and seconds display. Uses shadcn Calendar for date selection.
+• **QR Code Generator**: Generate QR codes from text or URLs. Download as PNG or copy content. Supports WiFi, phone, and email formats.
+• **Habit Tracker**: Track daily habits with a 7-day view and streak tracking. Compact mode for smaller widget sizes.
+• **Embed Widget**: Embed external content via iframe URLs. Auto-detects images for responsive display. Includes scale and alignment options.
+
+### 🎨 Design Improvements
+• **World Clocks Redesign**: New Bauhaus-inspired minimalist clock design with geometric rectangular hands, red second hand with counterweight, and subtle hour markers.
+• **UF Widget**: Replaced blue "Actualizar" button with subtle refresh icon across all sizes.
+• **Readwise Widget**: Fixed text cropping - quotes now scroll instead of being cut off.
+• **Quick Links Widget**: Hidden input on small sizes, replaced with subtle "Add Link" button.
+
+### 📱 Large Display Support
+• Added breakpoints for 4K and ultra-wide displays (xl: 1536px, xxl: 1920px, xxxl: 2560px)
+• Removed max-width constraints to use full screen real estate
+• Up to 24 columns on 4K displays
+
+### 🐛 Bug Fixes
+• Fixed Calendar widget sidebar scroll to show current/selected date
+• Fixed iframe widget responsiveness for images
+
+---
+
 ## June 17, 2025
 
 ### 🎉 Major UX Improvement: Clear Local-Only Mode
