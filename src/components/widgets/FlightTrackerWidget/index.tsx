@@ -963,11 +963,6 @@ const renderSetupView = () => {
   
   // Settings modal
   const renderSettings = () => {
-    const todayFormatted = () => {
-      const today = new Date();
-      return today.toISOString().split('T')[0];
-    };
-
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-md">
@@ -1051,66 +1046,17 @@ const renderSetupView = () => {
                 )}
               </div>
 
-              {/* Flight Date with Flighty-inspired design */}
-              <div className="space-y-2">
-                <Label htmlFor="flightDate" className="flex items-center text-sm font-medium">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                  Flight Date
-                </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={`h-auto py-1.5 ${
-                      localConfig.flightDate === todayFormatted() ? 
-                      "bg-gray-800 text-white border-transparent" : 
-                      ""
-                    }`}
-                    onClick={() => setLocalConfig({...localConfig, flightDate: todayFormatted()})}
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={`h-auto py-1.5 ${
-                      localConfig.flightDate === (() => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        return tomorrow.toISOString().split('T')[0];
-                      })() ? 
-                      "bg-gray-800 text-white border-transparent" : 
-                      ""
-                    }`}
-                    onClick={() => {
-                      const tomorrow = new Date();
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      setLocalConfig({...localConfig, flightDate: tomorrow.toISOString().split('T')[0]});
-                    }}
-                  >
-                    Tomorrow
-                  </Button>
-                  <Input
-                    id="flightDate"
-                    type="date"
-                    value={localConfig.flightDate}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, flightDate: e.target.value})}
-                    className="border-gray-300 dark:border-gray-600"
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Select or enter the date of the flight
-                </p>
-              </div>
-
-              {/* Flight tracking info - no API key needed */}
-              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 space-y-1">
-                <div className="flex items-center text-sm font-medium text-green-700 dark:text-green-400">
+              {/* Flight tracking info */}
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 space-y-2">
+                <div className="flex items-center text-sm font-medium text-blue-700 dark:text-blue-400">
                   <Shield className="h-3.5 w-3.5 mr-1.5" />
                   No API Key Required
                 </div>
-                <p className="text-xs text-green-600 dark:text-green-500">
-                  Flight tracking is handled automatically. Just enter your flight number above.
+                <p className="text-xs text-blue-600 dark:text-blue-500">
+                  Flight tracking is handled automatically. Works best with major US/European carriers (AA, UA, DL, BA, LH, etc.).
+                </p>
+                <p className="text-xs text-blue-600/70 dark:text-blue-500/70">
+                  Note: Shows recent/active flights only. Some regional flights may not be available.
                 </p>
               </div>
             </TabsContent>

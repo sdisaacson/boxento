@@ -87,7 +87,8 @@ export const flightProxy = onRequest(
       }
 
       // Get query parameters from the request
-      const { flight_iata, flight_icao, flight_date, airline_iata, airline_icao } = req.query;
+      // Note: flight_date is NOT supported on AviationStack free tier
+      const { flight_iata, flight_icao, airline_iata, airline_icao } = req.query;
 
       if (!flight_iata && !flight_icao) {
         res.status(400).json({ error: "Flight number (flight_iata or flight_icao) is required" });
@@ -95,10 +96,10 @@ export const flightProxy = onRequest(
       }
 
       // Build the AviationStack API URL
+      // Note: flight_date parameter removed - not supported on free tier
       const params = new URLSearchParams({ access_key: apiKey });
       if (flight_iata) params.append("flight_iata", flight_iata as string);
       if (flight_icao) params.append("flight_icao", flight_icao as string);
-      if (flight_date) params.append("flight_date", flight_date as string);
       if (airline_iata) params.append("airline_iata", airline_iata as string);
       if (airline_icao) params.append("airline_icao", airline_icao as string);
 
