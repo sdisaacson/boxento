@@ -17,8 +17,12 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [url, setUrl] = useState(config?.url || '');
   const [title, setTitle] = useState(config?.title || '');
+  const [scale, setScale] = useState(config?.scale || 1);
+  const [alignment, setAlignment] = useState<'top' | 'center' | 'bottom'>(config?.alignment || 'top');
   const [inputUrl, setInputUrl] = useState(config?.url || '');
   const [inputTitle, setInputTitle] = useState(config?.title || '');
+  const [inputScale, setInputScale] = useState(config?.scale || 1);
+  const [inputAlignment, setInputAlignment] = useState<'top' | 'center' | 'bottom'>(config?.alignment || 'top');
   const [error, setError] = useState<string | null>(null);
 
   // Validate URL
@@ -59,13 +63,17 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
 
     setUrl(trimmedUrl);
     setTitle(inputTitle.trim());
+    setScale(inputScale);
+    setAlignment(inputAlignment);
     setError(null);
 
     if (config?.onUpdate) {
       config.onUpdate({
         ...config,
         url: trimmedUrl,
-        title: inputTitle.trim()
+        title: inputTitle.trim(),
+        scale: inputScale,
+        alignment: inputAlignment
       });
     }
     setShowSettings(false);
@@ -97,17 +105,34 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
   );
 
   // Render iframe
-  const renderIframe = () => (
-    <div className="h-full w-full">
-      <iframe
-        src={url}
-        className="w-full h-full border-0"
-        sandbox="allow-scripts allow-same-origin allow-popups"
-        loading="lazy"
-        title={title || 'Embedded content'}
-      />
-    </div>
-  );
+  const renderIframe = () => {
+    const alignmentClass = {
+      top: 'items-start',
+      center: 'items-center',
+      bottom: 'items-end'
+    }[alignment];
+
+    // For scaled iframes, we need to adjust the container size
+    const iframeStyle: React.CSSProperties = scale !== 1 ? {
+      transform: `scale(${scale})`,
+      transformOrigin: alignment === 'bottom' ? 'bottom center' : alignment === 'center' ? 'center center' : 'top center',
+      width: `${100 / scale}%`,
+      height: `${100 / scale}%`,
+    } : {};
+
+    return (
+      <div className={`h-full w-full flex justify-center overflow-hidden ${alignmentClass}`}>
+        <iframe
+          src={url}
+          className="w-full h-full border-0"
+          style={iframeStyle}
+          sandbox="allow-scripts allow-same-origin allow-popups"
+          loading="lazy"
+          title={title || 'Embedded content'}
+        />
+      </div>
+    );
+  };
 
   // Render error state
   const renderError = () => (
@@ -159,6 +184,43 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
               value={inputTitle}
               onChange={(e) => setInputTitle(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="scale">Scale ({Math.round(inputScale * 100)}%)</Label>
+            <input
+              id="scale"
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.1"
+              value={inputScale}
+              onChange={(e) => setInputScale(parseFloat(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Adjust to fit content within widget
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Vertical Alignment</Label>
+            <div className="flex gap-2">
+              {(['top', 'center', 'bottom'] as const).map((align) => (
+                <button
+                  key={align}
+                  type="button"
+                  onClick={() => setInputAlignment(align)}
+                  className={`flex-1 px-3 py-2 text-sm rounded-md border transition-colors ${
+                    inputAlignment === align
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {align.charAt(0).toUpperCase() + align.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

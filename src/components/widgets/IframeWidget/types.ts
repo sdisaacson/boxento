@@ -12,6 +12,8 @@ export interface IframeWidgetConfig {
   id?: string;
   title?: string;
   url?: string;
+  scale?: number; // Scale factor for iframe content (0.5 - 2.0)
+  alignment?: 'top' | 'center' | 'bottom'; // Vertical alignment
   onUpdate?: (config: IframeWidgetConfig) => void;
   onDelete?: () => void;
   [key: string]: unknown;
