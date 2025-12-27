@@ -230,18 +230,19 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
   // Render habits list
   const renderHabits = () => (
     <div className="h-full flex flex-col">
-      {/* Add button in header area */}
-      <div className="flex justify-end mb-3">
-        <Button size="sm" onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Habit
-        </Button>
-      </div>
-
       {/* Habits list */}
       <div className="flex-1 overflow-y-auto pr-1">
         {habits.map(renderHabitItem)}
       </div>
+
+      {/* Add button at bottom - muted style */}
+      <button
+        onClick={() => setShowAddDialog(true)}
+        className="mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center justify-center gap-1"
+      >
+        <Plus className="w-3 h-3" />
+        Add Habit
+      </button>
     </div>
   );
 
