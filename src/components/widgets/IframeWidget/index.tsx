@@ -31,6 +31,18 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
     }
   };
 
+  // Check if URL points to an image
+  const isImageUrl = (urlString: string): boolean => {
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp', '.ico'];
+    try {
+      const urlObj = new URL(urlString);
+      const pathname = urlObj.pathname.toLowerCase();
+      return imageExtensions.some(ext => pathname.endsWith(ext));
+    } catch {
+      return false;
+    }
+  };
+
   // Save settings
   const handleSave = () => {
     const trimmedUrl = inputUrl.trim();
@@ -69,6 +81,18 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
       <Button size="sm" variant="outline" onClick={() => setShowSettings(true)}>
         Add URL
       </Button>
+    </div>
+  );
+
+  // Render image (for image URLs)
+  const renderImage = () => (
+    <div className="h-full w-full flex items-center justify-center">
+      <img
+        src={url}
+        alt={title || 'Embedded image'}
+        className="max-w-full max-h-full object-contain"
+        loading="lazy"
+      />
     </div>
   );
 
@@ -159,6 +183,7 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ config }) => {
   const renderContent = () => {
     if (!url) return renderSetup();
     if (!isValidUrl(url)) return renderError();
+    if (isImageUrl(url)) return renderImage();
     return renderIframe();
   };
 
