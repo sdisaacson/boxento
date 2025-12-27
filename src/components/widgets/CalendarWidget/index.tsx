@@ -126,6 +126,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   
   const widgetRef = useRef<HTMLDivElement | null>(null)
   const oauthProcessingRef = useRef(false)
+  const weekSidebarRef = useRef<HTMLDivElement | null>(null)
   
   // Simplified settings state
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
@@ -735,6 +736,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     enabled: isGoogleConnected
   });
 
+  // Scroll the week sidebar to show today's date
+  useEffect(() => {
+    if (weekSidebarRef.current) {
+      const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]');
+      if (todayElement) {
+        todayElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+  }, [selectedDate]);
+
   /**
    * Get the number of days in a month
    * 
@@ -1330,17 +1341,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto" ref={weekSidebarRef}>
               <div className="space-y-1 pr-1">
                 {/* Weekday slots */}
                 {Array.from({ length: 7 }).map((_, index) => {
                   const dayOffset = index
                   const dayDate = new Date(weekStart)
                   dayDate.setDate(weekStart.getDate() + dayOffset)
-                  const isToday = dayDate.getDate() === today.getDate() && 
-                                  dayDate.getMonth() === today.getMonth() && 
+                  const isToday = dayDate.getDate() === today.getDate() &&
+                                  dayDate.getMonth() === today.getMonth() &&
                                   dayDate.getFullYear() === today.getFullYear()
-                  
+
                   // Filter events for this day
                   const dayEvents = events.filter(event => {
                     if (!event.start) return false;
@@ -1349,10 +1360,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                           eventDate.getMonth() === dayDate.getMonth() &&
                           eventDate.getFullYear() === dayDate.getFullYear();
                   });
-                  
+
                   return (
-                    <div 
+                    <div
                       key={`weekday-${index}`}
+                      data-today={isToday ? 'true' : undefined}
                       className={`mb-3 pb-2 ${index < 6 ? 'border-b border-gray-100 dark:border-slate-800' : ''}`}
                     >
                       <div className={`flex items-center mb-1.5 ${isToday ? 'text-blue-500' : ''}`}>
