@@ -736,14 +736,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     enabled: isGoogleConnected
   });
 
-  // Scroll the week sidebar to show today's date
+  // Scroll the week sidebar to show the selected date (or today if in view)
   useEffect(() => {
     // Small delay to ensure DOM is fully rendered
     const timeoutId = setTimeout(() => {
       if (weekSidebarRef.current) {
+        // First try to scroll to selected date, then fall back to today
+        const selectedElement = weekSidebarRef.current.querySelector('[data-selected="true"]');
         const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]');
-        if (todayElement) {
-          todayElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        const targetElement = selectedElement || todayElement;
+        if (targetElement) {
+          targetElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
       }
     }, 100);
@@ -1357,6 +1360,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                                   dayDate.getMonth() === today.getMonth() &&
                                   dayDate.getFullYear() === today.getFullYear()
 
+                  const isSelected = dayDate.getDate() === selectedDate.getDate() &&
+                                    dayDate.getMonth() === selectedDate.getMonth() &&
+                                    dayDate.getFullYear() === selectedDate.getFullYear()
+
                   // Filter events for this day
                   const dayEvents = events.filter(event => {
                     if (!event.start) return false;
@@ -1370,6 +1377,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
                     <div
                       key={`weekday-${index}`}
                       data-today={isToday ? 'true' : undefined}
+                      data-selected={isSelected ? 'true' : undefined}
                       className={`mb-3 pb-2 ${index < 6 ? 'border-b border-gray-100 dark:border-slate-800' : ''}`}
                     >
                       <div className={`flex items-center mb-1.5 ${isToday ? 'text-blue-500' : ''}`}>
