@@ -11,7 +11,7 @@ export const createDefaultLayoutItem = (
   colCount: number,
   breakpoint: string
 ): LayoutItem => {
-  if (breakpoint === 'lg' || breakpoint === 'md') {
+  if (breakpoint === 'xxxl' || breakpoint === 'xxl' || breakpoint === 'xl' || breakpoint === 'lg' || breakpoint === 'md') {
     const maxItemsPerRow = Math.max(1, Math.floor(colCount / 3));
     const col = index % maxItemsPerRow;
     const row = Math.floor(index / maxItemsPerRow);

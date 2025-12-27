@@ -125,8 +125,8 @@ const AppFooter = () => {
   });
 
   return (
-    <footer className="py-4 sm:py-6 px-4 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
-      <div className="max-w-[1600px] mx-auto flex flex-col gap-4 sm:gap-6">
+    <footer className="py-4 sm:py-6 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
+      <div className="w-full flex flex-col gap-4 sm:gap-6">
         {/* Mobile layout (stacked) */}
         <div className="flex flex-col items-center gap-3 sm:hidden">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1502,8 +1502,8 @@ function App() {
         </header>
 
         {/* Skeleton Dashboard Grid */}
-        <main className="main-content pt-20 px-4 md:px-6 lg:px-8">
-          <div className="max-w-[1600px] mx-auto">
+        <main className="main-content pt-20 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="w-full">
             <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
               {/* Skeleton widgets mimicking typical dashboard layout */}
               <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
@@ -1642,13 +1642,13 @@ function App() {
             widgetCategories={widgetCategories}
           />
           
-          <div className="max-w-[1600px] mx-auto">
+          <div className="w-full">
             <div className="mobile-view-container">
               <div className="mobile-view">
                 {renderMobileLayout()}
               </div>
             </div>
-            
+
             <div className="desktop-view-container">
               {/* Show skeleton grid while layout is calculating */}
               {!isLayoutReady && widgets.length > 0 && (

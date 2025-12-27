@@ -31,6 +31,9 @@ export const GRID = {
 
 // Breakpoints for responsive layout (in pixels)
 export const BREAKPOINTS = {
+  xxxl: 2560, // 4K and ultra-wide displays
+  xxl: 1920,  // Full HD and larger
+  xl: 1536,   // Large desktop
   lg: 1200,
   md: 996,
   sm: 768,
@@ -40,6 +43,9 @@ export const BREAKPOINTS = {
 
 // Column counts for each breakpoint
 export const COLS = {
+  xxxl: 24,  // 24 columns for 4K
+  xxl: 18,   // 18 columns for large screens
+  xl: 14,    // 14 columns for wide screens
   lg: 12,
   md: 10,
   sm: 6,
