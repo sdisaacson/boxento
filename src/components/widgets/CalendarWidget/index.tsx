@@ -742,11 +742,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     const timeoutId = setTimeout(() => {
       if (weekSidebarRef.current) {
         // First try to scroll to selected date, then fall back to today
-        const selectedElement = weekSidebarRef.current.querySelector('[data-selected="true"]');
-        const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]');
+        const selectedElement = weekSidebarRef.current.querySelector('[data-selected="true"]') as HTMLElement;
+        const todayElement = weekSidebarRef.current.querySelector('[data-today="true"]') as HTMLElement;
         const targetElement = selectedElement || todayElement;
         if (targetElement) {
-          targetElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          // Calculate scroll position to center the element within the sidebar only
+          const container = weekSidebarRef.current;
+          const elementTop = targetElement.offsetTop;
+          const elementHeight = targetElement.offsetHeight;
+          const containerHeight = container.clientHeight;
+          const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
+          container.scrollTo({ top: Math.max(0, scrollTo), behavior: 'smooth' });
         }
       }
     }, 100);
