@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,8 @@ import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
+import { Calendar } from '../../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
 import WidgetHeader from '../common/WidgetHeader';
 import type { CountdownWidgetProps, TimeRemaining } from './types';
 
@@ -19,10 +22,30 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
   const [targetDate, setTargetDate] = useState(config?.targetDate || '');
   const [eventName, setEventName] = useState(config?.eventName || '');
   const [showTime, setShowTime] = useState(config?.showTime ?? true);
-  const [inputTargetDate, setInputTargetDate] = useState(config?.targetDate || '');
   const [inputEventName, setInputEventName] = useState(config?.eventName || '');
   const [inputShowTime, setInputShowTime] = useState(config?.showTime ?? true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
+
+  // Separate date and time state for the picker
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    if (config?.targetDate) {
+      return new Date(config.targetDate);
+    }
+    return undefined;
+  });
+  const [selectedHour, setSelectedHour] = useState(() => {
+    if (config?.targetDate) {
+      return new Date(config.targetDate).getHours().toString().padStart(2, '0');
+    }
+    return '12';
+  });
+  const [selectedMinute, setSelectedMinute] = useState(() => {
+    if (config?.targetDate) {
+      return new Date(config.targetDate).getMinutes().toString().padStart(2, '0');
+    }
+    return '00';
+  });
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Calculate time remaining
   useEffect(() => {
@@ -63,14 +86,24 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
 
   // Save settings
   const handleSave = () => {
-    setTargetDate(inputTargetDate);
+    // Combine date and time into ISO string
+    let newTargetDate = '';
+    if (selectedDate) {
+      const dateWithTime = new Date(selectedDate);
+      dateWithTime.setHours(parseInt(selectedHour, 10));
+      dateWithTime.setMinutes(parseInt(selectedMinute, 10));
+      dateWithTime.setSeconds(0);
+      newTargetDate = dateWithTime.toISOString();
+    }
+
+    setTargetDate(newTargetDate);
     setEventName(inputEventName);
     setShowTime(inputShowTime);
 
     if (config?.onUpdate) {
       config.onUpdate({
         ...config,
-        targetDate: inputTargetDate,
+        targetDate: newTargetDate,
         eventName: inputEventName,
         showTime: inputShowTime
       });
@@ -84,7 +117,7 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
   // Render setup view when no date configured
   const renderSetup = () => (
     <div className="h-full flex flex-col items-center justify-center text-center p-4">
-      <Calendar size={32} className="text-gray-400 mb-3" strokeWidth={1.5} />
+      <CalendarIcon size={32} className="text-gray-400 mb-3" strokeWidth={1.5} />
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
         Set a countdown date
       </p>
@@ -219,13 +252,63 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="targetDate">Target Date</Label>
-            <Input
-              id="targetDate"
-              type="datetime-local"
-              value={inputTargetDate}
-              onChange={(e) => setInputTargetDate(e.target.value)}
-            />
+            <Label>Target Date</Label>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, 'PPP') : <span className="text-muted-foreground">Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setCalendarOpen(false);
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Time</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min="0"
+                  max="23"
+                  value={selectedHour}
+                  onChange={(e) => {
+                    const val = Math.min(23, Math.max(0, parseInt(e.target.value) || 0));
+                    setSelectedHour(val.toString().padStart(2, '0'));
+                  }}
+                  className="w-16 text-center"
+                />
+                <span className="text-muted-foreground">:</span>
+                <Input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={selectedMinute}
+                  onChange={(e) => {
+                    const val = Math.min(59, Math.max(0, parseInt(e.target.value) || 0));
+                    setSelectedMinute(val.toString().padStart(2, '0'));
+                  }}
+                  className="w-16 text-center"
+                />
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {parseInt(selectedHour) >= 12 ? 'PM' : 'AM'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
