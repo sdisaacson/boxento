@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Check, Pencil, X, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -19,25 +19,47 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [habitName, setHabitName] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate array of 7 days centered around today
+  // Detect if widget is in compact mode (small size)
+  useEffect(() => {
+    const checkSize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        setIsCompact(width < 280);
+      }
+    };
+
+    checkSize();
+    const resizeObserver = new ResizeObserver(checkSize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Generate array of days centered around today
   const weekDays = useMemo(() => {
-    const days: { date: Date; dateStr: string; dayName: string; isToday: boolean }[] = [];
+    const days: { date: Date; dateStr: string; dayName: string; dayLetter: string; isToday: boolean }[] = [];
     const today = new Date();
+    const range = isCompact ? 2 : 3; // 5 days for compact, 7 for normal
 
-    // Show 3 days before, today, and 3 days after
-    for (let i = -3; i <= 3; i++) {
+    for (let i = -range; i <= range; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
       days.push({
         date,
         dateStr: date.toISOString().split('T')[0],
-        dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayName,
+        dayLetter: dayName.charAt(0),
         isToday: i === 0
       });
     }
     return days;
-  }, []);
+  }, [isCompact]);
 
   // Calculate streak for a habit
   const calculateStreak = (habit: Habit): number => {
@@ -166,44 +188,48 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
     const streak = calculateStreak(habit);
 
     return (
-      <div key={habit.id} className="mb-4 last:mb-0">
+      <div key={habit.id} className={`${isCompact ? 'mb-2' : 'mb-4'} last:mb-0`}>
         {/* Habit header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <span className={`font-medium text-gray-900 dark:text-white truncate ${isCompact ? 'text-xs' : 'text-sm'}`}>
               {habit.name}
             </span>
-            <button
-              onClick={() => openEditDialog(habit)}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <Pencil className="w-3 h-3" />
-            </button>
-            <button
-              onClick={() => handleDeleteHabit(habit.id)}
-              className="p-1 text-gray-400 hover:text-red-500"
-            >
-              <X className="w-3 h-3" />
-            </button>
+            {!isCompact && (
+              <>
+                <button
+                  onClick={() => openEditDialog(habit)}
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleDeleteHabit(habit.id)}
+                  className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </>
+            )}
           </div>
           {streak > 0 && (
-            <span className="text-xs font-medium text-orange-500">
-              Streak: {streak}
+            <span className={`font-medium text-orange-500 flex-shrink-0 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
+              {isCompact ? streak : `Streak: ${streak}`}
             </span>
           )}
         </div>
 
         {/* Week view */}
-        <div className="flex gap-1">
-          {weekDays.map(({ dateStr, dayName, isToday }) => {
+        <div className="flex gap-0.5">
+          {weekDays.map(({ dateStr, dayName, dayLetter, isToday }) => {
             const completed = isCompletedOn(habit, dateStr);
             return (
               <button
                 key={dateStr}
                 onClick={() => toggleCompletion(habit.id, dateStr)}
                 className={`
-                  flex-1 flex flex-col items-center py-1.5 px-1 rounded-md text-xs
-                  transition-colors
+                  flex-1 flex flex-col items-center rounded transition-colors
+                  ${isCompact ? 'py-1 text-[10px]' : 'py-1.5 px-1 text-xs'}
                   ${isToday
                     ? completed
                       ? 'bg-green-500 text-white'
@@ -215,9 +241,9 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
                   hover:opacity-80
                 `}
               >
-                <span className="font-medium">{dayName}</span>
-                <span className="mt-0.5">
-                  {completed ? <Check className="w-3 h-3" /> : '?'}
+                <span className="font-medium">{isCompact ? dayLetter : dayName}</span>
+                <span className={isCompact ? '' : 'mt-0.5'}>
+                  {completed ? <Check className={isCompact ? 'w-2.5 h-2.5' : 'w-3 h-3'} /> : '?'}
                 </span>
               </button>
             );
@@ -324,13 +350,13 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
   );
 
   return (
-    <div className="widget-container h-full flex flex-col">
+    <div className="widget-container h-full flex flex-col" ref={containerRef}>
       <WidgetHeader
         title="Habits"
         onSettingsClick={() => setShowSettings(true)}
       />
 
-      <div className="flex-grow overflow-hidden p-3">
+      <div className={`flex-grow overflow-hidden ${isCompact ? 'p-2' : 'p-3'}`}>
         {habits.length === 0 ? renderEmptyState() : renderHabits()}
       </div>
 
