@@ -19,6 +19,7 @@ import FlightTrackerWidget from './FlightTrackerWidget/index';
 import GeographyQuizWidget from './GeographyQuizWidget/index';
 import TodoistWidget from './TodoistWidget/index';
 import YearProgressWidget from './YearProgressWidget/index';
+import IframeWidget from './IframeWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -40,6 +41,7 @@ export * from './FlightTrackerWidget/types';
 export * from './GeographyQuizWidget/types';
 export * from './TodoistWidget/types';
 export * from './YearProgressWidget/types';
+export * from './IframeWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -238,6 +240,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Information',
     description: 'Visual representation of year progress with dots'
+  },
+  {
+    type: 'iframe',
+    name: 'Embed',
+    icon: 'Globe',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Utilities',
+    description: 'Embed external content via iframe URL'
   }
 ];
 
@@ -276,6 +289,7 @@ const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
   'geography-quiz': GeographyQuizWidget,
   'todoist': TodoistWidget,
   'year-progress': YearProgressWidget,
+  'iframe': IframeWidget,
 };
 
 /**
