@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, type FC, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info } from 'lucide-react';
+import { Skeleton } from '../../ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -40,8 +42,43 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   const [localConfig, setLocalConfig] = useState<WeatherWidgetConfig>(
     config || { id: '', location: 'New York', units: 'metric' }
   );
+  const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const configRef = useRef<string>(''); // Track the last config for comparison
+
+  /**
+   * Validate location exists using geocoding API
+   */
+  const validateLocation = useCallback(async (location: string): Promise<{ valid: boolean; error?: string }> => {
+    if (!location.trim()) {
+      return { valid: false, error: 'Location is required' };
+    }
+
+    try {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+
+      if (!response.ok) {
+        return { valid: false, error: 'Could not verify location' };
+      }
+
+      const data = await response.json();
+
+      if (!data.results || data.results.length === 0) {
+        return { valid: false, error: `Location "${location}" not found` };
+      }
+
+      return { valid: true };
+    } catch (err) {
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        return { valid: false, error: 'Request timed out' };
+      }
+      return { valid: false, error: 'Could not verify location' };
+    }
+  }, []);
 
   const mockWeatherData: WeatherData = {
     location: 'New York',
@@ -374,8 +411,20 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
    */
   const renderLoading = () => {
     return (
-      <div className="flex items-center justify-center h-full w-full">
-        <div className="animate-pulse rounded-full bg-gray-200 bg-opacity-50 dark:bg-gray-700 dark:bg-opacity-50 h-10 w-10"></div>
+      <div className="h-full w-full p-4 flex flex-col">
+        {/* Temperature and icon skeleton */}
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
+        {/* Location skeleton */}
+        <Skeleton className="h-4 w-24 mb-2" />
+        {/* Condition skeleton */}
+        <Skeleton className="h-3 w-16 mb-4" />
+        {/* Forecast skeleton */}
+        <div className="flex-1 flex items-end space-x-2">
+          <Skeleton className="h-8 w-full" />
+        </div>
       </div>
     );
   };
@@ -724,8 +773,15 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
           type="text"
           placeholder="Enter city name"
           value={localConfig.location || ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig(prev => ({...prev, location: e.target.value}))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setLocalConfig(prev => ({...prev, location: e.target.value}));
+            setLocationError(null); // Clear error when user types
+          }}
+          className={locationError ? 'border-red-500' : ''}
         />
+        {locationError && (
+          <p className="text-xs text-red-500">{locationError}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -754,6 +810,40 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
    * 
    * @returns {JSX.Element} Settings footer
    */
+  const handleSaveSettings = async () => {
+    // Validate location before saving
+    setIsValidating(true);
+    setLocationError(null);
+
+    const result = await validateLocation(localConfig.location || '');
+
+    setIsValidating(false);
+
+    if (!result.valid) {
+      setLocationError(result.error || 'Invalid location');
+      toast.error('Invalid location', {
+        description: result.error,
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Save settings via onUpdate callback
+    if (config?.onUpdate) {
+      config.onUpdate(localConfig);
+    }
+
+    // Apply the local config settings
+    setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
+    setIsSettingsOpen(false);
+
+    // Trigger a weather refresh with new settings
+    setLoading(true);
+    setTimeout(() => {
+      fetchWeather();
+    }, 300);
+  };
+
   const renderSettingsFooter = () => {
     return (
       <div className="flex justify-between w-full">
@@ -770,30 +860,21 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             Delete
           </Button>
         )}
-        
+
         <div className="flex">
           <Button
             variant="default"
-            onClick={() => {
-              // Save settings via onUpdate callback (will use configManager in App.tsx)
-              if (config?.onUpdate) {
-                config.onUpdate(localConfig);
-              }
-
-              // Apply the local config settings
-              setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
-              setIsSettingsOpen(false);
-
-              // Trigger a weather refresh with new settings
-              setLoading(true);
-              
-              // Short delay to ensure all state updates are processed
-              setTimeout(() => {
-                fetchWeather();
-              }, 300);
-            }}
+            onClick={handleSaveSettings}
+            disabled={isValidating}
           >
-            Save
+            {isValidating ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Validating...
+              </>
+            ) : (
+              'Save'
+            )}
           </Button>
         </div>
       </div>

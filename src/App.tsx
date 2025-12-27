@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PasteDetectionLayer } from '@/components/clipboard/PasteDetectionLayer'
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
 import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
 import { Changelog } from '@/components/Changelog'
 import { faviconService } from '@/lib/services/favicon'
@@ -484,12 +484,13 @@ function App() {
         }
       };
 
-      if (debounce) {
-        // Clear any existing timeout to debounce rapid updates
-        if (widgetUpdateTimeout.current !== null) {
-          clearTimeout(widgetUpdateTimeout.current);
-        }
+      // Always cancel pending debounced save to prevent race conditions
+      if (widgetUpdateTimeout.current !== null) {
+        clearTimeout(widgetUpdateTimeout.current);
+        widgetUpdateTimeout.current = null;
+      }
 
+      if (debounce) {
         // Schedule save for later (returns immediately)
         widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
       } else {
@@ -526,12 +527,13 @@ function App() {
         }
       };
 
-      if (debounce) {
-        // Clear any existing timeout to debounce rapid updates
-        if (layoutUpdateTimeout.current !== null) {
-          clearTimeout(layoutUpdateTimeout.current);
-        }
+      // Always cancel pending debounced save to prevent race conditions
+      if (layoutUpdateTimeout.current !== null) {
+        clearTimeout(layoutUpdateTimeout.current);
+        layoutUpdateTimeout.current = null;
+      }
 
+      if (debounce) {
         // Schedule save for later (returns immediately)
         layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
       } else {
@@ -540,7 +542,7 @@ function App() {
       }
     }
   };
-  
+
   // Update theme based on settings
   useEffect(() => {
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -903,17 +905,34 @@ function App() {
     if (draggedWidgetId && dragDirection) {
       // Find the dragged widget element
       const widgetElement = document.querySelector(`.react-grid-item[data-grid*="i:${draggedWidgetId}"].react-draggable-dragging`);
-      
+
       if (widgetElement) {
         // Remove any existing direction classes
         widgetElement.classList.remove('dragging-left', 'dragging-right');
-        
+
         // Add the appropriate direction class
         widgetElement.classList.add(`dragging-${dragDirection}`);
       }
     }
   }, [draggedWidgetId, dragDirection]);
-  
+
+  // Cleanup drag/resize classes on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Clean up any lingering drag/resize classes from body
+      document.body.classList.remove(
+        'dragging',
+        'react-grid-layout--dragging',
+        'react-grid-layout--resizing'
+      );
+
+      // Clean up any widget-specific classes
+      document.querySelectorAll('.dragging-left, .dragging-right, .drag-rebound').forEach(el => {
+        el.classList.remove('dragging-left', 'dragging-right', 'drag-rebound');
+      });
+    };
+  }, []);
+
   // Track resizing widget for constraint feedback
   const [resizingWidgetId, setResizingWidgetId] = useState<string | null>(null);
   const lastResizeSize = useRef<{ w: number; h: number } | null>(null);
@@ -1342,11 +1361,23 @@ function App() {
         }
       });
       
-      // If we found orphaned items, update the layouts
+      // If we found orphaned items, update the layouts and notify user
       if (hasOrphanedItems) {
-        // Cleaning up orphaned layout items
+        // Count how many items were removed
+        const removedCount = Object.keys(layouts).reduce((acc, bp) => {
+          const original = layouts[bp]?.length || 0;
+          const cleaned = cleanedLayouts[bp]?.length || 0;
+          return acc + (original - cleaned);
+        }, 0);
+
         setLayouts(cleanedLayouts);
         localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(cleanedLayouts));
+
+        // Notify user about the cleanup
+        toast.info('Dashboard cleaned up', {
+          description: `Removed ${removedCount} orphaned layout item${removedCount > 1 ? 's' : ''} from deleted widgets.`,
+          duration: 4000,
+        });
       }
     }
   }, [widgets, layouts]);

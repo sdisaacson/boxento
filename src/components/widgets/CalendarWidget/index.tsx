@@ -309,11 +309,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
     // Decrypt the access token before returning
     try {
       return await encryptionUtils.decrypt(encryptedAccessToken);
-    } catch {
-      console.error('Failed to decrypt access token');
+    } catch (err) {
+      console.error('Failed to decrypt access token:', err);
+      // This usually happens when the encryption key changed (login/logout)
+      toast.error('Calendar token expired', {
+        description: 'Please reconnect your Google Calendar.',
+        duration: 5000,
+      });
+      disconnectGoogleCalendar();
       return null;
     }
-  }, [getTokenKeys, refreshAccessToken]);
+  }, [getTokenKeys, refreshAccessToken, disconnectGoogleCalendar]);
   
   /**
    * Fetches events from Google Calendar

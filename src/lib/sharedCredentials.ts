@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { encryptionUtils } from './encryption';
 
 // Storage key for shared credentials
@@ -45,6 +46,20 @@ export const sharedCredentialsManager = {
       return await encryptionUtils.decrypt(credential);
     } catch (e) {
       console.error('Error loading shared credential', e);
+      // This usually happens when encryption key changed (login/logout)
+      // Clear the corrupted credential and notify user
+      const stored = localStorage.getItem(SHARED_CREDENTIALS_KEY);
+      if (stored) {
+        const credentials: SharedCredentialsStore = JSON.parse(stored);
+        if (credentials[credentialType]) {
+          delete credentials[credentialType];
+          localStorage.setItem(SHARED_CREDENTIALS_KEY, JSON.stringify(credentials));
+          toast.warning('API key needs re-entry', {
+            description: 'Please re-enter your API key in widget settings.',
+            duration: 5000,
+          });
+        }
+      }
       return null;
     }
   },

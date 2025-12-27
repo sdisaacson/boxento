@@ -14,6 +14,7 @@ import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
 import { AlertCircle, Github, Shield } from 'lucide-react';
+import { Skeleton } from '../../ui/skeleton';
 
 /**
  * Size categories for widget content rendering
@@ -512,8 +513,22 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
 
     if (githubData.loading) {
       return (
-        <div className="h-full flex flex-col items-center justify-center">
-          <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="h-full flex flex-col p-4 space-y-3">
+          {/* Streak number skeleton */}
+          <div className="flex items-center justify-center">
+            <Skeleton className="h-12 w-24" />
+          </div>
+          {/* Contribution graph skeleton */}
+          <div className="flex-1 flex flex-col justify-center space-y-1">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+          {/* Stats skeleton */}
+          <div className="flex justify-between">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-16" />
+          </div>
         </div>
       );
     }
