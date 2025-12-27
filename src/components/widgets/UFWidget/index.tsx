@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import { RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { UFWidgetProps, UFWidgetConfig, UFData } from './types';
 import { Button } from '../../ui/button';
-// Add imports for Input, Label, Checkbox
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
@@ -403,9 +403,16 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
             (Valor aproximado)
           </div>
         )}
+        <button
+          onClick={() => fetchUfData()}
+          className="mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex items-center justify-center gap-1"
+        >
+          <RefreshCw size={12} />
+          Actualizar
+        </button>
       </div>
     );
-  }, [loading, error, ufData, useFallbackData, formatUfValue, formatDate, lastUpdated, renderErrorView]);
+  }, [loading, error, ufData, useFallbackData, formatUfValue, formatDate, lastUpdated, renderErrorView, fetchUfData]);
   
   // Render wide small view (3x2 or 4x2)
   const renderWideSmallView = useCallback(() => {
