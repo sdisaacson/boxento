@@ -21,6 +21,8 @@ import TodoistWidget from './TodoistWidget/index';
 import YearProgressWidget from './YearProgressWidget/index';
 import IframeWidget from './IframeWidget/index';
 import HabitWidget from './HabitWidget/index';
+import CountdownWidget from './CountdownWidget/index';
+import QRCodeWidget from './QRCodeWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -44,6 +46,8 @@ export * from './TodoistWidget/types';
 export * from './YearProgressWidget/types';
 export * from './IframeWidget/types';
 export * from './HabitWidget/types';
+export * from './CountdownWidget/types';
+export * from './QRCodeWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -264,6 +268,28 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Productivity',
     description: 'Track daily habits and build streaks'
+  },
+  {
+    type: 'countdown',
+    name: 'Countdown',
+    icon: 'Clock',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Count down to important events and dates'
+  },
+  {
+    type: 'qrcode',
+    name: 'QR Code',
+    icon: 'QrCode',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Utilities',
+    description: 'Generate QR codes from text or URLs'
   }
 ];
 
@@ -304,6 +330,8 @@ const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
   'year-progress': YearProgressWidget,
   'iframe': IframeWidget,
   'habits': HabitWidget,
+  'countdown': CountdownWidget,
+  'qrcode': QRCodeWidget,
 };
 
 /**
