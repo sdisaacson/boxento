@@ -47,7 +47,9 @@ interface FlightData {
 const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [flightNumber, setFlightNumber] = useState(config?.flightNumber || '');
+  const [flightDate, setFlightDate] = useState(config?.flightDate || new Date().toISOString().split('T')[0]);
   const [inputValue, setInputValue] = useState(config?.flightNumber || '');
+  const [inputDate, setInputDate] = useState(config?.flightDate || new Date().toISOString().split('T')[0]);
   const [flightData, setFlightData] = useState<FlightData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,13 +114,20 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
   const handleSave = () => {
     const newFlightNumber = inputValue.toUpperCase().trim();
     setFlightNumber(newFlightNumber);
+    setFlightDate(inputDate);
     if (config?.onUpdate) {
-      config.onUpdate({ ...config, flightNumber: newFlightNumber });
+      config.onUpdate({ ...config, flightNumber: newFlightNumber, flightDate: inputDate });
     }
     setShowSettings(false);
     if (newFlightNumber) {
       fetchFlight(newFlightNumber);
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   // Render setup view when no flight configured
@@ -157,17 +166,26 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
     </div>
   );
 
+  // Extract flight date from departure time
+  const getFlightDate = () => {
+    if (flightData?.departure?.scheduled) {
+      const datePart = flightData.departure.scheduled.split(' ')[0];
+      return formatDate(datePart);
+    }
+    return formatDate(flightDate);
+  };
+
   // Render flight info - Flighty-style minimal design
   const renderFlight = () => {
     if (!flightData) return null;
 
     return (
       <div className="h-full flex flex-col p-3">
-        {/* Header with flight number and status */}
+        {/* Header with flight number, date, and status */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold">{flightData.flight_iata}</span>
-            <span className="text-xs text-gray-500">{flightData.airline_name}</span>
+            <span className="text-xs text-gray-500">• {getFlightDate()}</span>
           </div>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${getStatusColor(flightData.status)}`}>
             {flightData.status}
@@ -252,11 +270,17 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({ config }) => 
               placeholder="e.g. LA621, AA100, UA123"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             />
-            <p className="text-xs text-gray-500">
-              Enter the airline code and flight number
-            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Flight Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={inputDate}
+              onChange={(e) => setInputDate(e.target.value)}
+            />
           </div>
         </div>
 
