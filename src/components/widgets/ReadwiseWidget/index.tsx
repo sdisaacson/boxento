@@ -307,15 +307,13 @@ const renderNoApiTokenState = () => {
    */
   const renderSmallView = () => {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center overflow-hidden w-full px-1">
-          <div
-            className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-6 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            onClick={openHighlightInReadwise}
-            title="Open in Readwise"
-          >
-            "{highlight?.text}"
-          </div>
+      <div className="h-full overflow-y-auto">
+        <div
+          className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          onClick={openHighlightInReadwise}
+          title="Open in Readwise"
+        >
+          "{highlight?.text}"
         </div>
       </div>
     );
@@ -328,17 +326,19 @@ const renderNoApiTokenState = () => {
    */
   const renderWideSmallView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div
-          className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          onClick={openHighlightInReadwise}
-          title="Open in Readwise"
-        >
-          "{highlight?.text}"
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
+            "{highlight?.text}"
+          </div>
         </div>
 
         {localConfig.showBookInfo && highlight?.book_title && (
-          <div className="text-xs text-gray-500 mt-2 flex items-center">
+          <div className="text-xs text-gray-500 mt-2 flex items-center flex-shrink-0">
             <BookOpen size={12} className="mr-1" />
             <span className="truncate">{highlight.book_title}</span>
           </div>
@@ -354,17 +354,19 @@ const renderNoApiTokenState = () => {
    */
   const renderTallSmallView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div
-          className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-7 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          onClick={openHighlightInReadwise}
-          title="Open in Readwise"
-        >
-          "{highlight?.text}"
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
+            "{highlight?.text}"
+          </div>
         </div>
 
         {localConfig.showBookInfo && (
-          <div className="mt-2">
+          <div className="mt-2 flex-shrink-0">
             {highlight?.book_title && (
               <div className="text-xs text-gray-500 flex items-center">
                 <BookOpen size={12} className="mr-1" />
@@ -389,10 +391,10 @@ const renderNoApiTokenState = () => {
    */
   const renderMediumView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div>
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
           <div
-            className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-6 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             onClick={openHighlightInReadwise}
             title="Open in Readwise"
           >
@@ -400,13 +402,13 @@ const renderNoApiTokenState = () => {
           </div>
 
           {highlight?.note && (
-            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               Note: {highlight.note}
             </div>
           )}
         </div>
-        
-        <div>
+
+        <div className="flex-shrink-0">
           {localConfig.showBookInfo && (
             <div className="mb-2">
               {highlight?.book_title && (
@@ -422,7 +424,7 @@ const renderNoApiTokenState = () => {
               )}
             </div>
           )}
-          
+
           {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
             <div className="flex flex-wrap">
               {highlight.tags.map(tag => (
@@ -445,10 +447,10 @@ const renderNoApiTokenState = () => {
   const renderWideMediumView = () => {
     return (
       <div className="grid grid-cols-4 h-full">
-        <div className="col-span-3 flex flex-col justify-between pr-3">
-          <div>
+        <div className="col-span-3 flex flex-col pr-3">
+          <div className="flex-grow overflow-y-auto min-h-0">
             <div
-              className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-5 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               onClick={openHighlightInReadwise}
               title="Open in Readwise"
             >
@@ -456,13 +458,13 @@ const renderNoApiTokenState = () => {
             </div>
 
             {highlight?.note && (
-              <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+              <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                 Note: {highlight.note}
               </div>
             )}
           </div>
-          
-          <div>
+
+          <div className="flex-shrink-0">
             {localConfig.showBookInfo && (
               <div className="mb-2">
                 {highlight?.book_title && (
@@ -478,7 +480,7 @@ const renderNoApiTokenState = () => {
                 )}
               </div>
             )}
-            
+
             {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
               <div className="flex flex-wrap">
                 {highlight.tags.map(tag => (
@@ -490,9 +492,9 @@ const renderNoApiTokenState = () => {
             )}
           </div>
         </div>
-        
+
         <div className="col-span-1 flex flex-col items-center justify-center border-l border-gray-200 dark:border-gray-700 pl-3">
-          <button 
+          <button
             onClick={fetchRandomHighlight}
             className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full mb-2"
             aria-label="Refresh highlight"
@@ -500,7 +502,7 @@ const renderNoApiTokenState = () => {
             <RefreshCw size={16} />
           </button>
           <span className="text-xs text-gray-500 text-center">New Highlight</span>
-          
+
           <div className="flex items-center justify-center mt-6">
             <Quote size={40} className="text-gray-300 dark:text-gray-600" />
           </div>
@@ -516,10 +518,10 @@ const renderNoApiTokenState = () => {
    */
   const renderTallMediumView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div>
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
           <div
-            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-8 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             onClick={openHighlightInReadwise}
             title="Open in Readwise"
           >
@@ -532,8 +534,8 @@ const renderNoApiTokenState = () => {
             </div>
           )}
         </div>
-        
-        <div>
+
+        <div className="flex-shrink-0">
           {localConfig.showBookInfo && (
             <div className="mb-2">
               {highlight?.book_title && (
@@ -549,7 +551,7 @@ const renderNoApiTokenState = () => {
               )}
             </div>
           )}
-          
+
           {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
             <div className="flex flex-wrap mb-2">
               {highlight.tags.map(tag => (
@@ -559,9 +561,9 @@ const renderNoApiTokenState = () => {
               ))}
             </div>
           )}
-          
+
           <div className="flex justify-end">
-            <button 
+            <button
               onClick={fetchRandomHighlight}
               className="flex items-center justify-center px-3 py-1 bg-blue-500 text-white rounded text-sm"
             >
