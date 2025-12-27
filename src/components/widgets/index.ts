@@ -20,6 +20,7 @@ import GeographyQuizWidget from './GeographyQuizWidget/index';
 import TodoistWidget from './TodoistWidget/index';
 import YearProgressWidget from './YearProgressWidget/index';
 import IframeWidget from './IframeWidget/index';
+import HabitWidget from './HabitWidget/index';
 // Import TemplateWidget (commented as it's not for production use)
 // import TemplateWidget from './TemplateWidget/index';
 
@@ -42,6 +43,7 @@ export * from './GeographyQuizWidget/types';
 export * from './TodoistWidget/types';
 export * from './YearProgressWidget/types';
 export * from './IframeWidget/types';
+export * from './HabitWidget/types';
 // Export TemplateWidget types (commented as it's not for production use)
 // export * from './TemplateWidget/types';
 
@@ -251,6 +253,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Utilities',
     description: 'Embed external content via iframe URL'
+  },
+  {
+    type: 'habits',
+    name: 'Habit Tracker',
+    icon: 'CheckSquare',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Productivity',
+    description: 'Track daily habits and build streaks'
   }
 ];
 
@@ -290,6 +303,7 @@ const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
   'todoist': TodoistWidget,
   'year-progress': YearProgressWidget,
   'iframe': IframeWidget,
+  'habits': HabitWidget,
 };
 
 /**
