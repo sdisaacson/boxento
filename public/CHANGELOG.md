@@ -3,16 +3,16 @@
 ## December 27, 2025
 
 ### 🎉 New Widgets
-• **Countdown Widget**: Count down to important events with days, hours, minutes, seconds. Uses shadcn Calendar for date selection.
-• **QR Code Generator**: Generate QR codes from text/URLs. Download as PNG or copy content.
-• **Habit Tracker**: Track daily habits with a 7-day view and streak tracking.
-• **Embed Widget**: Embed external content via iframe or images. Includes scale and alignment options.
+• Countdown Widget: Count down to important events with days, hours, minutes, seconds. Uses shadcn Calendar for date selection.
+• QR Code Generator: Generate QR codes from text/URLs. Download as PNG or copy content.
+• Habit Tracker: Track daily habits with a 7-day view and streak tracking.
+• Embed Widget: Embed external content via iframe or images. Includes scale and alignment options.
 
 ### 🎨 Design Improvements
-• **World Clocks Redesign**: New Bauhaus-inspired minimalist clock with geometric hands and red second hand accent.
-• **UF Widget**: Subtle refresh icons instead of blue buttons.
-• **Readwise Widget**: Quotes now scroll instead of being cropped.
-• **Quick Links Widget**: Compact mode for small widget sizes.
+• World Clocks Redesign: New Bauhaus-inspired minimalist clock with geometric hands and red second hand accent.
+• UF Widget: Subtle refresh icons instead of blue buttons.
+• Readwise Widget: Quotes now scroll instead of being cropped.
+• Quick Links Widget: Compact mode for small widget sizes.
 
 ### 📱 Large Display Support
 • 4K and ultra-wide display breakpoints (up to 24 columns)
