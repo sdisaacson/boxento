@@ -2,6 +2,10 @@
 
 ## December 27, 2025
 
+### 🚀 Multi-Dashboard & Sharing
+• Multiple Dashboards: Create and switch between multiple dashboards. Each dashboard has its own widgets and layouts.
+• Public Dashboard Sharing: Share your dashboards publicly via a unique URL. Anyone can view your shared dashboard in read-only mode.
+
 ### 🎉 New Widgets
 • Countdown Widget: Count down to important events with days, hours, minutes, seconds. Uses shadcn Calendar for date selection.
 • QR Code Generator: Generate QR codes from text/URLs. Download as PNG or copy content.

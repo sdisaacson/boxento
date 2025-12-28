@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { Plus, Moon, Sun, Cloud, CloudOff, Loader2 } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
@@ -17,7 +17,7 @@ import WidgetSelector from '@/components/widgets/common/WidgetSelector'
 import { configManager } from '@/lib/configManager'
 import { UserMenuButton } from '@/components/auth/UserMenuButton'
 import { auth } from '@/lib/firebase'
-import { userDashboardService } from '@/lib/firestoreService'
+import { userDashboardService, publicDashboardService } from '@/lib/firestoreService'
 import { TIMING, STORAGE_KEYS } from '@/lib/constants'
 import { useSync } from '@/lib/SyncContext'
 import { Button } from './components/ui/button'
@@ -29,14 +29,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PasteDetectionLayer } from '@/components/clipboard/PasteDetectionLayer'
-import { Toaster, toast } from 'sonner'
+import { Toaster } from 'sonner'
 import { UrlMatchResult } from '@/lib/services/clipboard/urlDetector'
 import { Changelog } from '@/components/Changelog'
 import { faviconService } from '@/lib/services/favicon'
 import { useAppSettings } from '@/context/AppSettingsContext'
 import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
+import { DashboardSwitcher, Dashboard, DashboardVisibility } from '@/components/dashboard/DashboardSwitcher'
 import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
+import { AppFooter } from '@/components/AppFooter'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -72,24 +74,6 @@ const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: stri
   return validatedLayouts;
 };
 
-const createDefaultLayoutsForWidgets = (
-  widgets: Widget[]
-): { [key: string]: LayoutItem[] } => {
-  const newLayouts: { [key: string]: LayoutItem[] } = {};
-  
-  // For each breakpoint, create layout items for all widgets
-  Object.keys(breakpoints).forEach(breakpoint => {
-    const colsForBreakpoint = cols[breakpoint as keyof typeof cols];
-    
-    // Create layout items for each widget, using smart positioning based on breakpoint
-    newLayouts[breakpoint] = widgets.map((widget, index) => 
-      createDefaultLayoutItem(widget.id, index, colsForBreakpoint, breakpoint)
-    );
-  });
-  
-  return newLayouts;
-};
-
 const prepareWidgetConfigForSave = (config: Record<string, unknown>): Record<string, unknown> => {
   // Create a copy of the config without function properties
   const configToSave = { ...config };
@@ -112,172 +96,6 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
   
   return defaultValue;
 };
-
-// Define the Footer component
-const AppFooter = () => {
-  const currentYear = new Date().getFullYear();
-  const buildHash = __BUILD_HASH__;
-  const buildTime = new Date(__BUILD_TIME__).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  return (
-    <footer className="py-4 sm:py-6 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 my-4 sm:my-8 border-t border-gray-200 dark:border-gray-800">
-      <div className="w-full flex flex-col gap-4 sm:gap-6">
-        {/* Mobile layout (stacked) */}
-        <div className="flex flex-col items-center gap-3 sm:hidden">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Built by{' '}
-            <a 
-              href="https://sushaantu.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              Sushaantu
-            </a>
-          </p>
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <a
-              href="https://github.com/sushaantu/boxento"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-              <span className="sr-only sm:not-sr-only">View Source</span>
-            </a>
-            <a
-              href="https://twitter.com/intent/tweet?text=Check%20out%20Boxento%20-%20An%20awesome%20open-source%20dashboard%20built%20by%20%40su%20%F0%9F%9A%80&url=https%3A%2F%2Fgithub.com%2Fsushaantu%2Fboxento"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-              </svg>
-              <span className="sr-only sm:not-sr-only">Share Project</span>
-            </a>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <a
-              href="https://github.com/sushaantu/boxento/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              Report Issue
-            </a>
-            <a
-              href="https://github.com/sushaantu/boxento#contributing"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              Contribute
-            </a>
-          </div>
-          <div className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
-            <span>© {currentYear}</span>
-            <span>·</span>
-            <a
-              href={`https://github.com/sushaantu/boxento/commit/${buildHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              title={`Built: ${buildTime}`}
-            >
-              v{buildHash}
-            </a>
-          </div>
-        </div>
-
-        {/* Desktop/Tablet layout (side by side) */}
-        <div className="hidden sm:flex sm:flex-row justify-between items-center">
-          <div className="flex items-center gap-4 md:gap-6">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Built by{' '}
-              <a 
-                href="https://sushaantu.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                Sushaantu
-              </a>
-            </p>
-            <span className="text-gray-300 dark:text-gray-600">|</span>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              <a
-                href="https://github.com/sushaantu/boxento"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-                View Source
-              </a>
-              <a
-                href="https://twitter.com/intent/tweet?text=Check%20out%20Boxento%20-%20An%20awesome%20open-source%20dashboard%20built%20by%20%40su%20%F0%9F%9A%80&url=https%3A%2F%2Fgithub.com%2Fsushaantu%2Fboxento"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-                Share Project
-              </a>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 md:gap-6">
-            <div className="flex items-center gap-4 md:gap-6 text-sm text-gray-500 dark:text-gray-400">
-              <a
-                href="https://github.com/sushaantu/boxento/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                Report Issue
-              </a>
-              <a
-                href="https://github.com/sushaantu/boxento#contributing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                Contribute
-              </a>
-            </div>
-            <span className="text-gray-300 dark:text-gray-600">|</span>
-            <div className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
-              <span>© {currentYear}</span>
-              <span>·</span>
-              <a
-                href={`https://github.com/sushaantu/boxento/commit/${buildHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                title={`Built: ${buildTime}`}
-              >
-                v{buildHash}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
 
 function App() {
   // Register service worker for PWA functionality
@@ -390,33 +208,67 @@ function App() {
   });
   
   const [layouts, setLayouts] = useState<{ [key: string]: LayoutItem[] }>(() => {
+    if (typeof window === 'undefined') return getDefaultLayouts();
+
     try {
-      const savedLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, {});
-      if (Object.keys(savedLayouts).length > 0) {
-        return validateLayouts(savedLayouts);
+      // Get current dashboard ID from localStorage
+      const dashboardId = localStorage.getItem('boxento-current-dashboard') || 'personal';
+      const dashboardKey = `boxento-layouts-${dashboardId}`;
+
+      // Try dashboard-specific storage first
+      const dashboardLayouts = localStorage.getItem(dashboardKey);
+      if (dashboardLayouts) {
+        const parsed = JSON.parse(dashboardLayouts);
+        if (Object.keys(parsed).length > 0) {
+          return validateLayouts(parsed);
+        }
+      }
+
+      // Fall back to legacy storage only for personal dashboard
+      if (dashboardId === 'personal') {
+        const savedLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, {});
+        if (Object.keys(savedLayouts).length > 0) {
+          return validateLayouts(savedLayouts);
+        }
       }
     } catch (error) {
       console.error('Error initializing layouts:', error);
     }
-    
+
     // Default layout for all breakpoints with default widgets
     return getDefaultLayouts();
   });
-  
-  const [widgets, setWidgets] = useState<Widget[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, []);
 
-      // Only use default widgets if we're not logged in and no widgets in storage
-      if (savedWidgets.length === 0 && !auth?.currentUser) {
-        return getDefaultWidgets();
+  const [widgets, setWidgets] = useState<Widget[]>(() => {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      // Get current dashboard ID from localStorage
+      const dashboardId = localStorage.getItem('boxento-current-dashboard') || 'personal';
+      const dashboardKey = `boxento-widgets-${dashboardId}`;
+
+      // Try dashboard-specific storage first
+      const dashboardWidgets = localStorage.getItem(dashboardKey);
+      if (dashboardWidgets) {
+        const parsed = JSON.parse(dashboardWidgets);
+        if (parsed.length > 0) {
+          return parsed;
+        }
       }
 
-      // Return widget metadata only - configs will be loaded asynchronously
-      // in loadLocalData() or loadUserData() after component mounts
-      return savedWidgets;
+      // Fall back to legacy storage only for personal dashboard
+      if (dashboardId === 'personal') {
+        const savedWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, []);
+        if (savedWidgets.length > 0) {
+          return savedWidgets;
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing widgets:', error);
     }
-    return []
+
+    // Use default widgets if nothing found
+    return getDefaultWidgets();
   });
   
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200);
@@ -425,6 +277,253 @@ function App() {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
   const [isTransitionsEnabled, setIsTransitionsEnabled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
+
+  // Default dashboard to ensure there's always at least one
+  const defaultDashboard: Dashboard = {
+    id: 'personal',
+    name: 'Personal',
+    visibility: 'private' as DashboardVisibility,
+    sharedWith: [],
+    isDefault: true,
+    createdAt: new Date().toISOString()
+  };
+
+  // Multi-dashboard state
+  const [dashboards, setDashboards] = useState<Dashboard[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('boxento-dashboards');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Ensure parsed is a valid array
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Migrate old isPublic to visibility if needed
+            const migrated = parsed.map((d: Dashboard & { isPublic?: boolean }) => ({
+              ...d,
+              visibility: d.visibility || (d.isPublic ? 'public' : 'private'),
+              sharedWith: d.sharedWith || [],
+            }));
+            // Ensure the result has at least one valid dashboard
+            if (migrated.length > 0 && migrated[0]?.id && migrated[0]?.name) {
+              return migrated;
+            }
+          }
+        } catch {
+          // ignore corrupted data
+        }
+      }
+    }
+    return [defaultDashboard];
+  });
+
+  const [currentDashboardId, setCurrentDashboardId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('boxento-current-dashboard') || 'personal';
+    }
+    return 'personal';
+  });
+
+  // Ensure currentDashboard is always defined - fallback to first dashboard or default
+  const currentDashboard = dashboards.find(d => d.id === currentDashboardId)
+    || dashboards[0]
+    || defaultDashboard;
+
+  // Save dashboards to localStorage
+  useEffect(() => {
+    localStorage.setItem('boxento-dashboards', JSON.stringify(dashboards));
+  }, [dashboards]);
+
+  useEffect(() => {
+    localStorage.setItem('boxento-current-dashboard', currentDashboardId);
+  }, [currentDashboardId]);
+
+  // Helper to get storage keys for a specific dashboard
+  const getDashboardStorageKeys = (dashboardId: string) => ({
+    widgets: `boxento-widgets-${dashboardId}`,
+    layouts: `boxento-layouts-${dashboardId}`,
+    configs: `boxento-configs-${dashboardId}`,
+  });
+
+  // Save current dashboard's widgets and layouts before switching
+  const saveCurrentDashboardData = () => {
+    const keys = getDashboardStorageKeys(currentDashboardId);
+    localStorage.setItem(keys.widgets, JSON.stringify(widgets));
+    localStorage.setItem(keys.layouts, JSON.stringify(layouts));
+  };
+
+  // Helper to generate fresh widgets with unique IDs
+  const generateFreshDefaultWidgets = () => {
+    const timestamp = Date.now();
+    return [
+      { id: `todo-${timestamp}`, type: 'todo', config: getWidgetConfigByType('todo') || {} },
+      { id: `weather-${timestamp + 1}`, type: 'weather', config: getWidgetConfigByType('weather') || {} },
+      { id: `quick-links-${timestamp + 2}`, type: 'quick-links', config: getWidgetConfigByType('quick-links') || {} },
+      { id: `notes-${timestamp + 3}`, type: 'notes', config: getWidgetConfigByType('notes') || {} },
+    ] as Widget[];
+  };
+
+  // Helper to generate layouts for given widgets
+  const generateLayoutsForWidgets = (widgets: Widget[]) => ({
+    lg: [
+      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: widgets[1].id, x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[2].id, x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: widgets[3].id, x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    md: [
+      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: widgets[1].id, x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[2].id, x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: widgets[3].id, x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    sm: [
+      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: widgets[1].id, x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: widgets[2].id, x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: widgets[3].id, x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
+    ],
+    xs: [
+      { i: widgets[0].id, x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[1].id, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[2].id, x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[3].id, x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
+    ],
+    xxs: [
+      { i: widgets[0].id, x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[1].id, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[2].id, x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: widgets[3].id, x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
+    ]
+  });
+
+  // Load widgets and layouts for a specific dashboard
+  const loadDashboardData = async (dashboardId: string) => {
+    const keys = getDashboardStorageKeys(dashboardId);
+
+    // Try to load from dashboard-specific storage
+    const savedWidgets = localStorage.getItem(keys.widgets);
+    const savedLayouts = localStorage.getItem(keys.layouts);
+
+    let widgetsToLoad: Widget[];
+    let layoutsToLoad: { [key: string]: LayoutItem[] };
+
+    if (savedWidgets && savedLayouts) {
+      // Dashboard has saved data
+      widgetsToLoad = JSON.parse(savedWidgets);
+      layoutsToLoad = JSON.parse(savedLayouts);
+    } else if (dashboardId === 'personal') {
+      // Personal dashboard falls back to legacy storage
+      widgetsToLoad = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
+      layoutsToLoad = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
+    } else {
+      // Non-personal dashboards without storage get fresh widgets with unique IDs
+      widgetsToLoad = generateFreshDefaultWidgets();
+      layoutsToLoad = generateLayoutsForWidgets(widgetsToLoad);
+      // Save immediately so they persist
+      localStorage.setItem(keys.widgets, JSON.stringify(widgetsToLoad));
+      localStorage.setItem(keys.layouts, JSON.stringify(layoutsToLoad));
+    }
+
+    // Load configs for these widgets
+    const localConfigs = await configManager.getConfigs(true);
+    const widgetsWithConfigs = widgetsToLoad.map((widget: Widget) => {
+      if (widget.id && localConfigs[widget.id]) {
+        return {
+          ...widget,
+          config: {
+            ...widget.config,
+            ...localConfigs[widget.id]
+          }
+        };
+      }
+      return widget;
+    });
+    setWidgets(widgetsWithConfigs);
+    setLayouts(layoutsToLoad);
+  };
+
+  const handleSwitchDashboard = async (dashboard: Dashboard) => {
+    // Save current dashboard's data first
+    saveCurrentDashboardData();
+
+    // Switch to new dashboard
+    setCurrentDashboardId(dashboard.id);
+
+    // Load the new dashboard's data
+    await loadDashboardData(dashboard.id);
+  };
+
+  const handleCreateDashboard = async (name: string, visibility: DashboardVisibility) => {
+    // Save current dashboard's data first
+    saveCurrentDashboardData();
+
+    const newDashboard: Dashboard = {
+      id: `dashboard-${Date.now()}`,
+      name,
+      visibility,
+      sharedWith: [],
+      isDefault: false,
+      createdAt: new Date().toISOString(),
+    };
+    setDashboards(prev => [...prev, newDashboard]);
+    setCurrentDashboardId(newDashboard.id);
+
+    // Generate fresh widgets with UNIQUE IDs for this dashboard
+    // This ensures widget configs don't conflict between dashboards
+    const freshWidgets = generateFreshDefaultWidgets();
+    const freshLayouts = generateLayoutsForWidgets(freshWidgets);
+
+    setWidgets(freshWidgets);
+    setLayouts(freshLayouts);
+
+    // Save to the new dashboard's storage immediately
+    const keys = getDashboardStorageKeys(newDashboard.id);
+    localStorage.setItem(keys.widgets, JSON.stringify(freshWidgets));
+    localStorage.setItem(keys.layouts, JSON.stringify(freshLayouts));
+
+    // Sync to Firestore if the dashboard is public or team
+    if (visibility !== 'private') {
+      syncPublicDashboard(newDashboard, freshWidgets, freshLayouts);
+    }
+  };
+
+  const handleUpdateDashboard = (updated: Dashboard) => {
+    setDashboards(prev => prev.map(d => d.id === updated.id ? updated : d));
+
+    // Sync to public dashboard if this is the current dashboard and visibility changed to public/team
+    // or if metadata (name, sharedWith) changed
+    if (updated.id === currentDashboardId) {
+      syncPublicDashboard(updated, widgets, layouts);
+    }
+  };
+
+  const handleDeleteDashboard = async (dashboardId: string) => {
+    const dashboard = dashboards.find(d => d.id === dashboardId);
+    if (dashboard?.isDefault) return; // Can't delete default
+
+    // Clean up storage for deleted dashboard
+    const keys = getDashboardStorageKeys(dashboardId);
+    localStorage.removeItem(keys.widgets);
+    localStorage.removeItem(keys.layouts);
+    localStorage.removeItem(keys.configs);
+
+    // Delete from public-dashboards collection if it was public/team
+    if (dashboard?.visibility !== 'private' && auth?.currentUser) {
+      try {
+        await publicDashboardService.deleteDashboard(dashboardId);
+      } catch (error) {
+        console.error('Error deleting public dashboard:', error);
+      }
+    }
+
+    setDashboards(prev => prev.filter(d => d.id !== dashboardId));
+    if (currentDashboardId === dashboardId) {
+      setCurrentDashboardId('personal');
+      // Load personal dashboard data
+      loadDashboardData('personal');
+    }
+  };
+
   const widgetCategories: WidgetCategory = (() => {
     // Group widgets by category
     const categories: WidgetCategory = {};
@@ -443,9 +542,55 @@ function App() {
   // References for debouncing updates
   const layoutUpdateTimeout = useRef<number | null>(null);
   const widgetUpdateTimeout = useRef<number | null>(null);
+  const publicDashboardSyncTimeout = useRef<number | null>(null);
 
   // Get sync status from context
   const { isSyncing, syncStatus } = useSync();
+
+  /**
+   * Sync public/team dashboard to Firestore for sharing
+   * This is debounced to avoid excessive writes
+   */
+  const syncPublicDashboard = async (
+    dashboard: Dashboard,
+    widgetsToSync: Widget[],
+    layoutsToSync: { [key: string]: LayoutItem[] }
+  ) => {
+    // Only sync if dashboard is public or team
+    if (dashboard.visibility === 'private') {
+      return;
+    }
+
+    // Only sync if user is logged in
+    if (!auth?.currentUser) {
+      console.warn('Cannot sync public dashboard: user not logged in');
+      return;
+    }
+
+    // Cancel any pending sync
+    if (publicDashboardSyncTimeout.current !== null) {
+      clearTimeout(publicDashboardSyncTimeout.current);
+    }
+
+    // Debounce the sync
+    publicDashboardSyncTimeout.current = window.setTimeout(async () => {
+      try {
+        // Get all widget configs
+        const allConfigs = await configManager.getConfigs(true);
+
+        await publicDashboardService.saveDashboard(
+          dashboard.id,
+          dashboard,
+          widgetsToSync,
+          layoutsToSync,
+          allConfigs
+        );
+        console.log('[App] Public dashboard synced:', dashboard.id);
+      } catch (error) {
+        console.error('[App] Failed to sync public dashboard:', error);
+      }
+    }, 2000); // 2 second debounce for public dashboard sync
+  };
   
   // Track the last created widget for undo functionality
   const [lastCreatedWidgetId, setLastCreatedWidgetId] = useState<string | null>(null);
@@ -461,8 +606,9 @@ function App() {
   const saveWidgets = async (updatedWidgets: Widget[], debounce = true): Promise<void> => {
     setWidgets(updatedWidgets);
 
-    // Save to localStorage immediately
-    localStorage.setItem(STORAGE_KEYS.WIDGETS, JSON.stringify(updatedWidgets));
+    // Save to per-dashboard localStorage
+    const keys = getDashboardStorageKeys(currentDashboardId);
+    localStorage.setItem(keys.widgets, JSON.stringify(updatedWidgets));
 
     // Save each widget's configuration separately using configManager
     updatedWidgets.forEach(widget => {
@@ -474,29 +620,37 @@ function App() {
 
     // Save widgets to Firestore when user is logged in
     if (auth?.currentUser) {
-      // Extract Firestore save logic to avoid duplication
-      const saveToFirestore = async () => {
-        try {
-          await userDashboardService.saveWidgets(updatedWidgets);
-          // Widget metadata saved to Firestore
-        } catch (error) {
-          console.error('Error saving widgets to Firestore:', error);
+      // IMPORTANT: Only save to user's global Firestore storage for the personal dashboard
+      // Non-personal dashboards use localStorage + public-dashboards collection only
+      // This prevents overwriting personal dashboard data when editing other dashboards
+      if (currentDashboardId === 'personal') {
+        // Extract Firestore save logic to avoid duplication
+        const saveToFirestore = async () => {
+          try {
+            await userDashboardService.saveWidgets(updatedWidgets);
+            // Widget metadata saved to Firestore
+          } catch (error) {
+            console.error('Error saving widgets to Firestore:', error);
+          }
+        };
+
+        // Always cancel pending debounced save to prevent race conditions
+        if (widgetUpdateTimeout.current !== null) {
+          clearTimeout(widgetUpdateTimeout.current);
+          widgetUpdateTimeout.current = null;
         }
-      };
 
-      // Always cancel pending debounced save to prevent race conditions
-      if (widgetUpdateTimeout.current !== null) {
-        clearTimeout(widgetUpdateTimeout.current);
-        widgetUpdateTimeout.current = null;
+        if (debounce) {
+          // Schedule save for later (returns immediately)
+          widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
+        } else {
+          // Save immediately and wait for completion
+          await saveToFirestore();
+        }
       }
 
-      if (debounce) {
-        // Schedule save for later (returns immediately)
-        widgetUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
-      } else {
-        // Save immediately and wait for completion
-        await saveToFirestore();
-      }
+      // Sync to public dashboard if visibility is public/team
+      syncPublicDashboard(currentDashboard, updatedWidgets, layouts);
     }
   };
   
@@ -512,34 +666,43 @@ function App() {
     // Update state
     setLayouts(updatedLayouts);
 
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(updatedLayouts));
+    // Save to per-dashboard localStorage
+    const keys = getDashboardStorageKeys(currentDashboardId);
+    localStorage.setItem(keys.layouts, JSON.stringify(updatedLayouts));
 
     // Save to Firestore if logged in
     if (auth?.currentUser) {
-      // Extract Firestore save logic to avoid duplication
-      const saveToFirestore = async () => {
-        try {
-          await userDashboardService.saveLayouts(updatedLayouts);
-          // Layouts saved to Firestore
-        } catch (error) {
-          console.error('Error saving layouts to Firestore:', error);
+      // IMPORTANT: Only save to user's global Firestore storage for the personal dashboard
+      // Non-personal dashboards use localStorage + public-dashboards collection only
+      // This prevents overwriting personal dashboard data when editing other dashboards
+      if (currentDashboardId === 'personal') {
+        // Extract Firestore save logic to avoid duplication
+        const saveToFirestore = async () => {
+          try {
+            await userDashboardService.saveLayouts(updatedLayouts);
+            // Layouts saved to Firestore
+          } catch (error) {
+            console.error('Error saving layouts to Firestore:', error);
+          }
+        };
+
+        // Always cancel pending debounced save to prevent race conditions
+        if (layoutUpdateTimeout.current !== null) {
+          clearTimeout(layoutUpdateTimeout.current);
+          layoutUpdateTimeout.current = null;
         }
-      };
 
-      // Always cancel pending debounced save to prevent race conditions
-      if (layoutUpdateTimeout.current !== null) {
-        clearTimeout(layoutUpdateTimeout.current);
-        layoutUpdateTimeout.current = null;
+        if (debounce) {
+          // Schedule save for later (returns immediately)
+          layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
+        } else {
+          // Save immediately and wait for completion
+          await saveToFirestore();
+        }
       }
 
-      if (debounce) {
-        // Schedule save for later (returns immediately)
-        layoutUpdateTimeout.current = window.setTimeout(saveToFirestore, TIMING.SAVE_DEBOUNCE_MS);
-      } else {
-        // Save immediately and wait for completion
-        await saveToFirestore();
-      }
+      // Sync to public dashboard if visibility is public/team
+      syncPublicDashboard(currentDashboard, widgets, updatedLayouts);
     }
   };
 
@@ -637,14 +800,83 @@ function App() {
     const newTheme: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    
+
     // Also update app settings
     const newThemeMode: 'light' | 'dark' | 'system' = newTheme === 'dark' ? 'dark' : 'light';
     if (settings.themeMode !== newThemeMode) {
       updateSettings({ themeMode: newThemeMode });
     }
   };
-  
+
+  // Auto-arrange widgets to fill empty space compactly
+  const handleAutoArrange = (): void => {
+    const updatedLayouts: { [key: string]: LayoutItem[] } = {};
+
+    // Process each breakpoint
+    Object.keys(breakpoints).forEach((breakpoint) => {
+      const colCount = cols[breakpoint as keyof typeof cols];
+      const currentLayout = layouts[breakpoint] || [];
+
+      // Sort widgets by y position, then x position (top-left to bottom-right)
+      const sortedItems = [...currentLayout].sort((a, b) => {
+        if (a.y !== b.y) return a.y - b.y;
+        return a.x - b.x;
+      });
+
+      // Create a grid to track occupied cells
+      const maxY = Math.max(...sortedItems.map(item => item.y + item.h), 0);
+      const grid: boolean[][] = Array(maxY + 100)
+        .fill(null)
+        .map(() => Array(colCount).fill(false));
+
+      // Helper to check if a position is available
+      const canPlace = (x: number, y: number, w: number, h: number): boolean => {
+        if (x + w > colCount) return false;
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            if (grid[y + dy]?.[x + dx]) return false;
+          }
+        }
+        return true;
+      };
+
+      // Helper to mark cells as occupied
+      const placeItem = (x: number, y: number, w: number, h: number): void => {
+        for (let dy = 0; dy < h; dy++) {
+          for (let dx = 0; dx < w; dx++) {
+            if (!grid[y + dy]) grid[y + dy] = Array(colCount).fill(false);
+            grid[y + dy][x + dx] = true;
+          }
+        }
+      };
+
+      // Place each widget in the first available position
+      const newLayout: LayoutItem[] = [];
+      for (const item of sortedItems) {
+        let placed = false;
+        // Try each row, then each column
+        for (let y = 0; !placed && y < grid.length; y++) {
+          for (let x = 0; x <= colCount - item.w; x++) {
+            if (canPlace(x, y, item.w, item.h)) {
+              newLayout.push({ ...item, x, y });
+              placeItem(x, y, item.w, item.h);
+              placed = true;
+              break;
+            }
+          }
+        }
+        // If not placed (shouldn't happen), keep original position
+        if (!placed) {
+          newLayout.push(item);
+        }
+      }
+
+      updatedLayouts[breakpoint] = newLayout;
+    });
+
+    saveLayouts(updatedLayouts);
+  };
+
   // Add widget function - refactored to reduce duplication
   const addWidget = (type: string): void => {
     // Generate unique ID for this widget instance
@@ -673,11 +905,13 @@ function App() {
       const colCount = cols[breakpoint as keyof typeof cols];
       
       // Create default layout item based on the breakpoint
+      // Pass existing layout so it can find the first available position
       const defaultItem = createDefaultLayoutItem(
-        widgetId, 
-        updatedLayouts[breakpoint].length, 
+        widgetId,
+        updatedLayouts[breakpoint].length,
         colCount,
-        breakpoint
+        breakpoint,
+        updatedLayouts[breakpoint]
       );
       
       // Force 2x2 grid size for mobile
@@ -817,22 +1051,37 @@ function App() {
     
     const { width, height } = getWidgetDimensions();
     
+    // Determine if we're in read-only mode (viewing someone else's dashboard)
+    // For now, check if dashboard has an ownerId that doesn't match current user
+    const isReadOnly = currentDashboard.ownerId !== undefined &&
+                       auth?.currentUser?.uid !== currentDashboard.ownerId;
+
     // Create widget config with callbacks
     // IMPORTANT: Include widget.id so widgets can use it for storage keys
+    // In read-only mode, don't provide edit/delete callbacks
     const widgetConfig = {
       ...widget.config,
       id: widget.id,
-      onDelete: () => deleteWidget(widget.id),
-      onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
+      readOnly: isReadOnly,
+      ...(isReadOnly ? {} : {
+        onDelete: () => deleteWidget(widget.id),
+        onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
+      })
     };
     
     return (
       <WidgetErrorBoundary>
-        <WidgetComponent
-          width={width}
-          height={height}
-          config={widgetConfig}
-        />
+        <Suspense fallback={
+          <div className="w-full h-full flex items-center justify-center bg-card rounded-lg">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        }>
+          <WidgetComponent
+            width={width}
+            height={height}
+            config={widgetConfig}
+          />
+        </Suspense>
       </WidgetErrorBoundary>
     );
   };
@@ -1062,12 +1311,50 @@ function App() {
   
   // Load local data (async to properly load encrypted configs)
   const loadLocalData = async () => {
-    // Load layouts from localStorage
-    const localLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
-    if (localLayouts) setLayouts(localLayouts);
+    const personalKeys = getDashboardStorageKeys('personal');
 
-    // Load widgets from localStorage
-    const localWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
+    // Check if we need to migrate legacy data to personal dashboard
+    const hasLegacyData = localStorage.getItem(STORAGE_KEYS.WIDGETS);
+    const hasPersonalDashboardData = localStorage.getItem(personalKeys.widgets);
+
+    // If we have legacy data but no personal dashboard data, migrate
+    if (hasLegacyData && !hasPersonalDashboardData) {
+      localStorage.setItem(personalKeys.widgets, hasLegacyData);
+      const legacyLayouts = localStorage.getItem(STORAGE_KEYS.LAYOUTS);
+      if (legacyLayouts) {
+        localStorage.setItem(personalKeys.layouts, legacyLayouts);
+      }
+    }
+
+    // Load from dashboard-specific storage
+    const keys = getDashboardStorageKeys(currentDashboardId);
+    const dashboardWidgets = localStorage.getItem(keys.widgets);
+    const dashboardLayouts = localStorage.getItem(keys.layouts);
+
+    // Load widgets and layouts together to ensure they match
+    let localWidgets: Widget[];
+    let localLayouts: { [key: string]: LayoutItem[] };
+
+    if (dashboardWidgets && dashboardLayouts) {
+      // Dashboard has saved data - use it
+      localWidgets = JSON.parse(dashboardWidgets);
+      localLayouts = JSON.parse(dashboardLayouts);
+    } else if (currentDashboardId === 'personal') {
+      // Personal dashboard can fall back to legacy storage
+      localWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
+      localLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
+    } else {
+      // Non-personal dashboards without storage get fresh widgets with unique IDs
+      // AND matching layouts to ensure they work together
+      localWidgets = generateFreshDefaultWidgets();
+      localLayouts = generateLayoutsForWidgets(localWidgets);
+      // Save immediately so they persist
+      const keys = getDashboardStorageKeys(currentDashboardId);
+      localStorage.setItem(keys.widgets, JSON.stringify(localWidgets));
+      localStorage.setItem(keys.layouts, JSON.stringify(localLayouts));
+    }
+
+    setLayouts(localLayouts);
 
     // Load and decrypt widget configs from localStorage
     const localConfigs = await configManager.getConfigs(true);
@@ -1185,23 +1472,27 @@ function App() {
             } as Widget;
           }) : [];
 
-          // 6. Set the merged widgets in state
-          setWidgets(typedWidgets);
-          userHasFirestoreData = true;
-
-          // 7. Validate and fix layouts based on the widgets
-          // Validating layouts to ensure they match widgets
+          // 6. Validate and fix layouts based on the widgets
           const validatedLayouts = await userDashboardService.validateAndFixLayouts(
             typedWidgets.map(w => ({ id: w.id, type: w.type }))
           );
 
-          // 8. Set the validated layouts in state
-          setLayouts(validatedLayouts);
-          // Validated layouts set
-          
-          // Also update localStorage to match Firestore state
+          // 7. Update localStorage for personal dashboard
+          const personalKeys = getDashboardStorageKeys('personal');
+          localStorage.setItem(personalKeys.widgets, JSON.stringify(typedWidgets));
+          localStorage.setItem(personalKeys.layouts, JSON.stringify(validatedLayouts));
+          // Also save to legacy keys for backwards compatibility
           localStorage.setItem(STORAGE_KEYS.WIDGETS, JSON.stringify(typedWidgets));
           localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(validatedLayouts));
+
+          // 8. IMPORTANT: Only apply Firestore data to state if on personal dashboard
+          // This prevents overwriting other dashboard data with personal dashboard data
+          if (currentDashboardId === 'personal') {
+            setWidgets(typedWidgets);
+            setLayouts(validatedLayouts);
+          }
+
+          userHasFirestoreData = true;
         } else if (!userHasFirestoreData) {
           // Fall back to localStorage if no Firestore data
           await loadLocalData();
@@ -1336,68 +1627,45 @@ function App() {
     }
   }, [layouts, widgets, currentBreakpoint]);
   
-  // Clean up orphaned layout items
+  // NOTE: Automatic orphaned layout cleanup was removed because it caused data loss
+  // when running before Firestore data finished loading. Layout cleanup is now handled
+  // only during explicit widget deletion via the deleteWidget function.
+  
+  // Ensure layouts exist for all widgets - only add missing items, don't recreate
   useEffect(() => {
-    // Only run cleanup if we have both widgets and layouts
-    if (widgets.length > 0 && layouts && Object.keys(layouts).length > 0) {
-      // Check if there are any orphaned layout items
-      let hasOrphanedItems = false;
-      const widgetIds = new Set(widgets.map(w => w.id));
-      const cleanedLayouts = { ...layouts };
-      
-      // For each breakpoint, filter out layout items without a corresponding widget
-      Object.keys(cleanedLayouts).forEach(breakpoint => {
-        const originalLength = cleanedLayouts[breakpoint]?.length || 0;
-        
-        if (cleanedLayouts[breakpoint] && Array.isArray(cleanedLayouts[breakpoint])) {
-          cleanedLayouts[breakpoint] = cleanedLayouts[breakpoint].filter(item => 
-            widgetIds.has(item.i)
+    if (widgets.length === 0 || !layouts) return;
+
+    let needsUpdate = false;
+    const updatedLayouts = { ...layouts };
+
+    // Check each breakpoint
+    Object.keys(breakpoints).forEach(breakpoint => {
+      if (!updatedLayouts[breakpoint]) {
+        updatedLayouts[breakpoint] = [];
+      }
+
+      const existingIds = new Set(updatedLayouts[breakpoint].map(item => item.i));
+
+      // Find widgets without layout items in this breakpoint
+      widgets.forEach((widget, index) => {
+        if (!existingIds.has(widget.id)) {
+          // Add missing layout item
+          const colCount = cols[breakpoint as keyof typeof cols];
+          const newItem = createDefaultLayoutItem(
+            widget.id,
+            index,
+            colCount,
+            breakpoint,
+            updatedLayouts[breakpoint]
           );
-          
-          // Check if we removed any items
-          if (cleanedLayouts[breakpoint].length < originalLength) {
-            hasOrphanedItems = true;
-          }
+          updatedLayouts[breakpoint].push(newItem);
+          needsUpdate = true;
         }
       });
-      
-      // If we found orphaned items, update the layouts and notify user
-      if (hasOrphanedItems) {
-        // Count how many items were removed
-        const removedCount = Object.keys(layouts).reduce((acc, bp) => {
-          const original = layouts[bp]?.length || 0;
-          const cleaned = cleanedLayouts[bp]?.length || 0;
-          return acc + (original - cleaned);
-        }, 0);
+    });
 
-        setLayouts(cleanedLayouts);
-        localStorage.setItem(STORAGE_KEYS.LAYOUTS, JSON.stringify(cleanedLayouts));
-
-        // Notify user about the cleanup
-        toast.info('Dashboard cleaned up', {
-          description: `Removed ${removedCount} orphaned layout item${removedCount > 1 ? 's' : ''} from deleted widgets.`,
-          duration: 4000,
-        });
-      }
-    }
-  }, [widgets, layouts]);
-  
-  // Ensure layouts exist for all widgets
-  useEffect(() => {
-    // Only run this if we have widgets but missing or empty layouts
-    if (widgets.length > 0 && 
-        (!layouts || 
-         Object.keys(layouts).length === 0 || 
-         Object.values(layouts).some(layout => layout.length === 0))) {
-      
-      // Creating default layouts for widgets
-      
-      // Create default layouts for all widgets
-      const newLayouts = createDefaultLayoutsForWidgets(widgets);
-      
-      // Update layouts state
-      setLayouts(newLayouts);
-      // Default layouts created
+    if (needsUpdate) {
+      setLayouts(updatedLayouts);
     }
   }, [widgets, layouts]);
   
@@ -1554,9 +1822,16 @@ function App() {
       <div className="fixed top-0 z-50 w-full backdrop-blur-sm app-header">
         <div className="px-2 sm:px-4 py-3 flex items-center justify-between"> {/* Use px-2 for xs, px-4 for sm+ */}
           <div className="flex items-center">
-            <a href="/" rel="noopener noreferrer" className="text-gray-900 dark:text-white hover:text-gray-700 transition-colors">
-              <h1 className="text-lg font-semibold mr-2 sm:mr-3">Boxento</h1> {/* Use mr-2 for xs, mr-3 for sm+ */}
-            </a>
+            <div className="mr-2 sm:mr-3">
+              <DashboardSwitcher
+                dashboards={dashboards}
+                currentDashboard={currentDashboard}
+                onSwitchDashboard={handleSwitchDashboard}
+                onCreateDashboard={handleCreateDashboard}
+                onUpdateDashboard={handleUpdateDashboard}
+                onDeleteDashboard={handleDeleteDashboard}
+              />
+            </div>
             {/* Sync indicator */}
             <TooltipProvider>
               <Tooltip>
@@ -1670,7 +1945,7 @@ function App() {
                 </div>
               )}
               {/* Hide grid completely until layout is ready to prevent position animation */}
-              <DashboardContextMenu onAddWidget={toggleWidgetSelector}>
+              <DashboardContextMenu onAddWidget={toggleWidgetSelector} onAutoArrange={handleAutoArrange}>
                 <div className={isLayoutReady ? '' : 'hidden'}>
                   <ResponsiveReactGridLayout
                     className={`layout ${!isTransitionsEnabled ? 'layout-loading' : ''}`}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type FC, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
-import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info } from 'lucide-react';
+import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2 } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
 import {
   Dialog,
@@ -17,6 +17,15 @@ import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { faviconService } from '@/lib/services/favicon';
+
+interface CitySearchResult {
+  id: number;
+  name: string;
+  country: string;
+  admin1?: string; // State/province
+  latitude: number;
+  longitude: number;
+}
 
 /**
  * Weather Widget Component
@@ -44,6 +53,11 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   );
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [citySearch, setCitySearch] = useState<string>('');
+  const [cityResults, setCityResults] = useState<CitySearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const configRef = useRef<string>(''); // Track the last config for comparison
 
@@ -78,6 +92,92 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       }
       return { valid: false, error: 'Could not verify location' };
     }
+  }, []);
+
+  /**
+   * Search for cities using geocoding API
+   */
+  const searchCities = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setCityResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+
+      if (!response.ok) {
+        setCityResults([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        const results: CitySearchResult[] = data.results.map((r: {
+          id: number;
+          name: string;
+          country: string;
+          admin1?: string;
+          latitude: number;
+          longitude: number;
+        }) => ({
+          id: r.id,
+          name: r.name,
+          country: r.country,
+          admin1: r.admin1,
+          latitude: r.latitude,
+          longitude: r.longitude,
+        }));
+        setCityResults(results);
+        setShowResults(true);
+      } else {
+        setCityResults([]);
+      }
+    } catch (err) {
+      console.error('City search error:', err);
+      setCityResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  /**
+   * Handle city search input with debounce
+   */
+  const handleCitySearchChange = useCallback((value: string) => {
+    setCitySearch(value);
+    setLocationError(null);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce the search
+    searchTimeoutRef.current = setTimeout(() => {
+      searchCities(value);
+    }, 300);
+  }, [searchCities]);
+
+  /**
+   * Handle city selection from search results
+   */
+  const handleCitySelect = useCallback((city: CitySearchResult) => {
+    const locationName = city.admin1
+      ? `${city.name}, ${city.admin1}, ${city.country}`
+      : `${city.name}, ${city.country}`;
+
+    setLocalConfig(prev => ({ ...prev, location: city.name }));
+    setCitySearch(locationName);
+    setShowResults(false);
+    setCityResults([]);
+    setLocationError(null);
   }, []);
 
   const mockWeatherData: WeatherData = {
@@ -758,30 +858,70 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
 
   /**
    * Renders the settings content for the modal
-   * 
+   *
    * @returns {JSX.Element} Settings content
    */
   const renderSettingsContent = () => {
   return (
-    // Remove the outer fragment <>...</>
-    // The wrapping div with space-y-4 is now applied where this function is called
     <>
       <div className="space-y-2">
         <Label htmlFor="location-input">Location</Label>
-        <Input
-          id="location-input"
-          type="text"
-          placeholder="Enter city name"
-          value={localConfig.location || ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setLocalConfig(prev => ({...prev, location: e.target.value}));
-            setLocationError(null); // Clear error when user types
-          }}
-          className={locationError ? 'border-red-500' : ''}
-        />
+        <div className="relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="location-input"
+              type="text"
+              placeholder="Search for a city..."
+              value={citySearch || localConfig.location || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                handleCitySearchChange(e.target.value);
+              }}
+              onFocus={() => {
+                if (cityResults.length > 0) setShowResults(true);
+              }}
+              className={`pl-9 ${locationError ? 'border-red-500' : ''}`}
+            />
+            {isSearching && (
+              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {/* Search results dropdown */}
+          {showResults && cityResults.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {cityResults.map((city) => (
+                <button
+                  key={city.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left hover:bg-accent flex items-start gap-2 border-b last:border-b-0"
+                  onClick={() => handleCitySelect(city)}
+                >
+                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{city.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {city.admin1 ? `${city.admin1}, ` : ''}{city.country}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* No results message */}
+          {showResults && citySearch.length >= 2 && !isSearching && cityResults.length === 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
+              No cities found for "{citySearch}"
+            </div>
+          )}
+        </div>
         {locationError && (
           <p className="text-xs text-red-500">{locationError}</p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Start typing to search for any city worldwide
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -801,7 +941,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         </RadioGroup>
       </div>
     </>
-    // Remove the closing fragment </>
   );
 };
 
@@ -906,7 +1045,16 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       </div>
       
       {isSettingsOpen && (
-        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => setIsSettingsOpen(open)}>
+        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => {
+          setIsSettingsOpen(open);
+          if (open) {
+            // Reset search state when dialog opens
+            setCitySearch('');
+            setCityResults([]);
+            setShowResults(false);
+            setLocationError(null);
+          }
+        }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Weather Settings</DialogTitle>

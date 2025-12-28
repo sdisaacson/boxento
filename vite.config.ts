@@ -87,17 +87,24 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             return 'vendor';
           }
-          
+
           // App.tsx in its own chunk due to size
           if (id.includes('/App.tsx')) {
             return 'app';
           }
-          
-          // Components in their own chunk
+
+          // Let widget components be lazy-loaded into their own chunks
+          // Do NOT include them in ui-components
+          if (id.includes('/components/widgets/') && !id.includes('/common/')) {
+            // Return undefined to let Rollup handle chunking via dynamic imports
+            return undefined;
+          }
+
+          // Other components (UI, auth, etc.) in their own chunk
           if (id.includes('/components/')) {
             return 'ui-components';
           }
-          
+
           // Library files (including contexts) in their own chunk
           if (id.includes('/lib/') || id.includes('/utils/')) {
             return 'lib';
