@@ -1,22 +1,29 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App'
 import { AuthProvider } from './lib/AuthContext'
 import { SafeSyncProvider } from './lib/SyncContext'
 import { AppSettingsProvider } from './context/AppSettingsContext'
+import { SharedDashboardView } from './components/dashboard/SharedDashboardView'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Failed to find the root element')
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <AuthProvider>
-      <SafeSyncProvider>
-        <AppSettingsProvider>
-          <App />
-        </AppSettingsProvider>
-      </SafeSyncProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <SafeSyncProvider>
+          <AppSettingsProvider>
+            <Routes>
+              <Route path="/d/:dashboardId" element={<SharedDashboardView />} />
+              <Route path="/*" element={<App />} />
+            </Routes>
+          </AppSettingsProvider>
+        </SafeSyncProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 )

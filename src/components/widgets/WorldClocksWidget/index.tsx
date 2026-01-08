@@ -313,8 +313,8 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   };
 
   /**
-   * Renders an elegant analog clock for a timezone
-   * 
+   * Renders a Bauhaus-inspired minimal analog clock
+   *
    * @param {string} timezone - IANA timezone identifier
    * @param {number} [size=80] - Size of the clock in pixels
    * @param {boolean} [isDarkMode=false] - Whether to use dark mode colors
@@ -324,130 +324,100 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     try {
       // Get the current time in the specified timezone
       const date = new Date(currentTime.toLocaleString('en-US', { timeZone: timezone }));
-      
+
       // Calculate the angles for the clock hands
       const seconds = date.getSeconds();
       const minutes = date.getMinutes();
       const hours = date.getHours() % 12;
-      
-      const secondAngle = (seconds / 60) * 360;
+
+      // Smooth second hand movement
+      const secondAngle = ((seconds) / 60) * 360;
       const minuteAngle = ((minutes + seconds / 60) / 60) * 360;
       const hourAngle = ((hours + minutes / 60) / 12) * 360;
-      
+
       // Calculate dimensions
       const center = size / 2;
-      const radius = size / 2 - 2; // Slightly smaller to fit within SVG
-      
-      // Calculate hand lengths
-      const secondHandLength = radius * 0.85;
-      const minuteHandLength = radius * 0.75;
+      const radius = size / 2 - 2;
+
+      // Hand lengths - Bauhaus proportions
       const hourHandLength = radius * 0.5;
-      
-      // Determine colors based on theme
-      const isDarkTheme = isDarkMode;
-      const clockFaceColor = 'transparent'; // Transparent background
-      const clockBorderColor = isDarkTheme ? '#475569' : '#cbd5e1'; // More subtle border
-      const hourMarkerColor = isDarkTheme ? '#94a3b8' : '#94a3b8'; // Consistent subtle markers
-      const hourHandColor = isDarkTheme ? '#f1f5f9' : '#334155'; // More contrast for hour hand
-      const minuteHandColor = isDarkTheme ? '#e2e8f0' : '#475569'; // Slightly lighter minute hand
-      const secondHandColor = isDarkTheme ? '#38bdf8' : '#3b82f6'; // Accent color for second hand
-      
+      const minuteHandLength = radius * 0.72;
+      const secondHandLength = radius * 0.8;
+
+      // Bauhaus-inspired colors
+      const handColor = isDarkMode ? '#f8fafc' : '#1e293b';
+      const secondHandColor = '#ef4444'; // Bauhaus red accent
+      const markerColor = isDarkMode ? '#475569' : '#cbd5e1';
+
       return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="clock transition-all duration-300">
-          {/* Clock face - subtle border, no fill */}
-          <circle 
-            cx={center} 
-            cy={center} 
-            r={radius} 
-            fill={clockFaceColor} 
-            stroke={clockBorderColor} 
-            strokeWidth="0.5"
-            className="transition-all duration-300"
-          />
-          
-          {/* Hour markers - only at 12, 3, 6, 9 */}
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="clock">
+          {/* Minimal hour markers - just tiny dots at 12, 3, 6, 9 */}
           {[0, 3, 6, 9].map((hour) => {
             const angle = (hour * 30) * (Math.PI / 180);
-            const x1 = center + (radius - 6) * Math.sin(angle);
-            const y1 = center - (radius - 6) * Math.cos(angle);
-            const x2 = center + radius * Math.sin(angle);
-            const y2 = center - radius * Math.cos(angle);
-            
-            return (
-              <line 
-                key={hour} 
-                x1={x1} 
-                y1={y1} 
-                x2={x2} 
-                y2={y2} 
-                stroke={hourMarkerColor} 
-                strokeWidth={1} 
-                className="transition-all duration-300"
-              />
-            );
-          })}
-          
-          {/* Subtle dots for other hour markers */}
-          {[1, 2, 4, 5, 7, 8, 10, 11].map((hour) => {
-            const angle = (hour * 30) * (Math.PI / 180);
-            const x = center + (radius - 2) * Math.sin(angle);
-            const y = center - (radius - 2) * Math.cos(angle);
-            
+            const markerRadius = hour === 0 ? radius * 0.06 : radius * 0.04;
+            const x = center + (radius * 0.85) * Math.sin(angle);
+            const y = center - (radius * 0.85) * Math.cos(angle);
+
             return (
               <circle
                 key={hour}
                 cx={x}
                 cy={y}
-                r="0.5"
-                fill={hourMarkerColor}
-                className="transition-all duration-300"
+                r={markerRadius}
+                fill={markerColor}
               />
             );
           })}
-          
-          {/* Hour hand - thinner, more elegant */}
-          <line 
-            x1={center} 
-            y1={center} 
-            x2={center + hourHandLength * Math.sin(hourAngle * (Math.PI / 180))} 
-            y2={center - hourHandLength * Math.cos(hourAngle * (Math.PI / 180))} 
-            stroke={hourHandColor} 
-            strokeWidth="1.5" 
-            strokeLinecap="round" 
-            className="transition-all duration-300"
+
+          {/* Hour hand - bold, geometric rectangle */}
+          <rect
+            x={center - size * 0.025}
+            y={center - hourHandLength}
+            width={size * 0.05}
+            height={hourHandLength}
+            fill={handColor}
+            transform={`rotate(${hourAngle}, ${center}, ${center})`}
+            rx={size * 0.01}
           />
-          
-          {/* Minute hand - thinner, more elegant */}
-          <line 
-            x1={center} 
-            y1={center} 
-            x2={center + minuteHandLength * Math.sin(minuteAngle * (Math.PI / 180))} 
-            y2={center - minuteHandLength * Math.cos(minuteAngle * (Math.PI / 180))} 
-            stroke={minuteHandColor} 
-            strokeWidth="1" 
-            strokeLinecap="round" 
-            className="transition-all duration-300"
+
+          {/* Minute hand - slimmer rectangle */}
+          <rect
+            x={center - size * 0.018}
+            y={center - minuteHandLength}
+            width={size * 0.036}
+            height={minuteHandLength}
+            fill={handColor}
+            transform={`rotate(${minuteAngle}, ${center}, ${center})`}
+            rx={size * 0.008}
           />
-          
-          {/* Second hand - accent color, very thin */}
-          <line 
-            x1={center} 
-            y1={center} 
-            x2={center + secondHandLength * Math.sin(secondAngle * (Math.PI / 180))} 
-            y2={center - secondHandLength * Math.cos(secondAngle * (Math.PI / 180))} 
-            stroke={secondHandColor} 
-            strokeWidth="0.5" 
-            strokeLinecap="round" 
-            className="transition-all duration-300"
-          />
-          
-          {/* Center dot - smaller, more subtle */}
-          <circle 
-            cx={center} 
-            cy={center} 
-            r="1.5" 
-            fill={secondHandColor} 
-            className="transition-all duration-300"
+
+          {/* Second hand - thin line with counterweight */}
+          <g transform={`rotate(${secondAngle}, ${center}, ${center})`}>
+            {/* Main hand */}
+            <line
+              x1={center}
+              y1={center + radius * 0.2}
+              x2={center}
+              y2={center - secondHandLength}
+              stroke={secondHandColor}
+              strokeWidth={size * 0.012}
+              strokeLinecap="round"
+            />
+            {/* Counterweight circle */}
+            <circle
+              cx={center}
+              cy={center + radius * 0.15}
+              r={size * 0.025}
+              fill={secondHandColor}
+            />
+          </g>
+
+          {/* Center cap */}
+          <circle
+            cx={center}
+            cy={center}
+            r={size * 0.04}
+            fill={handColor}
           />
         </svg>
       );

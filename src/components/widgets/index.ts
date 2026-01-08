@@ -1,26 +1,29 @@
 import React from 'react';
 import { WidgetConfig, WidgetProps } from '@/types';
 
-// Widget Components
-import CalendarWidget from './CalendarWidget/index';
-import WeatherWidget from './WeatherWidget/index';
-import WorldClocksWidget from './WorldClocksWidget/index';
-import QuickLinksWidget from './QuickLinksWidget/index';
-import NotesWidget from './NotesWidget/index';
-import TodoWidget from './TodoWidget/index';
-import PomodoroWidget from './PomodoroWidget/index';
-import CurrencyConverterWidget from './CurrencyConverterWidget/index';
-import ReadwiseWidget from './ReadwiseWidget/index';
-import UFWidget from './UFWidget/index';
-import YouTubeWidget from './YouTubeWidget/index';
-import RSSWidget from './RSSWidget/index';
-import GitHubStreakWidget from './GitHubStreakWidget/index';
-import FlightTrackerWidget from './FlightTrackerWidget/index';
-import GeographyQuizWidget from './GeographyQuizWidget/index';
-import TodoistWidget from './TodoistWidget/index';
-import YearProgressWidget from './YearProgressWidget/index';
-// Import TemplateWidget (commented as it's not for production use)
-// import TemplateWidget from './TemplateWidget/index';
+// Lazy load widget components - each widget will be in its own chunk
+const CalendarWidget = React.lazy(() => import('./CalendarWidget/index'));
+const WeatherWidget = React.lazy(() => import('./WeatherWidget/index'));
+const WorldClocksWidget = React.lazy(() => import('./WorldClocksWidget/index'));
+const QuickLinksWidget = React.lazy(() => import('./QuickLinksWidget/index'));
+const NotesWidget = React.lazy(() => import('./NotesWidget/index'));
+const TodoWidget = React.lazy(() => import('./TodoWidget/index'));
+const PomodoroWidget = React.lazy(() => import('./PomodoroWidget/index'));
+const CurrencyConverterWidget = React.lazy(() => import('./CurrencyConverterWidget/index'));
+const ReadwiseWidget = React.lazy(() => import('./ReadwiseWidget/index'));
+const UFWidget = React.lazy(() => import('./UFWidget/index'));
+const YouTubeWidget = React.lazy(() => import('./YouTubeWidget/index'));
+const RSSWidget = React.lazy(() => import('./RSSWidget/index'));
+const GitHubStreakWidget = React.lazy(() => import('./GitHubStreakWidget/index'));
+const FlightTrackerWidget = React.lazy(() => import('./FlightTrackerWidget/index'));
+const GeographyQuizWidget = React.lazy(() => import('./GeographyQuizWidget/index'));
+const TodoistWidget = React.lazy(() => import('./TodoistWidget/index'));
+const YearProgressWidget = React.lazy(() => import('./YearProgressWidget/index'));
+const IframeWidget = React.lazy(() => import('./IframeWidget/index'));
+const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
+const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
+const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
+const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -40,14 +43,17 @@ export * from './FlightTrackerWidget/types';
 export * from './GeographyQuizWidget/types';
 export * from './TodoistWidget/types';
 export * from './YearProgressWidget/types';
-// Export TemplateWidget types (commented as it's not for production use)
-// export * from './TemplateWidget/types';
+export * from './IframeWidget/types';
+export * from './HabitWidget/types';
+export * from './CountdownWidget/types';
+export * from './QRCodeWidget/types';
+export * from './ReaderWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
   category: string;
   description: string;
-  [key: string]: unknown; // Add index signature to make it compatible with Record<string, unknown>
+  [key: string]: unknown;
 }
 
 // Widget registry with enhanced metadata
@@ -78,7 +84,7 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     type: 'world-clocks',
     name: 'World Clocks',
     icon: 'Clock',
-    minWidth: 2, 
+    minWidth: 2,
     minHeight: 2,
     defaultWidth: 2,
     defaultHeight: 2,
@@ -238,6 +244,61 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Information',
     description: 'Visual representation of year progress with dots'
+  },
+  {
+    type: 'iframe',
+    name: 'Embed',
+    icon: 'Globe',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Utilities',
+    description: 'Embed external content via iframe URL'
+  },
+  {
+    type: 'habits',
+    name: 'Habit Tracker',
+    icon: 'CheckSquare',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Productivity',
+    description: 'Track daily habits and build streaks'
+  },
+  {
+    type: 'countdown',
+    name: 'Countdown',
+    icon: 'Clock',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'Count down to important events and dates'
+  },
+  {
+    type: 'qrcode',
+    name: 'QR Code',
+    icon: 'QrCode',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Utilities',
+    description: 'Generate QR codes from text or URLs'
+  },
+  {
+    type: 'reader',
+    name: 'Reader',
+    icon: 'BookMarked',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Information',
+    description: 'Random articles from your Readwise Reader library'
   }
 ];
 
@@ -251,51 +312,44 @@ export const WIDGET_CATEGORIES = [
   { id: 'entertainment', name: 'Entertainment' }
 ];
 
+// Widget component type - now supports lazy components
+type WidgetComponent = React.ComponentType<WidgetProps<Record<string, unknown>>>;
+type LazyWidgetComponent = React.LazyExoticComponent<React.ComponentType<WidgetProps<Record<string, unknown>>>>;
+
 /**
- * Get widget component by type
+ * Widget component registry - maps widget types to their lazy-loaded components.
+ * Each widget is loaded on-demand when first rendered.
  */
-export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<Record<string, unknown>>> | null => {
-  switch (type) {
-    case 'calendar':
-      return CalendarWidget;
-    case 'weather':
-      return WeatherWidget;
-    case 'world-clocks':
-      return WorldClocksWidget;
-    case 'quick-links':
-      return QuickLinksWidget as unknown as React.ComponentType<WidgetProps<Record<string, unknown>>>;
-    case 'notes':
-      return NotesWidget;
-    case 'todo':
-      return TodoWidget;
-    case 'pomodoro':
-      return PomodoroWidget;
-    case 'currency-converter':
-      return CurrencyConverterWidget;
-    case 'readwise':
-      return ReadwiseWidget;
-    case 'uf-chile':
-      return UFWidget;
-    case 'youtube':
-      return YouTubeWidget;
-    case 'rss':
-      return RSSWidget as unknown as React.ComponentType<WidgetProps<Record<string, unknown>>>;
-    case 'github-streak':
-      return GitHubStreakWidget;
-    case 'flight-tracker':
-      return FlightTrackerWidget;
-    case 'geography-quiz':
-      return GeographyQuizWidget;
-    case 'todoist':
-      return TodoistWidget;
-    case 'year-progress':
-      return YearProgressWidget;
-    // Template widget registration (commented as it's not for production use)
-    // case 'template':
-    //   return TemplateWidget;
-    default:
-      return null;
-  }
+const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
+  'calendar': CalendarWidget,
+  'weather': WeatherWidget,
+  'world-clocks': WorldClocksWidget,
+  'quick-links': QuickLinksWidget as unknown as LazyWidgetComponent,
+  'notes': NotesWidget,
+  'todo': TodoWidget,
+  'pomodoro': PomodoroWidget,
+  'currency-converter': CurrencyConverterWidget,
+  'readwise': ReadwiseWidget,
+  'uf-chile': UFWidget,
+  'youtube': YouTubeWidget,
+  'rss': RSSWidget as unknown as LazyWidgetComponent,
+  'github-streak': GitHubStreakWidget,
+  'flight-tracker': FlightTrackerWidget,
+  'geography-quiz': GeographyQuizWidget,
+  'todoist': TodoistWidget,
+  'year-progress': YearProgressWidget,
+  'iframe': IframeWidget,
+  'habits': HabitWidget,
+  'countdown': CountdownWidget,
+  'qrcode': QRCodeWidget,
+  'reader': ReaderWidget,
+};
+
+/**
+ * Get widget component by type (returns lazy-loaded component)
+ */
+export const getWidgetComponent = (type: string): WidgetComponent | null => {
+  return WIDGET_COMPONENTS[type] ?? null;
 };
 
 /**

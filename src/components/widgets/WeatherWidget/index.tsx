@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, type FC, useCallback } from 'react';
-import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info } from 'lucide-react';
+import { toast } from 'sonner';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
+import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2 } from 'lucide-react';
+import { Skeleton } from '../../ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +17,15 @@ import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { faviconService } from '@/lib/services/favicon';
+
+interface CitySearchResult {
+  id: number;
+  name: string;
+  country: string;
+  admin1?: string; // State/province
+  latitude: number;
+  longitude: number;
+}
 
 /**
  * Weather Widget Component
@@ -31,7 +43,6 @@ import { faviconService } from '@/lib/services/favicon';
  * @returns {JSX.Element} Weather widget component
  */
 const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshInterval = 15 }) => {
-  // State for weather data and UI
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,10 +51,135 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   const [localConfig, setLocalConfig] = useState<WeatherWidgetConfig>(
     config || { id: '', location: 'New York', units: 'metric' }
   );
+  const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [citySearch, setCitySearch] = useState<string>('');
+  const [cityResults, setCityResults] = useState<CitySearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const configRef = useRef<string>(''); // Track the last config for comparison
 
-  // Mock weather data for development/testing
+  /**
+   * Validate location exists using geocoding API
+   */
+  const validateLocation = useCallback(async (location: string): Promise<{ valid: boolean; error?: string }> => {
+    if (!location.trim()) {
+      return { valid: false, error: 'Location is required' };
+    }
+
+    try {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+
+      if (!response.ok) {
+        return { valid: false, error: 'Could not verify location' };
+      }
+
+      const data = await response.json();
+
+      if (!data.results || data.results.length === 0) {
+        return { valid: false, error: `Location "${location}" not found` };
+      }
+
+      return { valid: true };
+    } catch (err) {
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        return { valid: false, error: 'Request timed out' };
+      }
+      return { valid: false, error: 'Could not verify location' };
+    }
+  }, []);
+
+  /**
+   * Search for cities using geocoding API
+   */
+  const searchCities = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setCityResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en`,
+        { signal: AbortSignal.timeout(10000) }
+      );
+
+      if (!response.ok) {
+        setCityResults([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        const results: CitySearchResult[] = data.results.map((r: {
+          id: number;
+          name: string;
+          country: string;
+          admin1?: string;
+          latitude: number;
+          longitude: number;
+        }) => ({
+          id: r.id,
+          name: r.name,
+          country: r.country,
+          admin1: r.admin1,
+          latitude: r.latitude,
+          longitude: r.longitude,
+        }));
+        setCityResults(results);
+        setShowResults(true);
+      } else {
+        setCityResults([]);
+      }
+    } catch (err) {
+      console.error('City search error:', err);
+      setCityResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  /**
+   * Handle city search input with debounce
+   */
+  const handleCitySearchChange = useCallback((value: string) => {
+    setCitySearch(value);
+    setLocationError(null);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce the search
+    searchTimeoutRef.current = setTimeout(() => {
+      searchCities(value);
+    }, 300);
+  }, [searchCities]);
+
+  /**
+   * Handle city selection from search results
+   */
+  const handleCitySelect = useCallback((city: CitySearchResult) => {
+    const locationName = city.admin1
+      ? `${city.name}, ${city.admin1}, ${city.country}`
+      : `${city.name}, ${city.country}`;
+
+    setLocalConfig(prev => ({ ...prev, location: city.name }));
+    setCitySearch(locationName);
+    setShowResults(false);
+    setCityResults([]);
+    setLocationError(null);
+  }, []);
+
   const mockWeatherData: WeatherData = {
     location: 'New York',
     temperature: 22,
@@ -158,7 +294,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     return 'Unknown weather condition';
   };
 
-  // Memoize the fetchWeather function to prevent unnecessary re-renders
   const fetchWeather = useCallback(async () => {
     setLoading(true);
     
@@ -251,7 +386,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [localConfig.location, localConfig.units]); // Only depend on location and units
 
-  // Update localConfig when config changes without creating a circular dependency
   useEffect(() => {
     if (config) {
       // Create a config signature to detect real changes
@@ -259,26 +393,24 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       
       // Only update if there's a real change and not just a re-render
       if (configSignature !== configRef.current) {
-        console.log(`[WeatherWidget] Config changed to ${config.location}`);
         configRef.current = configSignature;
         setLocalConfig(config);
       }
     }
   }, [config]);
 
-  // Combine both useEffects into one
   useEffect(() => {
-    // Initial fetch
     fetchWeather();
-    
-    // Set up refresh interval if specified
-    if (refreshInterval > 0) {
-      const interval = setInterval(fetchWeather, refreshInterval * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [fetchWeather, refreshInterval]); // Only depend on memoized fetchWeather and refreshInterval
+  }, [fetchWeather]);
 
-  // Fix the radio group value change handler
+  // Auto-refresh when tab becomes visible or at the configured interval
+  useVisibilityRefresh({
+    onRefresh: fetchWeather,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: refreshInterval > 0 ? refreshInterval * 60 * 1000 : 0,
+    enabled: true
+  });
+
   const handleUnitsChange = useCallback((value: 'metric' | 'imperial') => {
     setLocalConfig(prev => ({...prev, units: value}));
   }, []);
@@ -379,8 +511,20 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
    */
   const renderLoading = () => {
     return (
-      <div className="flex items-center justify-center h-full w-full">
-        <div className="animate-pulse rounded-full bg-gray-200 bg-opacity-50 dark:bg-gray-700 dark:bg-opacity-50 h-10 w-10"></div>
+      <div className="h-full w-full p-4 flex flex-col">
+        {/* Temperature and icon skeleton */}
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
+        {/* Location skeleton */}
+        <Skeleton className="h-4 w-24 mb-2" />
+        {/* Condition skeleton */}
+        <Skeleton className="h-3 w-16 mb-4" />
+        {/* Forecast skeleton */}
+        <div className="flex-1 flex items-end space-x-2">
+          <Skeleton className="h-8 w-full" />
+        </div>
       </div>
     );
   };
@@ -714,23 +858,70 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
 
   /**
    * Renders the settings content for the modal
-   * 
+   *
    * @returns {JSX.Element} Settings content
    */
   const renderSettingsContent = () => {
   return (
-    // Remove the outer fragment <>...</>
-    // The wrapping div with space-y-4 is now applied where this function is called
     <>
       <div className="space-y-2">
         <Label htmlFor="location-input">Location</Label>
-        <Input
-          id="location-input"
-          type="text"
-          placeholder="Enter city name"
-          value={localConfig.location || ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig(prev => ({...prev, location: e.target.value}))}
-        />
+        <div className="relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="location-input"
+              type="text"
+              placeholder="Search for a city..."
+              value={citySearch || localConfig.location || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                handleCitySearchChange(e.target.value);
+              }}
+              onFocus={() => {
+                if (cityResults.length > 0) setShowResults(true);
+              }}
+              className={`pl-9 ${locationError ? 'border-red-500' : ''}`}
+            />
+            {isSearching && (
+              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {/* Search results dropdown */}
+          {showResults && cityResults.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {cityResults.map((city) => (
+                <button
+                  key={city.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left hover:bg-accent flex items-start gap-2 border-b last:border-b-0"
+                  onClick={() => handleCitySelect(city)}
+                >
+                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{city.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {city.admin1 ? `${city.admin1}, ` : ''}{city.country}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* No results message */}
+          {showResults && citySearch.length >= 2 && !isSearching && cityResults.length === 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
+              No cities found for "{citySearch}"
+            </div>
+          )}
+        </div>
+        {locationError && (
+          <p className="text-xs text-red-500">{locationError}</p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Start typing to search for any city worldwide
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -750,7 +941,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         </RadioGroup>
       </div>
     </>
-    // Remove the closing fragment </>
   );
 };
 
@@ -759,6 +949,40 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
    * 
    * @returns {JSX.Element} Settings footer
    */
+  const handleSaveSettings = async () => {
+    // Validate location before saving
+    setIsValidating(true);
+    setLocationError(null);
+
+    const result = await validateLocation(localConfig.location || '');
+
+    setIsValidating(false);
+
+    if (!result.valid) {
+      setLocationError(result.error || 'Invalid location');
+      toast.error('Invalid location', {
+        description: result.error,
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Save settings via onUpdate callback
+    if (config?.onUpdate) {
+      config.onUpdate(localConfig);
+    }
+
+    // Apply the local config settings
+    setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
+    setIsSettingsOpen(false);
+
+    // Trigger a weather refresh with new settings
+    setLoading(true);
+    setTimeout(() => {
+      fetchWeather();
+    }, 300);
+  };
+
   const renderSettingsFooter = () => {
     return (
       <div className="flex justify-between w-full">
@@ -775,39 +999,27 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             Delete
           </Button>
         )}
-        
+
         <div className="flex">
           <Button
             variant="default"
-            onClick={() => {
-              // Save settings via onUpdate callback (will use configManager in App.tsx)
-              if (config?.onUpdate) {
-                console.log('[WeatherWidget] Saving local config to parent component');
-                config.onUpdate(localConfig);
-              }
-              
-              // Apply the local config settings
-              setUnit(localConfig.units === 'imperial' ? 'fahrenheit' : 'celsius');
-              setIsSettingsOpen(false);
-              
-              // Trigger a weather refresh with new settings
-              console.log('[WeatherWidget] Triggering weather refresh with new settings');
-              setLoading(true);
-              
-              // Short delay to ensure all state updates are processed
-              setTimeout(() => {
-                fetchWeather();
-              }, 300);
-            }}
+            onClick={handleSaveSettings}
+            disabled={isValidating}
           >
-            Save
+            {isValidating ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Validating...
+              </>
+            ) : (
+              'Save'
+            )}
           </Button>
         </div>
       </div>
     );
   };
 
-  // Update favicon when weather data changes
   useEffect(() => {
     if (weather && !loading && !error) {
       // Update favicon with current temperature
@@ -815,7 +1027,6 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }
   }, [weather, loading, error, localConfig.units]);
 
-  // Clean up favicon when component unmounts
   useEffect(() => {
     return () => {
       faviconService.clearWeatherInfo();
@@ -834,7 +1045,16 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       </div>
       
       {isSettingsOpen && (
-        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => setIsSettingsOpen(open)}>
+        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => {
+          setIsSettingsOpen(open);
+          if (open) {
+            // Reset search state when dialog opens
+            setCitySearch('');
+            setCityResults([]);
+            setShowResults(false);
+            setLocationError(null);
+          }
+        }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Weather Settings</DialogTitle>

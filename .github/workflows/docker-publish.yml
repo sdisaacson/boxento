@@ -7,6 +7,17 @@ on:
     tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker-compose*.yml'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
+      - '.github/workflows/docker-publish.yml'
 
 env:
   # Use github.repository as <account>/<repo>
@@ -44,7 +55,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=schedule
+            type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -64,22 +75,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
-
-      # Optional: Install cosign for image signing
-      # Only attempt signing if explicitly enabled via repository secret
-      - name: Install cosign
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[sign]')
-        uses: sigstore/cosign-installer@v3.3.0
-        with:
-          cosign-release: 'v2.1.1'
-
-      # Optional: Sign the images
-      # Only attempt signing if explicitly enabled
-      - name: Sign the published Docker image
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[sign]')
-        continue-on-error: true
-        env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST} 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,6 @@ import {
   DialogFooter
 } from '../../ui/dialog';
 import WidgetHeader from '../common/WidgetHeader';
-// Add AlertCircle import
 import { RefreshCw, Quote, AlertCircle, BookOpen, Book } from 'lucide-react';
 import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
 import { Button } from '../../ui/button';
@@ -58,22 +58,6 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
   // Ref for the widget container
   const widgetRef = useRef<HTMLDivElement | null>(null);
   
-  // Get a random highlight when component mounts or when refreshed
-  useEffect(() => {
-    if (localConfig.apiToken) {
-      fetchRandomHighlight();
-    }
-    
-    // Set up refresh interval if configured
-    if (localConfig.refreshInterval && localConfig.refreshInterval > 0) {
-      const intervalId = setInterval(() => {
-        fetchRandomHighlight();
-      }, localConfig.refreshInterval * 60 * 1000); // Convert minutes to milliseconds
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [localConfig.apiToken, localConfig.refreshInterval]);
-  
   // Update local config when props config changes
   useEffect(() => {
     setLocalConfig(prevConfig => ({
@@ -81,41 +65,41 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
       ...config
     }));
   }, [config]);
-  
+
   /**
    * Fetches a random highlight from Readwise API
    */
-  const fetchRandomHighlight = async () => {
+  const fetchRandomHighlight = useCallback(async () => {
     if (!localConfig.apiToken) {
       setError('API token is required');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Get a random page number (1-10) to increase variety
       const randomPage = Math.floor(Math.random() * 10) + 1;
-      
+
       const response = await fetch(`https://readwise.io/api/v2/highlights/?page=${randomPage}&page_size=100`, {
         headers: {
           'Authorization': `Token ${localConfig.apiToken}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.results && data.results.length > 0) {
         // Select a random highlight from the results
         const randomIndex = Math.floor(Math.random() * data.results.length);
         const randomHighlight = data.results[randomIndex];
-        
+
         // Get book info if available and showBookInfo is enabled
         if (localConfig.showBookInfo && randomHighlight.book_id) {
           try {
@@ -125,7 +109,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                 'Content-Type': 'application/json'
               }
             });
-            
+
             if (bookResponse.ok) {
               const bookData = await bookResponse.json();
               randomHighlight.book_title = bookData.title;
@@ -135,7 +119,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
             console.error('Error fetching book info:', bookError);
           }
         }
-        
+
         setHighlight(randomHighlight);
       } else {
         setError('No highlights found');
@@ -146,7 +130,24 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [localConfig.apiToken, localConfig.showBookInfo]);
+
+  // Get a random highlight when component mounts
+  useEffect(() => {
+    if (localConfig.apiToken) {
+      fetchRandomHighlight();
+    }
+  }, [localConfig.apiToken, fetchRandomHighlight]);
+
+  // Auto-refresh when tab becomes visible or at the configured interval
+  useVisibilityRefresh({
+    onRefresh: fetchRandomHighlight,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: localConfig.refreshInterval && localConfig.refreshInterval > 0
+      ? localConfig.refreshInterval * 60 * 1000
+      : 0,
+    enabled: !!localConfig.apiToken
+  });
   
   /**
    * Determines the appropriate size category based on width and height
@@ -291,17 +292,28 @@ const renderNoApiTokenState = () => {
   };
   
   /**
+   * Opens the highlight in Readwise
+   */
+  const openHighlightInReadwise = () => {
+    if (highlight?.id) {
+      window.open(`https://readwise.io/open/${highlight.id}`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  /**
    * Small View (2x2) - Just the highlight text
-   * 
+   *
    * @returns {JSX.Element} Small view content
    */
   const renderSmallView = () => {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center overflow-hidden w-full px-1">
-          <div className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-6">
-            "{highlight?.text}"
-          </div>
+      <div className="h-full overflow-y-auto">
+        <div
+          className="text-sm font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          onClick={openHighlightInReadwise}
+          title="Open in Readwise"
+        >
+          "{highlight?.text}"
         </div>
       </div>
     );
@@ -309,18 +321,24 @@ const renderNoApiTokenState = () => {
   
   /**
    * Wide Small View (3x2) - Highlight with minimal book info
-   * 
+   *
    * @returns {JSX.Element} Wide small view content
    */
   const renderWideSmallView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-4">
-          "{highlight?.text}"
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
+            "{highlight?.text}"
+          </div>
         </div>
-        
+
         {localConfig.showBookInfo && highlight?.book_title && (
-          <div className="text-xs text-gray-500 mt-2 flex items-center">
+          <div className="text-xs text-gray-500 mt-2 flex items-center flex-shrink-0">
             <BookOpen size={12} className="mr-1" />
             <span className="truncate">{highlight.book_title}</span>
           </div>
@@ -331,18 +349,24 @@ const renderNoApiTokenState = () => {
   
   /**
    * Tall Small View (2x3) - Highlight with book title and author
-   * 
+   *
    * @returns {JSX.Element} Tall small view content
    */
   const renderTallSmallView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug line-clamp-7">
-          "{highlight?.text}"
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-base font-serif italic text-gray-800 dark:text-gray-200 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
+            "{highlight?.text}"
+          </div>
         </div>
-        
+
         {localConfig.showBookInfo && (
-          <div className="mt-2">
+          <div className="mt-2 flex-shrink-0">
             {highlight?.book_title && (
               <div className="text-xs text-gray-500 flex items-center">
                 <BookOpen size={12} className="mr-1" />
@@ -362,25 +386,29 @@ const renderNoApiTokenState = () => {
   
   /**
    * Medium View (3x3) - Full highlight with book info and tags
-   * 
+   *
    * @returns {JSX.Element} Medium view content
    */
   const renderMediumView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-6">
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
-            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               Note: {highlight.note}
             </div>
           )}
         </div>
-        
-        <div>
+
+        <div className="flex-shrink-0">
           {localConfig.showBookInfo && (
             <div className="mb-2">
               {highlight?.book_title && (
@@ -396,7 +424,7 @@ const renderNoApiTokenState = () => {
               )}
             </div>
           )}
-          
+
           {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
             <div className="flex flex-wrap">
               {highlight.tags.map(tag => (
@@ -413,26 +441,30 @@ const renderNoApiTokenState = () => {
   
   /**
    * Wide Medium View (4x3) - Everything from medium plus refresh button
-   * 
+   *
    * @returns {JSX.Element} Wide medium view content
    */
   const renderWideMediumView = () => {
     return (
       <div className="grid grid-cols-4 h-full">
-        <div className="col-span-3 flex flex-col justify-between pr-3">
-          <div>
-            <div className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-5">
+        <div className="col-span-3 flex flex-col pr-3">
+          <div className="flex-grow overflow-y-auto min-h-0">
+            <div
+              className="text-xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              onClick={openHighlightInReadwise}
+              title="Open in Readwise"
+            >
               "{highlight?.text}"
             </div>
-            
+
             {highlight?.note && (
-              <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+              <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                 Note: {highlight.note}
               </div>
             )}
           </div>
-          
-          <div>
+
+          <div className="flex-shrink-0">
             {localConfig.showBookInfo && (
               <div className="mb-2">
                 {highlight?.book_title && (
@@ -448,7 +480,7 @@ const renderNoApiTokenState = () => {
                 )}
               </div>
             )}
-            
+
             {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
               <div className="flex flex-wrap">
                 {highlight.tags.map(tag => (
@@ -460,9 +492,9 @@ const renderNoApiTokenState = () => {
             )}
           </div>
         </div>
-        
+
         <div className="col-span-1 flex flex-col items-center justify-center border-l border-gray-200 dark:border-gray-700 pl-3">
-          <button 
+          <button
             onClick={fetchRandomHighlight}
             className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full mb-2"
             aria-label="Refresh highlight"
@@ -470,7 +502,7 @@ const renderNoApiTokenState = () => {
             <RefreshCw size={16} />
           </button>
           <span className="text-xs text-gray-500 text-center">New Highlight</span>
-          
+
           <div className="flex items-center justify-center mt-6">
             <Quote size={40} className="text-gray-300 dark:text-gray-600" />
           </div>
@@ -481,25 +513,29 @@ const renderNoApiTokenState = () => {
   
   /**
    * Tall Medium View (3x4) - Similar to medium view but with larger quote display
-   * 
+   *
    * @returns {JSX.Element} Tall medium view content
    */
   const renderTallMediumView = () => {
     return (
-      <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 line-clamp-8">
+      <div className="flex flex-col h-full">
+        <div className="flex-grow overflow-y-auto min-h-0">
+          <div
+            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
             <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               Note: {highlight.note}
             </div>
           )}
         </div>
-        
-        <div>
+
+        <div className="flex-shrink-0">
           {localConfig.showBookInfo && (
             <div className="mb-2">
               {highlight?.book_title && (
@@ -515,7 +551,7 @@ const renderNoApiTokenState = () => {
               )}
             </div>
           )}
-          
+
           {localConfig.showTags && highlight?.tags && highlight.tags.length > 0 && (
             <div className="flex flex-wrap mb-2">
               {highlight.tags.map(tag => (
@@ -525,9 +561,9 @@ const renderNoApiTokenState = () => {
               ))}
             </div>
           )}
-          
+
           <div className="flex justify-end">
-            <button 
+            <button
               onClick={fetchRandomHighlight}
               className="flex items-center justify-center px-3 py-1 bg-blue-500 text-white rounded text-sm"
             >
@@ -542,17 +578,21 @@ const renderNoApiTokenState = () => {
   
   /**
    * Large View (4x4) - Full featured view with all highlight details
-   * 
+   *
    * @returns {JSX.Element} Large view content
    */
   const renderLargeView = () => {
     return (
       <div className="flex flex-col h-full">
         <div className="mb-4 flex-grow overflow-auto">
-          <div className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4">
+          <div
+            className="text-2xl font-serif italic text-gray-800 dark:text-gray-200 leading-relaxed mb-4 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={openHighlightInReadwise}
+            title="Open in Readwise"
+          >
             "{highlight?.text}"
           </div>
-          
+
           {highlight?.note && (
             <div className="text-sm text-gray-700 dark:text-gray-300 mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="font-medium mb-1">Note:</div>

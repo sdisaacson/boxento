@@ -247,13 +247,13 @@ Create a README.md file for your widget with usage instructions and examples:
 Update the widget registry in `src/components/widgets/index.ts`:
 
 ```typescript
-// Add import at the top
+// 1. Add import at the top
 import MyWidget from './MyWidget/index';
 
-// Add types export
+// 2. Add types export
 export * from './MyWidget/types';
 
-// Add to WIDGET_REGISTRY array
+// 3. Add to WIDGET_REGISTRY array (for metadata)
 export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   // ... existing widgets
   {
@@ -269,17 +269,14 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   }
 ];
 
-// Add to getWidgetComponent function
-export const getWidgetComponent = (type: string): React.ComponentType<WidgetProps<any>> | null => {
-  switch (type) {
-    // ... existing cases
-    case 'my-widget':
-      return MyWidget;
-    default:
-      return null;
-  }
+// 4. Add to WIDGET_COMPONENTS map (for component lookup)
+const WIDGET_COMPONENTS: Record<string, WidgetComponent> = {
+  // ... existing widgets
+  'my-widget': MyWidget,
 };
 ```
+
+> **Note**: The `WIDGET_COMPONENTS` map follows the Open/Closed Principle - adding a new widget only requires adding one entry to each registry, no switch statements to modify.
 
 ## Widget Requirements
 
@@ -407,3 +404,45 @@ For examples, look at the existing widgets in the respective directories:
 - `NotesWidget/`
 
 These widgets demonstrate best practices for Boxento widget development.
+
+## Common Patterns and Tips
+
+### Styling Consistency
+
+- **Background styling**: Always include proper background styling (`bg-white dark:bg-gray-800`) for widget containers to ensure they don't appear transparent.
+- **Border radius**: Use `rounded-xl` for widget containers and `rounded-lg` for internal cards to match other widgets.
+- **Consistent padding**: Follow the app's padding patterns (typically `px-4 pb-4 pt-2` for main content areas).
+- **Resize handle clearance**: Include sufficient bottom margin (`mb-3`) to prevent content from overlapping with the resize handle.
+
+### Layout Organization
+
+Use a proper layout structure with flexbox:
+```
+Widget Container (widget-container h-full flex flex-col)
+├── WidgetHeader
+├── Content Area (flex-grow overflow-hidden)
+│   └── Your widget content
+└── Settings Dialog
+```
+
+Design with the 2x2 minimum size as the primary constraint. For small widgets, integrate elements within the content area rather than adding extra containers.
+
+### API Integration
+
+When working with external APIs:
+
+- **Rate limiting**: Consider API rate limits in your design. Minimize API calls by caching responses when appropriate.
+- **Error handling**: Implement comprehensive error handling for API failures, authentication issues, and empty responses.
+- **Loading states**: Show clear loading indicators during API calls to provide feedback.
+- **Token security**: Store API tokens securely in widget configuration and never expose them in the UI.
+
+### Responsive Content
+
+- **Progressive enhancement**: Display more information as widget size increases, prioritizing the most important content in smaller sizes.
+- **Adaptive content display**: Truncate and format content based on widget size to maintain readability.
+- **Responsive typography**: Adjust font sizes based on widget size when necessary.
+
+### State and Lifecycle
+
+- **Interval cleanup**: When using `setInterval` for automatic refresh, always include proper cleanup in `useEffect` return functions to prevent memory leaks.
+- **Config sync**: Keep local state in sync with the config prop using `useEffect`.

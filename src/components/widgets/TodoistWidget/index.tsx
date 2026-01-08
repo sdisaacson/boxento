@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 // Add CheckSquare import
 // Add AlertCircle import
 import { Check, Loader2, CalendarIcon, ExternalLink, CheckSquare, AlertCircle } from 'lucide-react';
@@ -232,6 +233,14 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ config }) => {
       fetchTasks();
     }
   }, [fetchTasks]);
+
+  // Auto-refresh when tab becomes visible or every 5 minutes
+  useVisibilityRefresh({
+    onRefresh: fetchTasks,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: 300000, // Refresh every 5 minutes
+    enabled: !!localConfig?.apiToken
+  });
 
   const renderContent = () => {
     if (!localConfig?.apiToken) {

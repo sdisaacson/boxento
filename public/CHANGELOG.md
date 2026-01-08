@@ -1,5 +1,54 @@
 # What's New
 
+## December 27, 2025
+
+### 🚀 Multi-Dashboard & Sharing
+• Multiple Dashboards: Create and switch between multiple dashboards. Each dashboard has its own widgets and layouts.
+• Public Dashboard Sharing: Share your dashboards publicly via a unique URL. Anyone can view your shared dashboard in read-only mode.
+
+### 🎉 New Widgets
+• Countdown Widget: Count down to important events with days, hours, minutes, seconds. Uses shadcn Calendar for date selection.
+• QR Code Generator: Generate QR codes from text/URLs. Download as PNG or copy content.
+• Habit Tracker: Track daily habits with a 7-day view and streak tracking.
+• Embed Widget: Embed external content via iframe or images. Includes scale and alignment options.
+
+### 🎨 Design Improvements
+• World Clocks Redesign: New Bauhaus-inspired minimalist clock with geometric hands and red second hand accent.
+• UF Widget: Subtle refresh icons instead of blue buttons.
+• Readwise Widget: Quotes now scroll instead of being cropped.
+• Quick Links Widget: Compact mode for small widget sizes.
+
+### 📱 Large Display Support
+• 4K and ultra-wide display breakpoints (up to 24 columns)
+• Removed max-width constraints for full screen usage
+
+### 🐛 Bug Fixes
+• Fixed Calendar sidebar scroll to show current/selected date
+• Fixed iframe widget image responsiveness
+
+---
+
+## December 25, 2025
+
+### 🔒 Security Enhancements
+• Server-Side OAuth: Google Calendar authentication now uses Cloud Functions instead of exposing client secrets in the browser
+• Firestore Security Rules: Added proper rules to restrict users to their own data
+• Encrypted OAuth Tokens: Google Calendar tokens are now encrypted before storing in localStorage
+
+### 🚀 Performance Improvements
+• Offline Persistence: Enabled Firestore IndexedDB persistence for better offline experience
+• Debounced Sync: Reduced unnecessary localStorage writes with 300ms debouncing
+• Optimized Real-Time Listeners: Batched sync status updates to reduce UI flicker
+
+### 🐛 Bug Fixes
+• Fixed Google Calendar persisting across logout/login - tokens are now preserved
+• Fixed widget ID not being passed to CalendarWidget config
+• Fixed OAuth secrets with trailing newlines causing "invalid_client" errors
+• Added automatic token migration from old storage keys to new widget-specific keys
+
+### ✨ New Features
+• Build Version in Footer: Shows git commit hash to identify deployed version - click to view the commit on GitHub
+
 ## June 17, 2025
 
 ### 🎉 Major UX Improvement: Clear Local-Only Mode

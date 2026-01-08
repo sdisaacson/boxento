@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from 'sonner';
+import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +18,7 @@ import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
 import { Rss, AlertCircle, Upload } from 'lucide-react';
+import { Skeleton } from '../../ui/skeleton';
 
 /**
  * Size categories for widget content rendering
@@ -59,7 +62,10 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     ...config
   });
   const [feedItems, setFeedItems] = useState<RSSFeedItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Start loading if there are enabled feeds configured
+  const [isLoading, setIsLoading] = useState<boolean>(
+    () => (config?.feeds || defaultConfig.feeds)?.some(feed => feed.enabled) ?? false
+  );
   const [error, setError] = useState<string | null>(null);
   const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('content');
@@ -70,8 +76,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
   // Move fetchSingleFeed before fetchAllFeeds
   const fetchSingleFeed = React.useCallback(async (feed: RSSFeed): Promise<RSSFeedItem[]> => {
-    const corsProxy = 'https://api.allorigins.win/raw?url=';
-    const response = await fetch(`${corsProxy}${encodeURIComponent(feed.url)}`);
+    // Use our own CORS proxy (server-side) instead of third-party allorigins.win
+    const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch RSS feed: ${response.statusText}`);
@@ -109,7 +115,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     
     try {
       const allItems: RSSFeedItem[] = [];
-      
+      const failedFeeds: string[] = [];
+
       // Fetch all feeds in parallel
       await Promise.all(enabledFeeds.map(async feed => {
         try {
@@ -120,21 +127,39 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           })));
         } catch (error) {
           console.error(`Error fetching feed ${feed.url}:`, error);
+          failedFeeds.push(feed.title || feed.url);
         }
       }));
-      
+
+      // Notify user if some feeds failed
+      if (failedFeeds.length > 0 && allItems.length > 0) {
+        toast.warning(`${failedFeeds.length} feed${failedFeeds.length > 1 ? 's' : ''} failed to load`, {
+          description: failedFeeds.slice(0, 2).join(', ') + (failedFeeds.length > 2 ? '...' : ''),
+          duration: 4000,
+        });
+      } else if (failedFeeds.length > 0 && allItems.length === 0) {
+        toast.error('Failed to load RSS feeds', {
+          description: 'Check your feed URLs or try again later.',
+          duration: 5000,
+        });
+      }
+
       // Sort all items by date
       const sortedItems = allItems.sort((a, b) => {
         const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
         const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
         return dateB - dateA;
       });
-      
+
       setFeedItems(sortedItems);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching feeds:', error);
       setError('Failed to fetch RSS feeds');
+      toast.error('Failed to load RSS feeds', {
+        description: 'Please check your internet connection.',
+        duration: 5000,
+      });
       setIsLoading(false);
     }
   }, [localConfig, fetchSingleFeed]);
@@ -172,6 +197,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   useEffect(() => {
     fetchAllFeeds();
   }, [localConfig.feeds, fetchAllFeeds]);
+
+  // Auto-refresh when tab becomes visible or every 15 minutes
+  useVisibilityRefresh({
+    onRefresh: fetchAllFeeds,
+    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
+    refreshInterval: 900000, // Refresh every 15 minutes
+    enabled: localConfig.feeds?.some(feed => feed.enabled) ?? false
+  });
 
   /**
    * Format publication date
@@ -388,11 +421,17 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
    */
   const renderLoadingState = (): React.ReactElement => {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-4">
-        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading RSS feed...
-        </p>
+      <div className="h-full flex flex-col p-4 space-y-3 overflow-hidden">
+        {/* Feed item skeletons */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-3">
+            <Skeleton className="h-12 w-12 rounded flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   };
@@ -463,30 +502,100 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     return renderFeedContent();
   };
   
+  // Track validation state
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   /**
-   * Save settings
+   * Test if a feed URL is accessible
    */
-  const saveSettings = () => {
-    
+  const testFeedUrl = async (url: string): Promise<{ valid: boolean; error?: string }> => {
+    if (!url) return { valid: true };
+
+    try {
+      new URL(url);
+    } catch {
+      return { valid: false, error: 'Invalid URL format' };
+    }
+
+    try {
+      // Use our own CORS proxy for validation
+      const response = await fetch(`/api/rss?url=${encodeURIComponent(url)}`, {
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+
+      if (!response.ok) {
+        return { valid: false, error: `Failed to fetch (${response.status})` };
+      }
+
+      const text = await response.text();
+      // Check if it looks like RSS/XML
+      if (!text.includes('<rss') && !text.includes('<feed') && !text.includes('<channel')) {
+        return { valid: false, error: 'Not a valid RSS feed' };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        return { valid: false, error: 'Request timed out' };
+      }
+      return { valid: false, error: 'Could not reach feed' };
+    }
+  };
+
+  /**
+   * Save settings with validation
+   */
+  const saveSettings = async () => {
+    const enabledFeeds = localConfig.feeds.filter(f => f.enabled && f.url);
+
+    // Validate enabled feeds before saving
+    if (enabledFeeds.length > 0) {
+      setIsValidating(true);
+      const errors: Record<string, string> = {};
+
+      await Promise.all(
+        enabledFeeds.map(async (feed) => {
+          const result = await testFeedUrl(feed.url);
+          if (!result.valid) {
+            errors[feed.url] = result.error || 'Invalid feed';
+          }
+        })
+      );
+
+      setIsValidating(false);
+
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        toast.error('Some feeds are invalid', {
+          description: 'Please check the highlighted feeds and try again.',
+          duration: 4000,
+        });
+        return; // Don't save if validation fails
+      }
+    }
+
+    setValidationErrors({});
+
     // Call onUpdate to persist changes
     if (config?.onUpdate && typeof config.onUpdate === 'function') {
       config.onUpdate(localConfig);
     }
-    
+
     setShowSettings(false);
-    
+
     // If the feed URL changed, fetch the feed
     if (localConfig.feeds.length > 0) {
       fetchAllFeeds(localConfig);
     }
   };
-  
+
   /**
-   * Validate feed URL
+   * Validate feed URL format only (for real-time feedback)
    */
   const validateFeedUrl = (url: string): boolean => {
     if (!url) return true; // Empty URL is allowed
-    
+
     try {
       new URL(url);
       return true;
@@ -561,14 +670,23 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                                       feeds: newFeeds
                                     });
                                     setIsValidUrl(newFeeds.every(f => validateFeedUrl(f.url)));
+                                    // Clear validation error when user edits
+                                    if (validationErrors[feed.url]) {
+                                      const newErrors = { ...validationErrors };
+                                      delete newErrors[feed.url];
+                                      setValidationErrors(newErrors);
+                                    }
                                   }}
                                   className={`${
-                                    !validateFeedUrl(feed.url) 
-                                      ? 'border-red-500 dark:border-red-500' 
+                                    !validateFeedUrl(feed.url) || validationErrors[feed.url]
+                                      ? 'border-red-500 dark:border-red-500'
                                       : 'border-transparent focus:border-gray-300 dark:focus:border-gray-600'
                                   } text-sm bg-transparent shadow-none`}
                                   placeholder="https://example.com/rss"
                                 />
+                                {validationErrors[feed.url] && (
+                                  <p className="text-xs text-red-500 mt-1">{validationErrors[feed.url]}</p>
+                                )}
                               </div>
                               <Button
                                 variant="ghost"
@@ -811,13 +929,17 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               
               <Button
                 variant="default"
-                onClick={() => {
-                  saveSettings();
-                  setShowSettings(false);
-                }}
-                disabled={!isValidUrl}
+                onClick={() => saveSettings()}
+                disabled={!isValidUrl || isValidating}
               >
-                Save
+                {isValidating ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Validating...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
             </div>
           </DialogFooter>

@@ -181,16 +181,20 @@ Boxento comes with a diverse collection of widgets organized by category:
 
 #### Productivity
 - **Todo Widget**: Track tasks and stay organized
+- **Todoist Widget**: Sync with your Todoist tasks
 - **Calendar Widget**: Display upcoming events
 - **Notes Widget**: Capture thoughts and ideas
 - **Pomodoro Timer**: Boost productivity with time management
+- **Habit Tracker**: Build daily habits with streak tracking
+- **Countdown**: Count down to important events and dates
 - **GitHub Streak Tracker**: Monitor your GitHub activity
 
 #### Information
 - **Weather Widget**: Check current conditions and forecasts
-- **World Clocks Widget**: Display time across different time zones
+- **World Clocks Widget**: Bauhaus-inspired clocks across time zones
 - **RSS Feed Widget**: Stay updated with favorite content
 - **Readwise Widget**: Access your reading highlights
+- **Year Progress**: Visualize progress through the year
 
 #### Finance & Travel
 - **Currency Converter**: Live exchange rates
@@ -201,6 +205,8 @@ Boxento comes with a diverse collection of widgets organized by category:
 - **YouTube Widget**: Watch videos directly
 - **Geography Quiz**: Test your knowledge
 - **Quick Links**: Organize favorite websites
+- **QR Code Generator**: Generate QR codes from text or URLs
+- **Embed Widget**: Embed external content via iframe or images
 
 ### Customization
 
