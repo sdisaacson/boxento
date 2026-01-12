@@ -38,7 +38,6 @@ import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMen
 import { DashboardSwitcher, Dashboard, DashboardVisibility } from '@/components/dashboard/DashboardSwitcher'
 import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
-import { AppFooter } from '@/components/AppFooter'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -1989,8 +1988,6 @@ function App() {
             </div>
           </div>
         </main>
-        {/* Add the footer */}
-        <AppFooter />
       </div>
     </div>
   )

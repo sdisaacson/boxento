@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
 import { UserMenuButton } from '@/components/auth/UserMenuButton';
 import { Changelog } from '@/components/Changelog';
-import { AppFooter } from '@/components/AppFooter';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -243,10 +242,6 @@ export function SharedDashboardView() {
           ))}
         </ResponsiveGridLayout>
       </main>
-
-      {/* Footer */}
-      <AppFooter />
-
       {/* CSS to hide interactive elements in read-only mode */}
       <style>{`
         .read-only-dashboard .widget-drag-handle,

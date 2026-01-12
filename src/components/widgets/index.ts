@@ -24,6 +24,7 @@ const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
 const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
 const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
+const AGGridWidget = React.lazy(() => import('./AGGridWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -48,6 +49,8 @@ export * from './HabitWidget/types';
 export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
+export * from './AGGridWidget/types';
+
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -299,7 +302,18 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Information',
     description: 'Random articles from your Readwise Reader library'
-  }
+  },
+  {
+    type: 'ag-grid',
+    name: 'AG-Grid',
+    icon: 'BarChart',
+    minWidth: 3,
+    minHeight: 3,
+    defaultWidth: 4,
+    defaultHeight: 4,
+    category: 'Information',
+    description: 'A powerful data grid for displaying and manipulating tabular data.'
+  },
 ];
 
 // Widget categories
@@ -343,6 +357,7 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
   'reader': ReaderWidget,
+  'ag-grid': AGGridWidget,
 };
 
 /**

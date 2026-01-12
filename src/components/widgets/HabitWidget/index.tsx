@@ -73,7 +73,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
     if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
 
     let streak = 0;
-    let checkDate = new Date(sortedDates[0]);
+    const checkDate = new Date(sortedDates[0]);
 
     for (const dateStr of sortedDates) {
       const expectedDate = checkDate.toISOString().split('T')[0];

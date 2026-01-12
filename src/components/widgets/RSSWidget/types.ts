@@ -22,6 +22,7 @@ export interface RSSFeedItem {
   author?: string;
   image?: string;
   feedTitle?: string;
+  feedUrl?: string;
 }
 
 /**
@@ -32,6 +33,11 @@ export enum RSSDisplayMode {
   CARDS = 'cards',
   COMPACT = 'compact'
 }
+
+/**
+ * Orientation for the RSS widget
+ */
+export type RSSOrientation = 'vertical' | 'horizontal';
 
 /**
  * RSS Feed configuration
@@ -56,6 +62,7 @@ export interface RSSFeed {
  * @property {boolean} [showAuthor] - Whether to show authors
  * @property {boolean} [showDescription] - Whether to show article descriptions
  * @property {RSSDisplayMode} [displayMode] - How to display the feed (list, cards, compact)
+ * @property {RSSOrientation} [orientation] - Layout orientation (vertical = merged list, horizontal = columns per feed)
  * @property {boolean} [openInNewTab] - Whether to open links in a new tab
  */
 export interface RSSWidgetConfig {
@@ -63,11 +70,15 @@ export interface RSSWidgetConfig {
   title?: string;
   feeds: RSSFeed[];
   maxItems?: number;
+  refreshInterval?: number; // Refresh interval in minutes
   showImages?: boolean;
   showDate?: boolean;
   showAuthor?: boolean;
   showDescription?: boolean;
   displayMode?: RSSDisplayMode;
+  orientation?: RSSOrientation;
+  columns?: number;
+  autoScroll?: boolean;
   openInNewTab?: boolean;
   onUpdate?: (config: RSSWidgetConfig) => void;
   onDelete?: () => void;

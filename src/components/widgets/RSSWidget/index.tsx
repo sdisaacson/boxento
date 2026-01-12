@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { toast } from 'sonner';
-import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +16,6 @@ import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
 import { Rss, AlertCircle, Upload } from 'lucide-react';
-import { Skeleton } from '../../ui/skeleton';
 
 /**
  * Size categories for widget content rendering
@@ -34,6 +31,73 @@ enum WidgetSizeCategory {
 }
 
 /**
+ * AutoScrollContainer Component
+ * 
+ * Handles seamless vertical scrolling for feed content.
+ */
+const AutoScrollContainer: React.FC<{
+  children: React.ReactNode;
+  enabled: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ children, enabled, className = "", style }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!enabled || !containerRef.current) return;
+
+    const container = containerRef.current;
+    let animationFrameId: number;
+    let lastTime = 0;
+    const speed = 20; // Pixels per second
+
+    const scroll = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      if (container) {
+        // Move amount based on time delta for smooth speed regardless of framerate
+        const moveAmount = (speed * deltaTime) / 1000;
+        container.scrollTop += moveAmount;
+
+        // Reset scroll position when we reach the end of the first set
+        // The first child is the wrapper around the original content
+        const firstChild = container.firstElementChild as HTMLElement;
+        if (firstChild && container.scrollTop >= firstChild.offsetHeight) {
+           container.scrollTop -= firstChild.offsetHeight;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [enabled, children]); // Re-run if children change
+
+  if (!enabled) {
+    return (
+      <div className={`overflow-y-auto ${className}`} style={style}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      ref={containerRef} 
+      className={`overflow-hidden ${className}`} 
+      style={style}
+    >
+      <div>{children}</div>
+      <div>{children}</div>
+    </div>
+  );
+};
+
+/**
  * RSS Widget Component
  * 
  * This widget allows users to view RSS feeds directly on their dashboard.
@@ -47,11 +111,15 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     title: 'RSS Feed',
     feeds: [],
     maxItems: 5,
+    refreshInterval: 30,
     showImages: true,
     showDate: true,
     showAuthor: true,
     showDescription: true,
     displayMode: RSSDisplayMode.LIST,
+    orientation: 'vertical',
+    columns: 3,
+    autoScroll: false,
     openInNewTab: true
   }), []); // Empty dependency array since these values never change
 
@@ -62,10 +130,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     ...config
   });
   const [feedItems, setFeedItems] = useState<RSSFeedItem[]>([]);
-  // Start loading if there are enabled feeds configured
-  const [isLoading, setIsLoading] = useState<boolean>(
-    () => (config?.feeds || defaultConfig.feeds)?.some(feed => feed.enabled) ?? false
-  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('content');
@@ -76,8 +141,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
   // Move fetchSingleFeed before fetchAllFeeds
   const fetchSingleFeed = React.useCallback(async (feed: RSSFeed): Promise<RSSFeedItem[]> => {
-    // Use our own CORS proxy (server-side) instead of third-party allorigins.win
-    const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
+    const corsProxy = 'https://api.allorigins.win/raw?url=';
+    const response = await fetch(`${corsProxy}${encodeURIComponent(feed.url)}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch RSS feed: ${response.statusText}`);
@@ -115,51 +180,38 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     
     try {
       const allItems: RSSFeedItem[] = [];
-      const failedFeeds: string[] = [];
-
+      
       // Fetch all feeds in parallel
       await Promise.all(enabledFeeds.map(async feed => {
         try {
           const items = await fetchSingleFeed(feed);
-          allItems.push(...items.map(item => ({
+          
+          // Apply maxItems limit per feed
+          const limit = currentConfig.maxItems && currentConfig.maxItems > 0 ? currentConfig.maxItems : 5;
+          const limitedItems = items.slice(0, limit);
+
+          allItems.push(...limitedItems.map(item => ({
             ...item,
-            feedTitle: feed.title // Add feed title to each item
+            feedTitle: feed.title, // Add feed title to each item
+            feedUrl: feed.url // Add feed URL to each item for grouping
           })));
         } catch (error) {
           console.error(`Error fetching feed ${feed.url}:`, error);
-          failedFeeds.push(feed.title || feed.url);
         }
       }));
-
-      // Notify user if some feeds failed
-      if (failedFeeds.length > 0 && allItems.length > 0) {
-        toast.warning(`${failedFeeds.length} feed${failedFeeds.length > 1 ? 's' : ''} failed to load`, {
-          description: failedFeeds.slice(0, 2).join(', ') + (failedFeeds.length > 2 ? '...' : ''),
-          duration: 4000,
-        });
-      } else if (failedFeeds.length > 0 && allItems.length === 0) {
-        toast.error('Failed to load RSS feeds', {
-          description: 'Check your feed URLs or try again later.',
-          duration: 5000,
-        });
-      }
-
+      
       // Sort all items by date
       const sortedItems = allItems.sort((a, b) => {
         const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
         const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
         return dateB - dateA;
       });
-
+      
       setFeedItems(sortedItems);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching feeds:', error);
       setError('Failed to fetch RSS feeds');
-      toast.error('Failed to load RSS feeds', {
-        description: 'Please check your internet connection.',
-        duration: 5000,
-      });
       setIsLoading(false);
     }
   }, [localConfig, fetchSingleFeed]);
@@ -198,13 +250,17 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     fetchAllFeeds();
   }, [localConfig.feeds, fetchAllFeeds]);
 
-  // Auto-refresh when tab becomes visible or every 15 minutes
-  useVisibilityRefresh({
-    onRefresh: fetchAllFeeds,
-    minHiddenTime: 60000, // Refresh if hidden for 1+ minute
-    refreshInterval: 900000, // Refresh every 15 minutes
-    enabled: localConfig.feeds?.some(feed => feed.enabled) ?? false
-  });
+  // Setup auto-refresh
+  useEffect(() => {
+    const intervalMinutes = localConfig.refreshInterval || 30;
+    if (intervalMinutes <= 0) return;
+
+    const intervalId = setInterval(() => {
+      fetchAllFeeds();
+    }, intervalMinutes * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [localConfig.refreshInterval, fetchAllFeeds]);
 
   /**
    * Format publication date
@@ -421,17 +477,11 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
    */
   const renderLoadingState = (): React.ReactElement => {
     return (
-      <div className="h-full flex flex-col p-4 space-y-3 overflow-hidden">
-        {/* Feed item skeletons */}
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex gap-3">
-            <Skeleton className="h-12 w-12 rounded flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-3/4" />
-            </div>
-          </div>
-        ))}
+      <div className="h-full flex flex-col items-center justify-center text-center p-4">
+        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Loading RSS feed...
+        </p>
       </div>
     );
   };
@@ -440,7 +490,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
    * Render feed content
    */
   const renderFeedContent = () => {
-    const { displayMode } = localConfig;
+    const { displayMode, orientation, autoScroll } = localConfig;
     
     if (isLoading) {
       return renderLoadingState();
@@ -462,37 +512,61 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     if (sizeCategory === WidgetSizeCategory.SMALL) {
       effectiveDisplayMode = RSSDisplayMode.COMPACT;
     }
-    
-    // Render based on display mode
-    switch (effectiveDisplayMode) {
-      case RSSDisplayMode.CARDS:
-        return (
-          <div className="h-full overflow-auto">
-            <div className="grid grid-cols-1 gap-4 p-4">
-              {renderFeedItems(effectiveDisplayMode)}
-            </div>
-          </div>
-        );
-        
-      case RSSDisplayMode.COMPACT:
-        return (
-          <div className="h-full overflow-auto">
-            <div className="px-4 py-2">
-              {renderFeedItems(effectiveDisplayMode)}
-            </div>
-          </div>
-        );
-        
-      case RSSDisplayMode.LIST:
-      default:
-        return (
-          <div className="h-full overflow-auto">
-            <div className="px-4">
-              {renderFeedItems(effectiveDisplayMode)}
-            </div>
-          </div>
-        );
+
+    // Horizontal Orientation Logic (Grid)
+    if (orientation === 'horizontal') {
+       // Group items by feedUrl
+       const feedGroups = localConfig.feeds
+         .filter(f => f.enabled)
+         .map(feed => {
+           // Filter items belonging to this feed
+           const items = feedItems.filter(item => item.feedUrl === feed.url);
+           return {
+             feed,
+             items
+           };
+         })
+         .filter(group => group.items.length > 0);
+
+       const columns = localConfig.columns || 3;
+
+       return (
+         <div className="h-full overflow-y-auto overflow-x-hidden">
+           <div 
+             className="grid gap-4 p-4"
+             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+           >
+             {feedGroups.map((group, i) => (
+               <div key={i} className="flex flex-col h-80 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950/50 shadow-sm overflow-hidden">
+                 <div className="p-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 font-medium text-sm truncate shrink-0">
+                   {group.feed.title}
+                 </div>
+                 <div className="flex-1 overflow-hidden relative">
+                   <AutoScrollContainer enabled={!!autoScroll} className="h-full p-3">
+                     <div className={effectiveDisplayMode === RSSDisplayMode.CARDS ? "grid grid-cols-1 gap-4" : ""}>
+                      {renderFeedItems(effectiveDisplayMode, group.items)}
+                     </div>
+                   </AutoScrollContainer>
+                 </div>
+               </div>
+             ))}
+           </div>
+         </div>
+       );
     }
+    
+    // Vertical (Default) Logic (Merged List)
+    const paddingClass = effectiveDisplayMode === RSSDisplayMode.CARDS ? "p-4" : 
+                         effectiveDisplayMode === RSSDisplayMode.COMPACT ? "px-4 py-2" : "px-4";
+    const gridClass = effectiveDisplayMode === RSSDisplayMode.CARDS ? "grid grid-cols-1 gap-4" : "";
+
+    return (
+      <AutoScrollContainer enabled={!!autoScroll} className="h-full">
+        <div className={`${paddingClass} ${gridClass}`}>
+          {renderFeedItems(effectiveDisplayMode, feedItems)}
+        </div>
+      </AutoScrollContainer>
+    );
   };
   
   /**
@@ -502,100 +576,30 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     return renderFeedContent();
   };
   
-  // Track validation state
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
   /**
-   * Test if a feed URL is accessible
+   * Save settings
    */
-  const testFeedUrl = async (url: string): Promise<{ valid: boolean; error?: string }> => {
-    if (!url) return { valid: true };
-
-    try {
-      new URL(url);
-    } catch {
-      return { valid: false, error: 'Invalid URL format' };
-    }
-
-    try {
-      // Use our own CORS proxy for validation
-      const response = await fetch(`/api/rss?url=${encodeURIComponent(url)}`, {
-        signal: AbortSignal.timeout(10000) // 10 second timeout
-      });
-
-      if (!response.ok) {
-        return { valid: false, error: `Failed to fetch (${response.status})` };
-      }
-
-      const text = await response.text();
-      // Check if it looks like RSS/XML
-      if (!text.includes('<rss') && !text.includes('<feed') && !text.includes('<channel')) {
-        return { valid: false, error: 'Not a valid RSS feed' };
-      }
-
-      return { valid: true };
-    } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
-        return { valid: false, error: 'Request timed out' };
-      }
-      return { valid: false, error: 'Could not reach feed' };
-    }
-  };
-
-  /**
-   * Save settings with validation
-   */
-  const saveSettings = async () => {
-    const enabledFeeds = localConfig.feeds.filter(f => f.enabled && f.url);
-
-    // Validate enabled feeds before saving
-    if (enabledFeeds.length > 0) {
-      setIsValidating(true);
-      const errors: Record<string, string> = {};
-
-      await Promise.all(
-        enabledFeeds.map(async (feed) => {
-          const result = await testFeedUrl(feed.url);
-          if (!result.valid) {
-            errors[feed.url] = result.error || 'Invalid feed';
-          }
-        })
-      );
-
-      setIsValidating(false);
-
-      if (Object.keys(errors).length > 0) {
-        setValidationErrors(errors);
-        toast.error('Some feeds are invalid', {
-          description: 'Please check the highlighted feeds and try again.',
-          duration: 4000,
-        });
-        return; // Don't save if validation fails
-      }
-    }
-
-    setValidationErrors({});
-
+  const saveSettings = () => {
+    
     // Call onUpdate to persist changes
     if (config?.onUpdate && typeof config.onUpdate === 'function') {
       config.onUpdate(localConfig);
     }
-
+    
     setShowSettings(false);
-
+    
     // If the feed URL changed, fetch the feed
     if (localConfig.feeds.length > 0) {
       fetchAllFeeds(localConfig);
     }
   };
-
+  
   /**
-   * Validate feed URL format only (for real-time feedback)
+   * Validate feed URL
    */
   const validateFeedUrl = (url: string): boolean => {
     if (!url) return true; // Empty URL is allowed
-
+    
     try {
       new URL(url);
       return true;
@@ -670,23 +674,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                                       feeds: newFeeds
                                     });
                                     setIsValidUrl(newFeeds.every(f => validateFeedUrl(f.url)));
-                                    // Clear validation error when user edits
-                                    if (validationErrors[feed.url]) {
-                                      const newErrors = { ...validationErrors };
-                                      delete newErrors[feed.url];
-                                      setValidationErrors(newErrors);
-                                    }
                                   }}
                                   className={`${
-                                    !validateFeedUrl(feed.url) || validationErrors[feed.url]
-                                      ? 'border-red-500 dark:border-red-500'
+                                    !validateFeedUrl(feed.url) 
+                                      ? 'border-red-500 dark:border-red-500' 
                                       : 'border-transparent focus:border-gray-300 dark:focus:border-gray-600'
                                   } text-sm bg-transparent shadow-none`}
                                   placeholder="https://example.com/rss"
                                 />
-                                {validationErrors[feed.url] && (
-                                  <p className="text-xs text-red-500 mt-1">{validationErrors[feed.url]}</p>
-                                )}
                               </div>
                               <Button
                                 variant="ghost"
@@ -764,6 +759,31 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                   Add RSS feed URLs manually or import from an OPML file
                 </p>
               </div>
+
+              {/* Feed Configuration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="max-items-input">Items per Feed</Label>
+                  <Input
+                    id="max-items-input"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={localConfig.maxItems || 5}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, maxItems: parseInt(e.target.value) || 5})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="refresh-interval-input">Refresh (mins)</Label>
+                  <Input
+                    id="refresh-interval-input"
+                    type="number"
+                    min="1"
+                    value={localConfig.refreshInterval || 30}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, refreshInterval: parseInt(e.target.value) || 30})}
+                  />
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="display" className="space-y-4 py-4">
@@ -797,6 +817,48 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                   </Button>
                 </div>
               </div>
+
+              {/* Orientation */}
+              <div className="space-y-2">
+                <Label>Orientation</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setLocalConfig({...localConfig, orientation: 'vertical'})}
+                    variant={!localConfig.orientation || localConfig.orientation === 'vertical' ? "default" : "outline"}
+                    size="sm"
+                  >
+                    Vertical (Merged)
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setLocalConfig({...localConfig, orientation: 'horizontal'})}
+                    variant={localConfig.orientation === 'horizontal' ? "default" : "outline"}
+                    size="sm"
+                  >
+                    Horizontal (Columns)
+                  </Button>
+                </div>
+              </div>
+
+              {/* Columns (Horizontal Only) */}
+              {localConfig.orientation === 'horizontal' && (
+                <div className="space-y-2">
+                  <Label htmlFor="columns-input">Columns</Label>
+                  <Input
+                    id="columns-input"
+                    type="number"
+                    min="1"
+                    max="6"
+                    value={localConfig.columns || 3}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalConfig({...localConfig, columns: parseInt(e.target.value) || 3})}
+                    placeholder="3"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Number of columns for the feed grid
+                  </p>
+                </div>
+              )}
               
               <div className="space-y-4">
                 <Label>Display Options</Label>
@@ -848,6 +910,16 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                     id="open-new-tab-toggle"
                     checked={localConfig.openInNewTab}
                     onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, openInNewTab: checked})}
+                  />
+                </div>
+
+                {/* Auto Scroll */}
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="auto-scroll-toggle" className="flex-1">Auto Scroll Feeds</Label>
+                  <Switch
+                    id="auto-scroll-toggle"
+                    checked={localConfig.autoScroll}
+                    onCheckedChange={(checked: boolean) => setLocalConfig({...localConfig, autoScroll: checked})}
                   />
                 </div>
               </div>
@@ -929,17 +1001,13 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               
               <Button
                 variant="default"
-                onClick={() => saveSettings()}
-                disabled={!isValidUrl || isValidating}
+                onClick={() => {
+                  saveSettings();
+                  setShowSettings(false);
+                }}
+                disabled={!isValidUrl}
               >
-                {isValidating ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Validating...
-                  </>
-                ) : (
-                  'Save'
-                )}
+                Save
               </Button>
             </div>
           </DialogFooter>
@@ -959,8 +1027,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   };
 
   // Ensure display mode is always defined by using a default value
-  const renderFeedItems = (displayMode: RSSDisplayMode = RSSDisplayMode.LIST) => {
-    return feedItems.map((item, index) => renderFeedItem(item, index, displayMode));
+  const renderFeedItems = (displayMode: RSSDisplayMode = RSSDisplayMode.LIST, items: RSSFeedItem[] = feedItems) => {
+    return items.map((item, index) => renderFeedItem(item, index, displayMode));
   };
 
   const handleOPMLImport = (event: React.ChangeEvent<HTMLInputElement>) => {

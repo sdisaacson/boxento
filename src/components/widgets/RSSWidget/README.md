@@ -1,6 +1,6 @@
 # RSS Widget
 
-The RSS Widget allows users to display and read RSS feeds directly on their Boxento dashboard.
+The RSS Widget allows users to display and read RSS feeds directly on their kanso dashboard.
 
 ## Features
 

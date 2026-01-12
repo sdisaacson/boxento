@@ -32,6 +32,7 @@ const getAllowedHosts = () => {
     'boxento-dev.boxento.orb.local',
     'boxento-prod.boxento.orb.local',
     'boxento.boxento.orb.local',
+    'sisaacson.io',
     // Allow custom domains set via environment variable
     ...(process.env.VITE_ALLOWED_HOSTS || '').split(',').filter(Boolean)
   ]
@@ -80,38 +81,6 @@ export default defineConfig({
   },
   build: {
     cssMinify: 'lightningcss',
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Put ALL node_modules in a single vendor chunk
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-
-          // App.tsx in its own chunk due to size
-          if (id.includes('/App.tsx')) {
-            return 'app';
-          }
-
-          // Let widget components be lazy-loaded into their own chunks
-          // Do NOT include them in ui-components
-          if (id.includes('/components/widgets/') && !id.includes('/common/')) {
-            // Return undefined to let Rollup handle chunking via dynamic imports
-            return undefined;
-          }
-
-          // Other components (UI, auth, etc.) in their own chunk
-          if (id.includes('/components/')) {
-            return 'ui-components';
-          }
-
-          // Library files (including contexts) in their own chunk
-          if (id.includes('/lib/') || id.includes('/utils/')) {
-            return 'lib';
-          }
-        }
-      },
-    },
-    chunkSizeWarningLimit: 800, // Increased since vendor will be larger
+    chunkSizeWarningLimit: 900,
   },
 })
