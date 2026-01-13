@@ -34,7 +34,8 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
   const [colDefs, setColDefs] = useState<any[]>(config?.colDefs || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isEditable, setIsEditable] = useState(true);
+  const [isEditable, setIsEditable] = useState(config?.isEditable ?? true);
+  const [debugMode, setDebugMode] = useState(config?.showDebug ?? false);
 
   // S3 File Browser State
   const [isS3BrowserOpen, setIsS3BrowserOpen] = useState(false);
@@ -46,8 +47,10 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
   useEffect(() => {
     if (config) {
       setLocalConfig(config);
+      setIsEditable(config.isEditable ?? true);
+      setDebugMode(config.showDebug ?? false);
       if (config.rowData) setRowData(config.rowData);
-      
+
       // Update column definitions to respect isEditable state
       if (config.colDefs) {
         const updatedColDefs = config.colDefs.map((col: any) => ({
@@ -59,7 +62,28 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
       
       if (config.s3FileName) setS3FileName(config.s3FileName);
     }
-  }, [config, isEditable]); // Added isEditable dependency
+  }, [config]);
+
+  // When the editable toggle changes, push the new editable flag into the grid immediately
+  useEffect(() => {
+    setColDefs(prev => {
+      const updated = (prev || []).map(col => ({
+        ...col,
+        editable: isEditable,
+      }));
+      const api = gridRef.current?.api;
+      if (api) {
+        api.stopEditing();
+        if (typeof (api as any).setGridOption === 'function') {
+          (api as any).setGridOption('columnDefs', updated);
+        } else if (typeof (api as any).setColumnDefs === 'function') {
+          (api as any).setColumnDefs(updated);
+        }
+        api.refreshCells({ force: true });
+      }
+      return updated;
+    });
+  }, [isEditable]);
 
   const streamToString = async (stream: ReadableStream): Promise<string> => {
     const reader = stream.getReader();
@@ -243,9 +267,11 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
   }, []);
 
   const handleSaveSettings = useCallback(() => {
-    config?.onUpdate?.(localConfig);
+    const updated = { ...localConfig, isEditable, showDebug: debugMode };
+    setLocalConfig(updated);
+    config?.onUpdate?.(updated);
     setIsSettingsOpen(false);
-  }, [config, localConfig]);
+  }, [config, localConfig, isEditable, debugMode]);
 
   useEffect(() => {
     if (localConfig.dataUrl && !rowData.length) {
@@ -260,6 +286,16 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
     config?.onUpdate?.({ ...localConfig, rowData: newData });
   }, [config, localConfig]);
 
+  const toggleEditable = useCallback((checked: boolean | string) => {
+    const next = Boolean(checked);
+    setIsEditable(next);
+    setLocalConfig(prev => ({ ...prev, isEditable: next }));
+    // Optional persistence without waiting for Save
+    if (config?.onUpdate) {
+      config.onUpdate({ ...localConfig, isEditable: next });
+    }
+  }, [config, localConfig]);
+
   return (
     <div className="widget-container h-full flex flex-col">
       <WidgetHeader 
@@ -270,16 +306,24 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
             <Button variant="outline" size="sm" onClick={() => openS3Browser('load')}><FolderOpen className="mr-2 h-4 w-4" /> Load S3</Button>
             <Button variant="outline" size="sm" onClick={() => openS3Browser('save')}><FileUp className="mr-2 h-4 w-4" /> Save S3</Button>
             <div className="flex items-center space-x-2 pl-2">
-              <Checkbox id="editable-toggle" checked={isEditable} onCheckedChange={(checked) => setIsEditable(!!checked)} />
+              <Checkbox id="editable-toggle" checked={isEditable} onCheckedChange={toggleEditable} />
               <Label htmlFor="editable-toggle" className="text-xs">Editable</Label>
             </div>
           </div>
       </WidgetHeader>
       <div className={`flex-1 ag-theme-alpine-dark h-full relative ${!isEditable ? 'ag-non-editable' : ''}`}>
-        {(isLoading || (error && !isS3BrowserOpen)) && (
+        {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            {isLoading && <Loader2 className="w-8 h-8 animate-spin text-primary" />}
-            {error && <div className="text-destructive flex items-center gap-2"><AlertCircle className="h-4 w-4" /> {error}</div>}
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+        {error && !isS3BrowserOpen && (
+          <div className="absolute top-2 left-2 right-2 z-10 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive">
+            <AlertCircle className="h-4 w-4 mt-0.5" />
+            <div className="flex-1 text-sm">{error}</div>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)} className="h-7">
+              Dismiss
+            </Button>
           </div>
         )}
 
@@ -337,11 +381,19 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
             resizable: true,
             editable: isEditable,
           }}
-          // Enable editing only if isEditable is true
-          readOnlyEdit={!isEditable}
+          suppressClickEdit={!isEditable}
+          singleClickEdit={true}
           onCellValueChanged={handleCellValueChanged}
         />
       </div>
+      {debugMode && (
+        <div className="absolute bottom-2 right-2 z-20 rounded-md bg-black/70 px-3 py-2 text-xs text-white space-y-1">
+          <div>Editable: {String(isEditable)}</div>
+          <div>Rows: {rowData.length}</div>
+          <div>Columns: {colDefs.length}</div>
+          <div>Errors: {error ? 'Yes' : 'No'}</div>
+        </div>
+      )}
 
       {/* Settings Modal */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
@@ -366,6 +418,27 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
                     value={localConfig.title || ''}
                     onChange={(e) => setLocalConfig({ ...localConfig, title: e.target.value })}
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="editable-setting-toggle"
+                    checked={isEditable}
+                    onCheckedChange={toggleEditable}
+                  />
+                  <Label htmlFor="editable-setting-toggle">Editable</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="debug-setting-toggle"
+                    checked={debugMode}
+                    onCheckedChange={(checked) => {
+                      const next = Boolean(checked);
+                      setDebugMode(next);
+                      setLocalConfig(prev => ({ ...prev, showDebug: next }));
+                      config?.onUpdate?.({ ...localConfig, showDebug: next });
+                    }}
+                  />
+                  <Label htmlFor="debug-setting-toggle">Debug Overlay</Label>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="dataUrl">Data URL (CSV)</Label>

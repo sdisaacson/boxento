@@ -12,6 +12,8 @@ export interface AGGridWidgetConfig {
   s3EndpointUrl?: string;
   s3Region?: string;
   s3FileName?: string;
+  isEditable?: boolean;
+  showDebug?: boolean;
   onUpdate?: (config: AGGridWidgetConfig) => void;
   onDelete?: () => void;
   [key: string]: unknown;

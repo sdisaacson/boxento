@@ -13,6 +13,7 @@ const CurrencyConverterWidget = React.lazy(() => import('./CurrencyConverterWidg
 const ReadwiseWidget = React.lazy(() => import('./ReadwiseWidget/index'));
 const UFWidget = React.lazy(() => import('./UFWidget/index'));
 const YouTubeWidget = React.lazy(() => import('./YouTubeWidget/index'));
+const YouTubeFavoritesWidget = React.lazy(() => import('./YouTubeFavoritesWidget/index'));
 const RSSWidget = React.lazy(() => import('./RSSWidget/index'));
 const GitHubStreakWidget = React.lazy(() => import('./GitHubStreakWidget/index'));
 const FlightTrackerWidget = React.lazy(() => import('./FlightTrackerWidget/index'));
@@ -38,6 +39,7 @@ export * from './CurrencyConverterWidget/types';
 export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
+export * from './YouTubeFavoritesWidget/types';
 export * from './RSSWidget/types';
 export * from './GitHubStreakWidget/types';
 export * from './FlightTrackerWidget/types';
@@ -50,6 +52,7 @@ export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
 export * from './AGGridWidget/types';
+export * from './YouTubeWidget/types';
 
 
 // Enhanced Widget Config
@@ -181,6 +184,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Entertainment',
     description: 'Watch YouTube videos directly on your dashboard'
+  },
+  {
+    type: 'youtube-favorites',
+    name: 'YouTube Favorites',
+    icon: 'Heart',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Entertainment',
+    description: 'Display the latest videos from selected channels'
   },
   {
     type: 'rss',
@@ -346,6 +360,7 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'readwise': ReadwiseWidget,
   'uf-chile': UFWidget,
   'youtube': YouTubeWidget,
+  'youtube-favorites': YouTubeFavoritesWidget,
   'rss': RSSWidget as unknown as LazyWidgetComponent,
   'github-streak': GitHubStreakWidget,
   'flight-tracker': FlightTrackerWidget,
