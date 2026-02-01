@@ -47,25 +47,52 @@ const AutoScrollContainer: React.FC<{
     if (!enabled || !containerRef.current) return;
 
     const container = containerRef.current;
+    container.scrollTop = 0;
+
     let animationFrameId: number;
     let lastTime = 0;
     const speed = 20; // Pixels per second
+    let virtualScrollTop = container.scrollTop;
 
     const scroll = (time: number) => {
+      const isHovered = container.matches(':hover');
+      const isFocusedWithin = container.contains(document.activeElement);
+      if (isHovered || isFocusedWithin) {
+        lastTime = time;
+        // Keep in sync with any user-driven scrolling while paused
+        virtualScrollTop = container.scrollTop;
+        animationFrameId = requestAnimationFrame(scroll);
+        return;
+      }
+
       if (!lastTime) lastTime = time;
       const deltaTime = time - lastTime;
       lastTime = time;
 
       if (container) {
+        const firstChild = container.firstElementChild as HTMLElement | null;
+        const loopHeight = firstChild?.scrollHeight ?? 0;
+        const canScroll = loopHeight > container.clientHeight + 1;
+
+        if (!canScroll) {
+          virtualScrollTop = 0;
+          container.scrollTop = 0;
+          animationFrameId = requestAnimationFrame(scroll);
+          return;
+        }
+
         // Move amount based on time delta for smooth speed regardless of framerate
         const moveAmount = (speed * deltaTime) / 1000;
-        container.scrollTop += moveAmount;
+        // Accumulate fractional pixels to avoid losing sub-pixel deltas
+        // (some browsers read/write `scrollTop` as an integer)
+        virtualScrollTop += moveAmount;
+        container.scrollTop = virtualScrollTop;
 
         // Reset scroll position when we reach the end of the first set
         // The first child is the wrapper around the original content
-        const firstChild = container.firstElementChild as HTMLElement;
-        if (firstChild && container.scrollTop >= firstChild.offsetHeight) {
-           container.scrollTop -= firstChild.offsetHeight;
+        if (firstChild && virtualScrollTop >= loopHeight) {
+          virtualScrollTop -= loopHeight;
+          container.scrollTop = virtualScrollTop;
         }
       }
 
@@ -74,7 +101,9 @@ const AutoScrollContainer: React.FC<{
 
     animationFrameId = requestAnimationFrame(scroll);
 
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
   }, [enabled, children]); // Re-run if children change
 
   if (!enabled) {
@@ -88,7 +117,7 @@ const AutoScrollContainer: React.FC<{
   return (
     <div 
       ref={containerRef} 
-      className={`overflow-hidden ${className}`} 
+      className={`overflow-y-auto overflow-x-hidden ${className}`} 
       style={style}
     >
       <div>{children}</div>
