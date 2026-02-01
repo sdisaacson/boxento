@@ -2,6 +2,7 @@
 
 ![Boxento Banner](./public/screenshot.png)
 
+
 **Project Status:** Beta - Ready for early adopters and contributors! Expect some rough edges, but core functionality is solid.
 
 ## 🌟 Bringing Back the Magic of Start Pages

@@ -14,7 +14,6 @@ const ReadwiseWidget = React.lazy(() => import('./ReadwiseWidget/index'));
 const UFWidget = React.lazy(() => import('./UFWidget/index'));
 const YouTubeWidget = React.lazy(() => import('./YouTubeWidget/index'));
 const YouTubeFavoritesWidget = React.lazy(() => import('./YouTubeFavoritesWidget/index'));
-const YouTubeAutoPlayWidget = React.lazy(() => import('./YouTubeAutoPlayWidget/index'));
 const RSSWidget = React.lazy(() => import('./RSSWidget/index'));
 const DailyScheduleWidget = React.lazy(() => import('./DailyScheduleWidget/index'));
 const GitHubStreakWidget = React.lazy(() => import('./GitHubStreakWidget/index'));
@@ -40,7 +39,6 @@ export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
 export * from './YouTubeFavoritesWidget/types';
-export * from './YouTubeAutoPlayWidget/types';
 export * from './RSSWidget/types';
 export * from './DailyScheduleWidget/types';
 export * from './GitHubStreakWidget/types';
@@ -53,6 +51,9 @@ export * from './HabitWidget/types';
 export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
+export * from './AGGridWidget/types';
+export * from './YouTubeWidget/types';
+
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -198,24 +199,13 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   {
     type: 'youtube-favorites',
     name: 'YouTube Favorites',
-    icon: 'Youtube',
+    icon: 'Heart',
     minWidth: 2,
     minHeight: 2,
-    defaultWidth: 4,
+    defaultWidth: 3,
     defaultHeight: 3,
     category: 'Entertainment',
-    description: 'Show recent videos from your favorite YouTube channels'
-  },
-  {
-    type: 'youtube-autoplay',
-    name: 'YouTube AutoPlay',
-    icon: 'Youtube',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 4,
-    defaultHeight: 3,
-    category: 'Entertainment',
-    description: 'Auto-play the newest video from each favorite channel'
+    description: 'Display the latest videos from selected channels'
   },
   {
     type: 'rss',

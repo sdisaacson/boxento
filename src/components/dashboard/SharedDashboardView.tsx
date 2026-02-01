@@ -10,7 +10,6 @@ import { Loader2, Lock, AlertCircle, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
 import { UserMenuButton } from '@/components/auth/UserMenuButton';
-import { Changelog } from '@/components/Changelog';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -210,7 +209,6 @@ export function SharedDashboardView() {
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            <Changelog />
 
             <div className="flex items-center">
               <UserMenuButton className="h-9" />
