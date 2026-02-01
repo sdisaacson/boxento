@@ -60,4 +60,6 @@ export const STORAGE_KEYS = {
   WIDGET_CONFIGS: 'boxento-widget-configs',
   APP_SETTINGS: 'boxento-app-settings',
   DEVICE_KEY: 'boxento-device-key',
+  // Shared snapshot of the most recently saved YouTube Favorites settings
+  YOUTUBE_FAVORITES_SHARED: 'boxento-youtube-favorites-shared',
 } as const;

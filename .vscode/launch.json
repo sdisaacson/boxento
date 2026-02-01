@@ -14,17 +14,11 @@
             "type": "node"
         },
         {
-            "type": "firefox",
+            "type": "chrome",
             "request": "launch",
-            "reAttach": true,
             "name": "Launch localhost",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}"
-        },
-        {
-            "type": "firefox",
-            "request": "attach",
-            "name": "Attach"
         },
         {
             "name": "Attach by Process ID",

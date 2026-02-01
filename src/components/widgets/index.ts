@@ -14,7 +14,9 @@ const ReadwiseWidget = React.lazy(() => import('./ReadwiseWidget/index'));
 const UFWidget = React.lazy(() => import('./UFWidget/index'));
 const YouTubeWidget = React.lazy(() => import('./YouTubeWidget/index'));
 const YouTubeFavoritesWidget = React.lazy(() => import('./YouTubeFavoritesWidget/index'));
+const YouTubeAutoPlayWidget = React.lazy(() => import('./YouTubeAutoPlayWidget/index'));
 const RSSWidget = React.lazy(() => import('./RSSWidget/index'));
+const DailyScheduleWidget = React.lazy(() => import('./DailyScheduleWidget/index'));
 const GitHubStreakWidget = React.lazy(() => import('./GitHubStreakWidget/index'));
 const FlightTrackerWidget = React.lazy(() => import('./FlightTrackerWidget/index'));
 const GeographyQuizWidget = React.lazy(() => import('./GeographyQuizWidget/index'));
@@ -25,8 +27,6 @@ const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
 const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
 const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
-const AGGridWidget = React.lazy(() => import('./AGGridWidget/index'));
-
 // Export widget types
 export * from './CalendarWidget/types';
 export * from './WeatherWidget/types';
@@ -40,7 +40,9 @@ export * from './ReadwiseWidget/types';
 export * from './UFWidget/types';
 export * from './YouTubeWidget/types';
 export * from './YouTubeFavoritesWidget/types';
+export * from './YouTubeAutoPlayWidget/types';
 export * from './RSSWidget/types';
+export * from './DailyScheduleWidget/types';
 export * from './GitHubStreakWidget/types';
 export * from './FlightTrackerWidget/types';
 export * from './GeographyQuizWidget/types';
@@ -52,8 +54,6 @@ export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
 export * from './AGGridWidget/types';
-export * from './YouTubeWidget/types';
-
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -74,6 +74,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Display your upcoming events and appointments'
+  },
+  {
+    type: 'daily-schedule',
+    name: 'Daily Schedule',
+    icon: 'Calendar',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Productivity',
+    description: 'Show upcoming meetings from an ICS calendar feed'
   },
   {
     type: 'weather',
@@ -188,13 +199,24 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
   {
     type: 'youtube-favorites',
     name: 'YouTube Favorites',
-    icon: 'Heart',
+    icon: 'Youtube',
     minWidth: 2,
     minHeight: 2,
-    defaultWidth: 3,
+    defaultWidth: 4,
     defaultHeight: 3,
     category: 'Entertainment',
-    description: 'Display the latest videos from selected channels'
+    description: 'Show recent videos from your favorite YouTube channels'
+  },
+  {
+    type: 'youtube-autoplay',
+    name: 'YouTube AutoPlay',
+    icon: 'Youtube',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 4,
+    defaultHeight: 3,
+    category: 'Entertainment',
+    description: 'Auto-play the newest video from each favorite channel'
   },
   {
     type: 'rss',
@@ -317,17 +339,6 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     category: 'Information',
     description: 'Random articles from your Readwise Reader library'
   },
-  {
-    type: 'ag-grid',
-    name: 'AG-Grid',
-    icon: 'BarChart',
-    minWidth: 3,
-    minHeight: 3,
-    defaultWidth: 4,
-    defaultHeight: 4,
-    category: 'Information',
-    description: 'A powerful data grid for displaying and manipulating tabular data.'
-  },
 ];
 
 // Widget categories
@@ -350,6 +361,7 @@ type LazyWidgetComponent = React.LazyExoticComponent<React.ComponentType<WidgetP
  */
 const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'calendar': CalendarWidget,
+  'daily-schedule': DailyScheduleWidget as unknown as LazyWidgetComponent,
   'weather': WeatherWidget,
   'world-clocks': WorldClocksWidget,
   'quick-links': QuickLinksWidget as unknown as LazyWidgetComponent,
@@ -360,7 +372,8 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'readwise': ReadwiseWidget,
   'uf-chile': UFWidget,
   'youtube': YouTubeWidget,
-  'youtube-favorites': YouTubeFavoritesWidget,
+  'youtube-favorites': YouTubeFavoritesWidget as unknown as LazyWidgetComponent,
+  'youtube-autoplay': YouTubeAutoPlayWidget as unknown as LazyWidgetComponent,
   'rss': RSSWidget as unknown as LazyWidgetComponent,
   'github-streak': GitHubStreakWidget,
   'flight-tracker': FlightTrackerWidget,
@@ -372,7 +385,6 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
   'reader': ReaderWidget,
-  'ag-grid': AGGridWidget,
 };
 
 /**
