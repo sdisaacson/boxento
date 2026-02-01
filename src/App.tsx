@@ -72,6 +72,64 @@ const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: stri
   return validatedLayouts;
 };
 
+type WidgetRendererProps = {
+  widget: Widget;
+  width: number;
+  height: number;
+  isReadOnly: boolean;
+  onDeleteWidget: (widgetId: string) => void;
+  onUpdateWidget: (widgetId: string, newConfig: Record<string, unknown>) => void;
+};
+
+const WidgetRenderer = React.memo(function WidgetRenderer({
+  widget,
+  width,
+  height,
+  isReadOnly,
+  onDeleteWidget,
+  onUpdateWidget,
+}: WidgetRendererProps) {
+  const WidgetComponent = getWidgetComponent(widget.type);
+
+  const widgetConfig = React.useMemo(() => {
+    // IMPORTANT: Include widget.id so widgets can use it for storage keys.
+    // In read-only mode, don't provide edit/delete callbacks.
+    return {
+      ...widget.config,
+      id: widget.id,
+      readOnly: isReadOnly,
+      ...(isReadOnly
+        ? {}
+        : {
+            onDelete: () => onDeleteWidget(widget.id),
+            onUpdate: (newConfig: Record<string, unknown>) => onUpdateWidget(widget.id, newConfig),
+          }),
+    };
+  }, [widget.config, widget.id, isReadOnly, onDeleteWidget, onUpdateWidget]);
+
+  if (!WidgetComponent) {
+    return (
+      <div className="widget-error">
+        <p>Widget type "{widget.type}" not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <WidgetErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="w-full h-full flex items-center justify-center bg-card rounded-lg">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <WidgetComponent width={width} height={height} config={widgetConfig} />
+      </Suspense>
+    </WidgetErrorBoundary>
+  );
+});
+
 const prepareWidgetConfigForSave = (config: Record<string, unknown>): Record<string, unknown> => {
   // Create a copy of the config without function properties
   const configToSave = { ...config };
@@ -1013,18 +1071,29 @@ function App() {
     }
   };
 
+  // Stable wrappers so widgets don't get new onUpdate/onDelete identities on every render.
+  // This prevents widgets that sync `config` via `useEffect([config])` from resetting/reloading
+  // when unrelated dashboard state changes (e.g. editing a different widget).
+  const deleteWidgetRef = useRef(deleteWidget);
+  useEffect(() => {
+    deleteWidgetRef.current = deleteWidget;
+  }, [deleteWidget]);
+
+  const updateWidgetConfigRef = useRef(updateWidgetConfig);
+  useEffect(() => {
+    updateWidgetConfigRef.current = updateWidgetConfig;
+  }, [updateWidgetConfig]);
+
+  const stableDeleteWidget = React.useCallback((widgetId: string) => {
+    void deleteWidgetRef.current(widgetId);
+  }, []);
+
+  const stableUpdateWidgetConfig = React.useCallback((widgetId: string, newConfig: Record<string, unknown>) => {
+    updateWidgetConfigRef.current(widgetId, newConfig);
+  }, []);
+
   // Unified widget rendering function
   const renderWidget = (widget: Widget, isMobileView = false): React.ReactNode => {
-    const WidgetComponent = getWidgetComponent(widget.type);
-    
-    if (!WidgetComponent) {
-      return (
-        <div className="widget-error">
-          <p>Widget type "{widget.type}" not found</p>
-        </div>
-      );
-    }
-    
     // Get widget dimensions
     const getWidgetDimensions = () => {
       // If layout isn't ready yet, use default dimensions
@@ -1054,33 +1123,15 @@ function App() {
     const isReadOnly = currentDashboard.ownerId !== undefined &&
                        auth?.currentUser?.uid !== currentDashboard.ownerId;
 
-    // Create widget config with callbacks
-    // IMPORTANT: Include widget.id so widgets can use it for storage keys
-    // In read-only mode, don't provide edit/delete callbacks
-    const widgetConfig = {
-      ...widget.config,
-      id: widget.id,
-      readOnly: isReadOnly,
-      ...(isReadOnly ? {} : {
-        onDelete: () => deleteWidget(widget.id),
-        onUpdate: (newConfig: Record<string, unknown>) => updateWidgetConfig(widget.id, newConfig)
-      })
-    };
-    
     return (
-      <WidgetErrorBoundary>
-        <Suspense fallback={
-          <div className="w-full h-full flex items-center justify-center bg-card rounded-lg">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        }>
-          <WidgetComponent
-            width={width}
-            height={height}
-            config={widgetConfig}
-          />
-        </Suspense>
-      </WidgetErrorBoundary>
+      <WidgetRenderer
+        widget={widget}
+        width={width}
+        height={height}
+        isReadOnly={isReadOnly}
+        onDeleteWidget={stableDeleteWidget}
+        onUpdateWidget={stableUpdateWidgetConfig}
+      />
     );
   };
   
