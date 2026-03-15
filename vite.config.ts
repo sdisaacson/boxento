@@ -33,6 +33,7 @@ const getAllowedHosts = () => {
     'boxento-prod.boxento.orb.local',
     'boxento.boxento.orb.local',
     'sisaacson.io',
+    '*',
     // Allow custom domains set via environment variable
     ...(process.env.VITE_ALLOWED_HOSTS || '').split(',').filter(Boolean)
   ]
