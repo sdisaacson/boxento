@@ -27,8 +27,16 @@ const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
 const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
 const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
+const CalendarMonthlyWidget = React.lazy(() => import('./CalendarMonthlyWidget/index'));
+const WebsiteMonitorWidget = React.lazy(() => import('./WebsiteMonitorWidget/index'));
+const DockerMonitorWidget = React.lazy(() => import('./DockerMonitorWidget/index'));
+
 // Export widget types
 export * from './CalendarWidget/types';
+export * from './CalendarMonthlyWidget/types';
+export * from './WebsiteMonitorWidget/types';
+export * from './DockerMonitorWidget/types';
+
 export * from './WeatherWidget/types';
 export * from './WorldClocksWidget/types';
 export * from './QuickLinksWidget/types';
@@ -74,6 +82,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 2,
     category: 'Productivity',
     description: 'Display your upcoming events and appointments'
+  },
+  {
+    type: 'calendar-monthly',
+    name: 'Monthly Calendar',
+    icon: 'CalendarDays',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 2,
+    category: 'Productivity',
+    description: 'A monthly calendar view with navigation'
   },
   {
     type: 'daily-schedule',
@@ -318,6 +337,28 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     description: 'Count down to important events and dates'
   },
   {
+    type: 'website-monitor',
+    name: 'Website Monitor',
+    icon: 'Globe',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Utilities',
+    description: 'Monitor the reachability and response time of websites'
+  },
+  {
+    type: 'docker-monitor',
+    name: 'Docker Monitor',
+    icon: 'Container',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Utilities',
+    description: 'Monitor local Docker containers and status'
+  },
+  {
     type: 'qrcode',
     name: 'QR Code',
     icon: 'QrCode',
@@ -385,6 +426,9 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
   'reader': ReaderWidget,
+  'calendar-monthly': CalendarMonthlyWidget,
+  'website-monitor': WebsiteMonitorWidget,
+  'docker-monitor': DockerMonitorWidget,
 };
 
 /**

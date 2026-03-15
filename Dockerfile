@@ -12,6 +12,7 @@ COPY package.json ./
 
 # Install dependencies and generate lockfile
 RUN bun install
+RUN bun pm trust --all
 
 # Stage 3: Builder
 FROM deps AS builder
