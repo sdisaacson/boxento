@@ -12,7 +12,9 @@ COPY package.json ./
 
 # Install dependencies and generate lockfile
 RUN bun install
-RUN bun pm trust --all
+
+#Install Post Install Scripts
+RUN cd node_modules/bun && node install.js
 
 # Stage 3: Builder
 FROM deps AS builder
