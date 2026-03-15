@@ -314,3 +314,58 @@ export const currencyProxy = onRequest(
     }
   }
 );
+
+// Proxy for Coolify API
+export const coolifyProxy = onRequest(
+  {
+    cors: true,
+    invoker: "public"
+  },
+  async (req, res) => {
+    try {
+      // Get the path after /api/coolify
+      const subPath = req.url.replace(/^\/api\/coolify/, '');
+      const targetUrl = `https://hosting.sisaacson.io:8000${subPath}`;
+
+      const headers: Record<string, string> = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Boxento/1.0"
+      };
+
+      // Forward Authorization header if present
+      if (req.headers.authorization) {
+        headers["Authorization"] = req.headers.authorization as string;
+      }
+
+      const fetchOptions: RequestInit = {
+        method: req.method,
+        headers
+      };
+
+      // Forward body for POST/PATCH/PUT
+      if (["POST", "PATCH", "PUT"].includes(req.method) && req.body) {
+        fetchOptions.body = JSON.stringify(req.body);
+      }
+
+      const response = await fetch(targetUrl, fetchOptions);
+
+      // Handle binary or non-json responses if necessary, but Coolify is mostly JSON
+      const contentType = response.headers.get("content-type");
+      
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        res.status(response.status).json(data);
+      } else {
+        const text = await response.text();
+        res.status(response.status).send(text);
+      }
+    } catch (error) {
+      console.error("Error in Coolify proxy:", error);
+      res.status(500).json({
+        error: "Failed to proxy request to Coolify",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+);

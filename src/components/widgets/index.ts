@@ -30,12 +30,14 @@ const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
 const CalendarMonthlyWidget = React.lazy(() => import('./CalendarMonthlyWidget/index'));
 const WebsiteMonitorWidget = React.lazy(() => import('./WebsiteMonitorWidget/index'));
 const DockerMonitorWidget = React.lazy(() => import('./DockerMonitorWidget/index'));
+const CoolifyWidget = React.lazy(() => import('./CoolifyWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
 export * from './CalendarMonthlyWidget/types';
 export * from './WebsiteMonitorWidget/types';
 export * from './DockerMonitorWidget/types';
+export * from './CoolifyWidget/types';
 
 export * from './WeatherWidget/types';
 export * from './WorldClocksWidget/types';
@@ -359,6 +361,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     description: 'Monitor local Docker containers and status'
   },
   {
+    type: 'coolify-monitor',
+    name: 'Coolify Status',
+    icon: 'Server',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Utilities',
+    description: 'Monitor Coolify servers and applications'
+  },
+  {
     type: 'qrcode',
     name: 'QR Code',
     icon: 'QrCode',
@@ -429,6 +442,7 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'calendar-monthly': CalendarMonthlyWidget,
   'website-monitor': WebsiteMonitorWidget,
   'docker-monitor': DockerMonitorWidget,
+  'coolify-monitor': CoolifyWidget,
 };
 
 /**

@@ -33,8 +33,7 @@ const getAllowedHosts = () => {
     'boxento-prod.boxento.orb.local',
     'boxento.boxento.orb.local',
     'sisaacson.io',
-    '*',
-    // Allow custom domains set via environment variable
+    'wx060si33ig45v7l4em7lth2.hosting.sisaacson.io',    // Allow custom domains set via environment variable
     ...(process.env.VITE_ALLOWED_HOSTS || '').split(',').filter(Boolean)
   ]
   
@@ -59,6 +58,12 @@ export default defineConfig({
         target: 'https://mindicador.cl',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/mindicador/, ''),
+        secure: false
+      },
+      '/api/coolify': {
+        target: 'https://hosting.sisaacson.io:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/coolify/, ''),
         secure: false
       }
     },

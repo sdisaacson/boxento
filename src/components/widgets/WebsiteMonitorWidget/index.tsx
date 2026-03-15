@@ -109,11 +109,11 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
     setIsRefreshing(false);
   }, [localConfig.websites, checkWebsite, isRefreshing]);
 
-  // Initial refresh and fixed interval (1 minute)
+  // Initial refresh and fixed interval (5 minutes)
   useEffect(() => {
     refreshAll();
     
-    const intervalId = setInterval(refreshAll, 60000);
+    const intervalId = setInterval(refreshAll, 300000);
     return () => clearInterval(intervalId);
   }, [localConfig.websites, refreshAll]);
 

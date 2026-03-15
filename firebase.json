@@ -37,6 +37,10 @@
         "function": "currencyProxy"
       },
       {
+        "source": "/api/coolify{,/**}",
+        "function": "coolifyProxy"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
