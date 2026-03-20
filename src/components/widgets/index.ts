@@ -416,9 +416,9 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
 
-  'calendar-monthly': CalendarMonthlyWidget,
-  'website-monitor': WebsiteMonitorWidget,
-  'docker-monitor': DockerMonitorWidget,
+  'calendar-monthly': CalendarMonthlyWidget as unknown as LazyWidgetComponent,
+  'website-monitor': WebsiteMonitorWidget as unknown as LazyWidgetComponent,
+  'docker-monitor': DockerMonitorWidget as unknown as LazyWidgetComponent,
   'coolify-monitor': CoolifyWidget as unknown as LazyWidgetComponent,
   'morning-brief': MorningBriefWidget,
 };

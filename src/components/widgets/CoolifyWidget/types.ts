@@ -29,4 +29,4 @@ export interface CoolifyResource {
   memory_usage?: string;
 }
 
-export interface CoolifyWidgetProps extends WidgetProps<CoolifyWidgetConfig> {}
+export type CoolifyWidgetProps = WidgetProps<CoolifyWidgetConfig>;

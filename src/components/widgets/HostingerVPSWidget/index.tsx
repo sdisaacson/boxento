@@ -641,8 +641,6 @@ const HostingerVPSWidget: React.FC<HostingerVPSWidgetProps> = ({
         {(localConfig.layout === 'horizontal' && width >= 3) ? (
           // Horizontal layout - unified inline style
           (() => {
-            const itemsPerRow = localConfig.itemsPerRow || 3;
-            const itemWidth = `calc(${100 / itemsPerRow}% - ${(itemsPerRow - 1) * 8 / itemsPerRow}px)`;
             return (
               <div className="flex flex-wrap gap-2">
                 {vpsList.map((vps) => (

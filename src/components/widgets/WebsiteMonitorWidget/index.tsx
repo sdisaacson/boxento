@@ -19,7 +19,6 @@ import {
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
-import { ScrollArea } from '../../ui/scroll-area';
 import WidgetHeader from '../common/WidgetHeader';
 import { 
   WebsiteMonitorWidgetProps, 

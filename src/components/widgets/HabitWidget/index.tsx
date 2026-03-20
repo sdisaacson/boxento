@@ -301,7 +301,11 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ config }) => {
               onChange={(e) => setHabitName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  editingHabit ? handleEditHabit() : handleAddHabit();
+                  if (editingHabit) {
+                    handleEditHabit();
+                  } else {
+                    handleAddHabit();
+                  }
                 }
               }}
               autoFocus

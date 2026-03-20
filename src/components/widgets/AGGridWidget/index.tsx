@@ -224,7 +224,7 @@ const AGGridWidget: React.FC<AGGridWidgetProps> = ({ config }) => {
       let response;
       try {
         response = await fetch(url);
-      } catch (e) {
+      } catch {
         console.warn("Direct fetch failed, trying CORS proxy...");
         response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
       }

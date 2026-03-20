@@ -83,6 +83,9 @@
   "trustedDependencies": [
     "@firebase/util",
     "aws-sdk",
-    "protobufjs"
+    "bun",
+    "esbuild",
+    "protobufjs",
+    "re2"
   ]
 }
