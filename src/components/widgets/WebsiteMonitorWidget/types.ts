@@ -28,7 +28,7 @@ export interface WebsiteMonitorWidgetConfig {
   id?: string;
   title?: string;
   websites: MonitoredWebsite[];
-  onUpdate?: (config: any) => void;
+  onUpdate?: (config: WebsiteMonitorWidgetConfig) => void;
   onDelete?: () => void;
   [key: string]: unknown;
 }
@@ -38,4 +38,4 @@ export interface WebsiteMonitorWidgetConfig {
  * 
  * @type WebsiteMonitorWidgetProps
  */
-export type WebsiteMonitorWidgetProps = WidgetProps<any>;
+export type WebsiteMonitorWidgetProps = WidgetProps<WebsiteMonitorWidgetConfig>;

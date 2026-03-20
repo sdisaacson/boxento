@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -28,10 +28,12 @@ import {
   WebsiteStatus 
 } from './types';
 
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+// Use local proxy server (run: node proxy-server.js)
+// This avoids CORS issues by routing requests through our own server
+const LOCAL_PROXY = 'http://localhost:3001/proxy/';
 const FAVICON_SERVICE = 'https://www.google.com/s2/favicons?sz=32&domain=';
 
-const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _width, height: _height, config }) => {
+const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width, height: _height, config }) => {
   const defaultConfig: WebsiteMonitorWidgetConfig = {
     title: 'Website Monitor',
     websites: [
@@ -48,6 +50,7 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
   
   const [statuses, setStatuses] = useState<Record<string, WebsiteStatus>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const hasChecked = useRef(false);
   
   // For settings modal
   const [newSiteName, setNewSiteName] = useState('');
@@ -62,34 +65,52 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
 
   const checkWebsite = useCallback(async (website: MonitoredWebsite): Promise<WebsiteStatus> => {
     const startTime = performance.now();
+
     try {
-      // Use no-cache to get a real response time
-      const response = await fetch(`${CORS_PROXY}${encodeURIComponent(website.url)}`, {
-        cache: 'no-store'
+      // Use local proxy server - don't encode the URL, just pass it directly
+      const proxyUrl = `${LOCAL_PROXY}${website.url}`;
+      
+      const response = await fetch(proxyUrl, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(15000)
       });
+      
       const endTime = performance.now();
       const responseTime = Math.round(endTime - startTime);
 
-      if (response.ok) {
+      // If we got any response, the website is up
+      if (response.status >= 200 && response.status < 500) {
         return {
           isOk: true,
           responseTime,
           lastChecked: Date.now()
         };
-      } else {
+      }
+
+      // 5xx errors mean the site is down
+      return {
+        isOk: false,
+        responseTime,
+        error: `HTTP ${response.status}`,
+        lastChecked: Date.now()
+      };
+    } catch (error) {
+      const endTime = performance.now();
+      const errorMessage = error instanceof Error ? error.message : 'Network Error';
+      
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('ECONNREFUSED')) {
         return {
           isOk: false,
-          responseTime,
-          error: `HTTP ${response.status}`,
+          responseTime: Math.round(endTime - startTime),
+          error: 'Proxy not running',
           lastChecked: Date.now()
         };
       }
-    } catch (error) {
-      const endTime = performance.now();
+
       return {
         isOk: false,
         responseTime: Math.round(endTime - startTime),
-        error: error instanceof Error ? error.message : 'Network Error',
+        error: errorMessage,
         lastChecked: Date.now()
       };
     }
@@ -109,13 +130,15 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
     setIsRefreshing(false);
   }, [localConfig.websites, checkWebsite, isRefreshing]);
 
-  // Initial refresh and fixed interval (5 minutes)
+  // Check each website only ONCE on initial load (no auto-refresh)
   useEffect(() => {
-    refreshAll();
-    
-    const intervalId = setInterval(refreshAll, 300000);
-    return () => clearInterval(intervalId);
-  }, [localConfig.websites, refreshAll]);
+    // Use ref to ensure we only check once even if component re-renders
+    if (!hasChecked.current && localConfig.websites.length > 0) {
+      hasChecked.current = true;
+      refreshAll();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array = run only once on mount
 
   const addWebsite = () => {
     if (!newSiteName || !newSiteUrl) return;
@@ -154,6 +177,115 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
     setShowSettings(false);
   };
 
+  const renderWebsiteItem = (site: MonitoredWebsite, isHorizontal: boolean) => {
+    const status = statuses[site.id];
+    const domain = new URL(site.url).hostname;
+    
+    if (isHorizontal) {
+      // Horizontal layout for wide widgets
+      return (
+        <div 
+          key={site.id} 
+          className="flex flex-col items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 group"
+          style={{ width: '100px', flex: '0 0 auto' }}
+        >
+          <img 
+            src={`${FAVICON_SERVICE}${domain}`} 
+            alt="" 
+            className="w-6 h-6 rounded-sm mb-2"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Ccircle cx="12" cy="12" r="10"/%3E%3Cline x1="2" y1="12" x2="22" y2="12"/%3E%3Cpath d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/%3E%3C/svg%3E';
+            }}
+          />
+          <a 
+            href={site.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs font-medium hover:underline text-center truncate w-full mb-1"
+          >
+            {site.name}
+          </a>
+          <div className="flex items-center gap-1">
+            {status ? (
+              <>
+                <span className="text-[10px] text-muted-foreground">
+                  {status.responseTime}ms
+                </span>
+                {status.isOk ? (
+                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                ) : (
+                  <XCircle className="h-3 w-3 text-red-500" />
+                )}
+              </>
+            ) : (
+              <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground opacity-50" />
+            )}
+          </div>
+          {status?.error && (
+            <span className="text-[9px] text-red-500 truncate w-full text-center mt-1">
+              {status.error}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // Vertical layout (default)
+    return (
+      <div 
+        key={site.id} 
+        className="flex items-center justify-between p-1.5 rounded bg-gray-50 dark:bg-gray-800/50 group"
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <img 
+            src={`${FAVICON_SERVICE}${domain}`} 
+            alt="" 
+            className="w-4 h-4 rounded-sm flex-shrink-0"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Ccircle cx="12" cy="12" r="10"/%3E%3Cline x1="2" y1="12" x2="22" y2="12"/%3E%3Cpath d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/%3E%3C/svg%3E';
+            }}
+          />
+          <div className="flex flex-col overflow-hidden">
+            <a 
+              href={site.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm font-medium hover:underline flex items-center gap-1 truncate"
+            >
+              {site.name}
+              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+            </a>
+            {status?.error && (
+              <span className="text-[10px] text-red-500 truncate font-medium">
+                {status.error}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {status ? (
+            <>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-2 w-2" />
+                  {status.responseTime}ms
+                </span>
+              </div>
+              {status.isOk ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-500" />
+              )}
+            </>
+          ) : (
+            <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground opacity-50" />
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (localConfig.websites.length === 0) {
       return (
@@ -172,69 +304,26 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
       );
     }
 
-    return (
-      <ScrollArea className="h-full pr-3">
-        <div className="space-y-3">
-          {localConfig.websites.map((site) => {
-            const status = statuses[site.id];
-            const domain = new URL(site.url).hostname;
-            
-            return (
-              <div 
-                key={site.id} 
-                className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 group"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <img 
-                    src={`${FAVICON_SERVICE}${domain}`} 
-                    alt="" 
-                    className="w-4 h-4 rounded-sm flex-shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Ccircle cx="12" cy="12" r="10"/%3E%3Cline x1="2" y1="12" x2="22" y2="12"/%3E%3Cpath d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/%3E%3C/svg%3E';
-                    }}
-                  />
-                  <div className="flex flex-col overflow-hidden">
-                    <a 
-                      href={site.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium hover:underline flex items-center gap-1 truncate"
-                    >
-                      {site.name}
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                    </a>
-                    {status?.error && (
-                      <span className="text-[10px] text-red-500 truncate font-medium">
-                        {status.error}
-                      </span>
-                    )}
-                  </div>
-                </div>
+    const isWide = width >= 4;
 
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  {status ? (
-                    <>
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-2 w-2" />
-                          {status.responseTime}ms
-                        </span>
-                      </div>
-                      {status.isOk ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                    </>
-                  ) : (
-                    <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground opacity-50" />
-                  )}
-                </div>
-              </div>
-            );
-          })}
+    if (isWide) {
+      // Horizontal layout for wide widgets - wrap to multiple rows if needed
+      return (
+        <div className="h-full overflow-y-auto">
+          <div className="flex flex-wrap gap-2 content-start">
+            {localConfig.websites.map((site) => renderWebsiteItem(site, true))}
+          </div>
         </div>
-      </ScrollArea>
+      );
+    }
+
+    // Vertical layout for narrow widgets
+    return (
+      <div className="h-full overflow-y-auto pr-1">
+        <div className="space-y-1">
+          {localConfig.websites.map((site) => renderWebsiteItem(site, false))}
+        </div>
+      </div>
     );
   };
 
@@ -304,17 +393,20 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
           </div>
           
           <DialogFooter>
-            <div className="flex justify-between w-full">
-              {config?.onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => config.onDelete?.()}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button onClick={saveSettings}>Save</Button>
-            </div>
+            {config?.onDelete && (
+              <Button
+                variant="outline"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-transparent hover:border-red-200 dark:hover:border-red-800"
+                onClick={() => {
+                  if (config.onDelete) {
+                    config.onDelete();
+                  }
+                }}
+              >
+                Delete Widget
+              </Button>
+            )}
+            <Button onClick={saveSettings}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -328,7 +420,7 @@ const WebsiteMonitorWidget: React.FC<WebsiteMonitorWidgetProps> = ({ width: _wid
         onSettingsClick={() => setShowSettings(true)}
       />
       
-      <div className="flex-grow p-4 overflow-hidden relative">
+      <div className="flex-grow p-2 overflow-hidden relative">
         {renderContent()}
         {isRefreshing && (
           <div className="absolute top-1 right-1">

@@ -5,6 +5,7 @@ export interface CoolifyWidgetConfig {
   apiEndpoint: string;
   bearerToken: string;
   showDockerInfo: boolean;
+  [key: string]: unknown;
 }
 
 export interface CoolifyServer {

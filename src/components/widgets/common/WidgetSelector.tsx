@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, Cloud, Clock, Link, StickyNote, CheckSquare, Timer, DollarSign, BookOpen, Video, Rss, Github, Plane, Globe, Youtube } from 'lucide-react';
+import { X, Plus, Calendar, Cloud, Clock, Link, StickyNote, CheckSquare, Timer, DollarSign, BookOpen, Video, Rss, Github, Plane, Globe, Youtube, Server } from 'lucide-react';
 import { WidgetConfig } from '@/types';
 
 interface WidgetSelectorProps {
@@ -163,6 +163,7 @@ const WidgetSelector = ({
                             case 'Github': return <Github size={16} />;
                             case 'Plane': return <Plane size={16} />;
                             case 'Globe': return <Globe size={16} />;
+                            case 'Server': return <Server size={16} />;
                             default: return <Plus size={16} />;
                           }
                         })()}

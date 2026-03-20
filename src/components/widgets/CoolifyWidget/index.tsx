@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Server, 
-  HardDrive, 
-  Activity, 
+import {
+  Server,
+  Activity,
   RefreshCw,
   AlertTriangle,
   Cpu,
   Layers,
   Container
 } from 'lucide-react';
+
 import {
   Dialog,
   DialogContent,

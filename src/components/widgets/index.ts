@@ -3,6 +3,7 @@ import { WidgetConfig, WidgetProps } from '@/types';
 
 // Lazy load widget components - each widget will be in its own chunk
 const CalendarWidget = React.lazy(() => import('./CalendarWidget/index'));
+const HostingerVPSWidget = React.lazy(() => import('./HostingerVPSWidget/index'));
 const WeatherWidget = React.lazy(() => import('./WeatherWidget/index'));
 const WorldClocksWidget = React.lazy(() => import('./WorldClocksWidget/index'));
 const QuickLinksWidget = React.lazy(() => import('./QuickLinksWidget/index'));
@@ -10,27 +11,28 @@ const NotesWidget = React.lazy(() => import('./NotesWidget/index'));
 const TodoWidget = React.lazy(() => import('./TodoWidget/index'));
 const PomodoroWidget = React.lazy(() => import('./PomodoroWidget/index'));
 const CurrencyConverterWidget = React.lazy(() => import('./CurrencyConverterWidget/index'));
-const ReadwiseWidget = React.lazy(() => import('./ReadwiseWidget/index'));
-const UFWidget = React.lazy(() => import('./UFWidget/index'));
+
+
 const YouTubeWidget = React.lazy(() => import('./YouTubeWidget/index'));
 const YouTubeFavoritesWidget = React.lazy(() => import('./YouTubeFavoritesWidget/index'));
 const YouTubeAutoPlayWidget = React.lazy(() => import('./YouTubeAutoPlayWidget/index'));
 const RSSWidget = React.lazy(() => import('./RSSWidget/index'));
 const DailyScheduleWidget = React.lazy(() => import('./DailyScheduleWidget/index'));
-const GitHubStreakWidget = React.lazy(() => import('./GitHubStreakWidget/index'));
+
 const FlightTrackerWidget = React.lazy(() => import('./FlightTrackerWidget/index'));
-const GeographyQuizWidget = React.lazy(() => import('./GeographyQuizWidget/index'));
+
 const TodoistWidget = React.lazy(() => import('./TodoistWidget/index'));
 const YearProgressWidget = React.lazy(() => import('./YearProgressWidget/index'));
 const IframeWidget = React.lazy(() => import('./IframeWidget/index'));
 const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
 const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
-const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
+
 const CalendarMonthlyWidget = React.lazy(() => import('./CalendarMonthlyWidget/index'));
 const WebsiteMonitorWidget = React.lazy(() => import('./WebsiteMonitorWidget/index'));
 const DockerMonitorWidget = React.lazy(() => import('./DockerMonitorWidget/index'));
 const CoolifyWidget = React.lazy(() => import('./CoolifyWidget/index'));
+const MorningBriefWidget = React.lazy(() => import('./MorningBriefWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -46,24 +48,26 @@ export * from './NotesWidget/types';
 export * from './TodoWidget/types';
 export * from './PomodoroWidget/types';
 export * from './CurrencyConverterWidget/types';
-export * from './ReadwiseWidget/types';
-export * from './UFWidget/types';
+
+
 export * from './YouTubeWidget/types';
 export * from './YouTubeFavoritesWidget/types';
 export * from './YouTubeAutoPlayWidget/types';
 export * from './RSSWidget/types';
 export * from './DailyScheduleWidget/types';
-export * from './GitHubStreakWidget/types';
+
 export * from './FlightTrackerWidget/types';
-export * from './GeographyQuizWidget/types';
+
 export * from './TodoistWidget/types';
 export * from './YearProgressWidget/types';
 export * from './IframeWidget/types';
 export * from './HabitWidget/types';
 export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
-export * from './ReaderWidget/types';
+
 export * from './AGGridWidget/types';
+export * from './HostingerVPSWidget/types';
+export * from './MorningBriefWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -74,6 +78,17 @@ export interface EnhancedWidgetConfig extends WidgetConfig {
 
 // Widget registry with enhanced metadata
 export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
+  {
+    type: 'hostinger-vps',
+    name: 'Hostinger VPS',
+    icon: 'Server',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 4,
+    defaultHeight: 4,
+    category: 'Utilities',
+    description: 'Monitor Hostinger VPS instances with historical metrics and charts'
+  },
   {
     type: 'calendar',
     name: 'Calendar',
@@ -184,28 +199,8 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     category: 'Finance',
     description: 'Convert between currencies using live exchange rates'
   },
-  {
-    type: 'readwise',
-    name: 'Readwise Highlights',
-    icon: 'BookOpen',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 2,
-    defaultHeight: 3,
-    category: 'Information',
-    description: 'Display highlights from your Readwise account'
-  },
-  {
-    type: 'uf-chile',
-    name: 'UF (Chile)',
-    icon: 'DollarSign',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 2,
-    defaultHeight: 2,
-    category: 'Finance',
-    description: 'Display the value of UF in Chilean Pesos'
-  },
+
+
   {
     type: 'youtube',
     name: 'YouTube Video',
@@ -250,17 +245,7 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     category: 'Information',
     description: 'Display RSS feeds from your favorite websites'
   },
-  {
-    type: 'github-streak',
-    name: 'GitHub Streak',
-    icon: 'Github',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 2,
-    defaultHeight: 2,
-    category: 'Productivity',
-    description: 'Track your GitHub contribution streak and activity'
-  },
+
   {
     type: 'flight-tracker',
     name: 'Flight Tracker',
@@ -272,17 +257,7 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     category: 'Travel',
     description: 'Track real-time flight status using Amadeus API'
   },
-  {
-    type: 'geography-quiz',
-    name: 'Geography Quiz',
-    icon: 'Globe',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 2,
-    defaultHeight: 2,
-    category: 'Education',
-    description: 'Test your geography knowledge with an interactive quiz'
-  },
+
   {
     type: 'todoist',
     name: 'Todoist Tasks',
@@ -343,9 +318,9 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     name: 'Website Monitor',
     icon: 'Globe',
     minWidth: 2,
-    minHeight: 2,
+    minHeight: 1,
     defaultWidth: 2,
-    defaultHeight: 3,
+    defaultHeight: 2,
     category: 'Utilities',
     description: 'Monitor the reachability and response time of websites'
   },
@@ -383,16 +358,17 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     description: 'Generate QR codes from text or URLs'
   },
   {
-    type: 'reader',
-    name: 'Reader',
-    icon: 'BookMarked',
+    type: 'morning-brief',
+    name: 'Morning Brief',
+    icon: 'Sun',
     minWidth: 2,
     minHeight: 2,
     defaultWidth: 3,
-    defaultHeight: 3,
+    defaultHeight: 4,
     category: 'Information',
-    description: 'Random articles from your Readwise Reader library'
+    description: 'Display daily morning brief from a remote HTML source'
   },
+
 ];
 
 // Widget categories
@@ -415,6 +391,7 @@ type LazyWidgetComponent = React.LazyExoticComponent<React.ComponentType<WidgetP
  */
 const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'calendar': CalendarWidget,
+  'hostinger-vps': HostingerVPSWidget as unknown as LazyWidgetComponent,
   'daily-schedule': DailyScheduleWidget as unknown as LazyWidgetComponent,
   'weather': WeatherWidget,
   'world-clocks': WorldClocksWidget,
@@ -423,26 +400,27 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'todo': TodoWidget,
   'pomodoro': PomodoroWidget,
   'currency-converter': CurrencyConverterWidget,
-  'readwise': ReadwiseWidget,
-  'uf-chile': UFWidget,
+
+
   'youtube': YouTubeWidget,
   'youtube-favorites': YouTubeFavoritesWidget as unknown as LazyWidgetComponent,
   'youtube-autoplay': YouTubeAutoPlayWidget as unknown as LazyWidgetComponent,
   'rss': RSSWidget as unknown as LazyWidgetComponent,
-  'github-streak': GitHubStreakWidget,
+
   'flight-tracker': FlightTrackerWidget,
-  'geography-quiz': GeographyQuizWidget,
+
   'todoist': TodoistWidget,
   'year-progress': YearProgressWidget,
   'iframe': IframeWidget,
   'habits': HabitWidget,
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
-  'reader': ReaderWidget,
+
   'calendar-monthly': CalendarMonthlyWidget,
   'website-monitor': WebsiteMonitorWidget,
   'docker-monitor': DockerMonitorWidget,
-  'coolify-monitor': CoolifyWidget,
+  'coolify-monitor': CoolifyWidget as unknown as LazyWidgetComponent,
+  'morning-brief': MorningBriefWidget,
 };
 
 /**

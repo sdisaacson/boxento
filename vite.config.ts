@@ -53,6 +53,12 @@ export default defineConfig({
     },
   },
   server: {
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      credentials: true
+    },
     proxy: {
       '/api/mindicador': {
         target: 'https://mindicador.cl',
@@ -65,12 +71,24 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/coolify/, ''),
         secure: false
-      }
+      },
+      '/api/hostinger': {
+        target: 'https://developers.hostinger.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/hostinger/, ''),
+        secure: true
+      },
+      '/api/docker': {
+        target: 'http://localhost:2375',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/docker/, ''),
+        secure: false
+      },
+
     },
     host: true, // Listen on all network interfaces
     port: 5173,
     strictPort: true,
-    cors: true,
     // Hosts allowed for dev server
     allowedHosts: getAllowedHosts()
   },
